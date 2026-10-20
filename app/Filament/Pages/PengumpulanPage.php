@@ -28,7 +28,7 @@ class PengumpulanPage extends BaseSheetPage
 
     protected static string|\UnitEnum|null $navigationGroup = 'Akademik';
 
-    protected static ?int $navigationSort = 5;
+    protected static ?int $navigationSort = 4;
 
     protected array $searchableColumns = ['task_title', 'student_name', 'student_npm', 'group_name', 'status'];
 

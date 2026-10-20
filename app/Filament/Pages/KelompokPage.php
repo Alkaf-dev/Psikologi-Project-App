@@ -27,7 +27,7 @@ class KelompokPage extends BaseSheetPage
 
     protected static string|\UnitEnum|null $navigationGroup = 'Akademik';
 
-    protected static ?int $navigationSort = 3;
+    protected static ?int $navigationSort = 5;
 
     protected array $searchableColumns = ['name', 'course_name', 'leader_name', 'member_names'];
 

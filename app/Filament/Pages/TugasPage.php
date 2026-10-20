@@ -29,7 +29,7 @@ class TugasPage extends BaseSheetPage
 
     protected static string|\UnitEnum|null $navigationGroup = 'Akademik';
 
-    protected static ?int $navigationSort = 4;
+    protected static ?int $navigationSort = 3;
 
     protected array $searchableColumns = ['title', 'course_name', 'group_name', 'type_label'];
 

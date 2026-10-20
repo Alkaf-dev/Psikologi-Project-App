@@ -23,7 +23,8 @@ Portal akademik **Prodi Psikologi STIT Muhammadiyah Kediri** berbasis **Laravel 
 
 ### Panel admin
 - Dashboard ringkasan data.
-- Menu **Administrasi** berisi CRUD Program Studi dan pendataan mahasiswa.
+- Menu diurutkan dari yang paling operasional: **Akademik**, **Administrasi**, **Konten**, lalu **Akun** dan **Sistem**.
+- Menu **Administrasi** berisi pendataan mahasiswa dan CRUD Program Studi.
 - Pendataan mahasiswa melalui **Administrasi > Mahasiswa**: Prodi, Nama Mahasiswa, NIM, email, kelas, angkatan, WhatsApp, dan akun login.
 - CRUD user, mata kuliah, jadwal, kelompok, tugas, pengumpulan/nilai, dan pengumuman.
 - Mata kuliah dapat ditetapkan ke beberapa Prodi; satu baris mata kuliah tetap memiliki satu kelas.

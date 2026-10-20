@@ -28,7 +28,7 @@ class StudentPage extends BaseSheetPage
 
     protected static string|\UnitEnum|null $navigationGroup = 'Administrasi';
 
-    protected static ?int $navigationSort = 2;
+    protected static ?int $navigationSort = 1;
 
     protected array $searchableColumns = ['name', 'npm', 'email', 'prodi_name', 'class_name', 'cohort'];
 

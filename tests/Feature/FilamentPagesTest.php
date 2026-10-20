@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Auth\SheetUserProvider;
 use App\Repositories\UserRepository;
+use Filament\Facades\Filament;
 use Tests\Concerns\InteractsWithSheets;
 use Tests\TestCase;
 
@@ -45,6 +46,18 @@ class FilamentPagesTest extends TestCase
         ] as $url => $text) {
             $this->get($url)->assertOk()->assertSee($text);
         }
+    }
+
+    public function test_navigation_groups_are_ordered_from_most_to_least_important(): void
+    {
+        $this->assertSame(
+            ['Akademik', 'Administrasi', 'Konten', 'Akun', 'Sistem'],
+            $this->navigationGroupLabels('admin'),
+        );
+        $this->assertSame(
+            ['Akademik', 'Informasi', 'Akun'],
+            $this->navigationGroupLabels('portal'),
+        );
     }
 
     public function test_student_page_shows_prodi_name_and_nim_columns(): void
@@ -90,6 +103,17 @@ class FilamentPagesTest extends TestCase
         ] as $url => $text) {
             $this->get($url)->assertOk()->assertSee($text);
         }
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    protected function navigationGroupLabels(string $panel): array
+    {
+        return collect(Filament::getPanel($panel)->getNavigationGroups())
+            ->map(fn ($group): string => (string) $group->getLabel())
+            ->values()
+            ->all();
     }
 
     protected function actingAsAdmin(): void
