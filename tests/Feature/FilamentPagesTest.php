@@ -32,6 +32,7 @@ class FilamentPagesTest extends TestCase
         $this->get('/admin')->assertOk()->assertSee('Dashboard Admin');
 
         foreach ([
+            '/admin/student-page' => 'Pendataan Mahasiswa',
             '/admin/user-page' => 'Manajemen User',
             '/admin/study-program-page' => 'Program Studi',
             '/admin/mata-kuliah-page' => 'Mata Kuliah',
@@ -44,6 +45,17 @@ class FilamentPagesTest extends TestCase
         ] as $url => $text) {
             $this->get($url)->assertOk()->assertSee($text);
         }
+    }
+
+    public function test_student_page_shows_prodi_name_and_nim_columns(): void
+    {
+        $this->actingAsAdmin();
+
+        $this->get('/admin/student-page')
+            ->assertOk()
+            ->assertSee('Prodi')
+            ->assertSee('Nama Mahasiswa')
+            ->assertSee('NIM');
     }
 
     public function test_pjmk_can_access_user_management_page(): void

@@ -154,7 +154,7 @@ class SetupSheets extends Command
 
         $name = (string) $this->ask('Nama Super Admin', 'Admin Program Studi');
         $email = (string) $this->ask('Email Super Admin', 'admin@psikologi.test');
-        $npm = (string) $this->ask('NPM Super Admin', 'ADMIN001');
+        $npm = (string) $this->ask('NIM Super Admin', 'ADMIN001');
         $password = (string) ($this->secret('Password Super Admin (minimal 8 karakter)') ?: 'password');
 
         $defaultProgram = array_values($programs)[0];
@@ -176,7 +176,7 @@ class SetupSheets extends Command
         $users = app(UserRepository::class);
 
         if ($users->findActiveByLogin($email) || $users->findActiveByLogin($npm)) {
-            $this->components->error('Email atau NPM sudah digunakan.');
+            $this->components->error('Email atau NIM sudah digunakan.');
 
             return null;
         }

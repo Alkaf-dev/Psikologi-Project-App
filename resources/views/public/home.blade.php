@@ -25,7 +25,7 @@
                     </a>
                 </div>
                 <p class="mt-5 text-xs text-teal-100/90">
-                    {{ $settings['portal_note'] ?? 'Pilih Prodi, lalu masuk dengan email atau NPM untuk melihat aktivitas akademik Anda.' }}
+                    {{ $settings['portal_note'] ?? 'Pilih Prodi, lalu masuk dengan email atau NIM untuk melihat aktivitas akademik Anda.' }}
                 </p>
             </div>
 
@@ -109,7 +109,7 @@
         <div class="rounded-3xl bg-slate-900 px-6 py-10 text-center text-white sm:px-10">
             <h2 class="text-2xl font-bold sm:text-3xl">Siap masuk ke portal?</h2>
             <p class="mx-auto mt-3 max-w-xl text-sm leading-6 text-slate-300">
-                Gunakan email atau NPM yang terdaftar. Jika belum bisa masuk, hubungi admin program studi.
+                Gunakan email atau NIM yang terdaftar. Jika belum bisa masuk, hubungi admin program studi.
             </p>
             <a href="{{ route('login') }}" class="mt-6 inline-block rounded-xl bg-teal-400 px-6 py-3 text-sm font-semibold text-slate-900 transition hover:bg-teal-300">
                 Masuk Sekarang

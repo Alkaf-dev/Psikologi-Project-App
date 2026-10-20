@@ -59,6 +59,9 @@
     <div style="margin-top: 1rem;">
         <x-filament::section heading="Akses Cepat">
             <div style="display: flex; flex-wrap: wrap; gap: .75rem;">
+                <x-filament::button tag="a" :href="\App\Filament\Pages\StudentPage::getUrl()" color="gray" icon="heroicon-o-identification">
+                    Pendataan Mahasiswa
+                </x-filament::button>
                 <x-filament::button tag="a" :href="\App\Filament\Pages\UserPage::getUrl()" color="gray" icon="heroicon-o-users">
                     Kelola User
                 </x-filament::button>

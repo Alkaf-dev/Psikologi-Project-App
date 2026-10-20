@@ -8,6 +8,7 @@ use App\Filament\Pages\KelompokPage;
 use App\Filament\Pages\MataKuliahPage;
 use App\Filament\Pages\PengumpulanPage;
 use App\Filament\Pages\PengumumanPage;
+use App\Filament\Pages\StudentPage;
 use App\Filament\Pages\StudyProgramPage;
 use App\Filament\Pages\TugasPage;
 use App\Filament\Pages\UserPage;
@@ -56,6 +57,10 @@ class AdminActionMountTest extends TestCase
         $announcement = app(AnnouncementRepository::class)->all()->firstOrFail();
 
         $cases = [
+            [StudentPage::class, 'create', null],
+            [StudentPage::class, 'edit', (string) $student['id']],
+            [StudentPage::class, 'resetPassword', (string) $student['id']],
+            [StudentPage::class, 'delete', (string) $student['id']],
             [UserPage::class, 'create', null],
             [UserPage::class, 'edit', (string) $student['id']],
             [UserPage::class, 'resetPassword', (string) $student['id']],

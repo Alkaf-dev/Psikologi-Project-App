@@ -18,7 +18,7 @@ class Login extends BaseLogin
         return $schema
             ->components([
                 TextInput::make('login')
-                    ->label('Email atau NPM')
+                    ->label('Email atau NIM')
                     ->required()
                     ->autocomplete('username')
                     ->autofocus(),
@@ -43,7 +43,7 @@ class Login extends BaseLogin
 
     public function getSubheading(): string|Htmlable|null
     {
-        return config('app.brand_subtitle').'. Pilih Prodi, lalu gunakan email atau NPM yang terdaftar beserta password.';
+        return config('app.brand_subtitle').'. Pilih Prodi, lalu gunakan email atau NIM yang terdaftar beserta password.';
     }
 
     protected function getCredentialsFromFormData(array $data): array

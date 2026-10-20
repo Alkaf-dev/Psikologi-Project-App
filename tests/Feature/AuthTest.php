@@ -32,13 +32,13 @@ class AuthTest extends TestCase
     {
         $this->get('/portal/login')
             ->assertOk()
-            ->assertSee('Email atau NPM')
+            ->assertSee('Email atau NIM')
             ->assertSee('Prodi')
             ->assertSee('S1 Psikologi');
 
         $this->get('/admin/login')
             ->assertOk()
-            ->assertSee('Email atau NPM')
+            ->assertSee('Email atau NIM')
             ->assertSee('Prodi')
             ->assertSee('S1 Psikologi');
     }

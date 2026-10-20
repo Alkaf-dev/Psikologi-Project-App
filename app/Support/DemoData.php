@@ -272,7 +272,7 @@ class DemoData
 
         $this->ensureAnnouncement([
             'title' => 'Selamat datang di Psikologi Connect',
-            'body' => "Halo mahasiswa Psikologi!\n\nPsikologi Connect adalah portal akademik untuk melihat jadwal, tugas, kelompok, dan pengumuman. Silakan masuk menggunakan email atau NPM Anda.",
+            'body' => "Halo mahasiswa Psikologi!\n\nPsikologi Connect adalah portal akademik untuk melihat jadwal, tugas, kelompok, dan pengumuman. Silakan masuk menggunakan email atau NIM Anda.",
             'audience' => 'all',
             'published_at' => now()->subDays(2)->toIso8601String(),
             'created_by' => $admin['id'],
@@ -302,7 +302,7 @@ class DemoData
             'contact_phone' => '0812-3456-7890',
             'public_tagline' => 'Ruang belajar, berkolaborasi, dan bertumbuh bersama.',
             'public_about' => 'Psikologi Connect membantu mahasiswa mengakses jadwal kuliah, tugas, kelompok, dan pengumuman dalam satu tempat.',
-            'portal_note' => 'Pilih Prodi, lalu masuk dengan email atau NPM untuk melihat aktivitas akademik Anda.',
+            'portal_note' => 'Pilih Prodi, lalu masuk dengan email atau NIM untuk melihat aktivitas akademik Anda.',
         ]);
 
         return [

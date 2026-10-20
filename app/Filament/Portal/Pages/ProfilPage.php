@@ -58,7 +58,7 @@ class ProfilPage extends Page
                             ->required()
                             ->maxLength(120),
                         TextInput::make('npm')
-                            ->label('NPM')
+                            ->label('NIM')
                             ->disabled(),
                         TextInput::make('email')
                             ->label('Email')

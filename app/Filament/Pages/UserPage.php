@@ -71,7 +71,7 @@ class UserPage extends BaseSheetPage
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('npm')
-                    ->label('NPM')
+                    ->label('NIM')
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('email')
@@ -252,7 +252,7 @@ class UserPage extends BaseSheetPage
                 ->required()
                 ->maxLength(120),
             TextInput::make('npm')
-                ->label('NPM')
+                ->label('NIM')
                 ->required()
                 ->maxLength(30),
             TextInput::make('email')
@@ -357,7 +357,7 @@ class UserPage extends BaseSheetPage
         }
 
         if ($users->npmExists((string) ($data['npm'] ?? ''), $exceptId)) {
-            $errors[$this->actionErrorKey('npm')] = 'NPM sudah digunakan oleh user lain.';
+            $errors[$this->actionErrorKey('npm')] = 'NIM sudah digunakan oleh user lain.';
         }
 
         if ($errors !== []) {

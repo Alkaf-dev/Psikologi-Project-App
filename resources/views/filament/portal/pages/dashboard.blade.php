@@ -23,7 +23,7 @@
                 <div style="font-size: 1.25rem; font-weight: 700; line-height: 1.4;">{{ $student['class_name'] ?: '-' }}</div>
             </x-filament::section>
             <x-filament::section>
-                <div style="font-size: .8rem; color: rgb(var(--gray-500));">NPM</div>
+                <div style="font-size: .8rem; color: rgb(var(--gray-500));">NIM</div>
                 <div style="font-size: 1.25rem; font-weight: 700; line-height: 1.4;">{{ $student['npm'] ?: '-' }}</div>
             </x-filament::section>
         </div>

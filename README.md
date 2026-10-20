@@ -11,7 +11,7 @@ Portal akademik **Prodi Psikologi STIT Muhammadiyah Kediri** berbasis **Laravel 
 - Tautan masuk ke portal mahasiswa.
 
 ### Portal mahasiswa
-- Login dengan Prodi, email/NPM, dan password.
+- Login dengan Prodi, email/NIM, dan password.
 - Dashboard berisi ringkasan tugas, jadwal, kelompok, dan pengumuman.
 - Jadwal kuliah sesuai kelas mahasiswa.
 - Daftar tugas individu dan kelompok.
@@ -23,7 +23,9 @@ Portal akademik **Prodi Psikologi STIT Muhammadiyah Kediri** berbasis **Laravel 
 
 ### Panel admin
 - Dashboard ringkasan data.
-- CRUD Program Studi, user, mata kuliah, jadwal, kelompok, tugas, pengumpulan/nilai, dan pengumuman.
+- Menu **Administrasi** berisi CRUD Program Studi dan pendataan mahasiswa.
+- Pendataan mahasiswa melalui **Administrasi > Mahasiswa**: Prodi, Nama Mahasiswa, NIM, email, kelas, angkatan, WhatsApp, dan akun login.
+- CRUD user, mata kuliah, jadwal, kelompok, tugas, pengumpulan/nilai, dan pengumuman.
 - Login admin juga memilih Prodi; admin tetap dapat melihat data seluruh Prodi.
 - Role user: **Mahasiswa**, **Super Admin**, dan **PJMK**.
 - PJMK memiliki akses panel yang sama dengan Super Admin, tetapi role tetap ditampilkan sebagai PJMK.
@@ -76,7 +78,7 @@ Akun demo:
 | Mahasiswa | `citra@psikologi.test` | `password` |
 | Mahasiswa | `dimas@psikologi.test` | `password` |
 
-Login dapat menggunakan email atau NPM, misalnya `ayu@psikologi.test` atau `2024001`, dengan pilihan Prodi **S1 Psikologi**. Data demo selalu diarahkan ke Prodi tersebut.
+Login dapat menggunakan email atau NIM, misalnya `ayu@psikologi.test` atau `2024001`, dengan pilihan Prodi **S1 Psikologi**. Data demo selalu diarahkan ke Prodi tersebut.
 
 Gunakan `php artisan sheets:setup --demo` lagi untuk menyegarkan data demo. Data yang sudah ada tidak diduplikasi; header baru seperti `prodi_id` akan ditambahkan otomatis.
 
@@ -143,7 +145,7 @@ Untuk spreadsheet lama, akun yang sudah ada tidak diisi Prodinya secara otomatis
 php artisan sheets:assign-prodi admin@example.ac.id --prodi=psikologi
 ```
 
-Setelah admin bisa masuk, lengkapi Prodi dan role akun lain melalui menu **User**. Akun tanpa Prodi tidak dapat login. Role lama `admin` tetap diterima kode sebagai fallback dan akan diubah menjadi `super_admin` saat setup dijalankan.
+Setelah admin bisa masuk, lengkapi Prodi dan role akun lain melalui menu **User**, atau data mahasiswa melalui **Administrasi > Mahasiswa**. Akun tanpa Prodi tidak dapat login. Role lama `admin` tetap diterima kode sebagai fallback dan akan diubah menjadi `super_admin` saat setup dijalankan.
 
 ### 5. Verifikasi
 
@@ -198,7 +200,7 @@ npm run dev                       # Vite development server
 | Login mahasiswa | `/portal/login` |
 | Portal mahasiswa | `/portal` |
 
-Halaman admin dan portal memakai slug default Filament, misalnya `/admin/user-page` dan `/portal/tugas-page`.
+Halaman admin dan portal memakai slug default Filament, misalnya `/admin/student-page`, `/admin/user-page`, dan `/portal/tugas-page`.
 
 ## Arsitektur Singkat
 
@@ -210,7 +212,7 @@ Halaman admin dan portal memakai slug default Filament, misalnya `/admin/user-pa
 - `app/Auth/SheetUser.php` dan `SheetUserProvider.php`: autentikasi tanpa Eloquent, termasuk validasi Prodi dan role.
 - `app/Enums/UserRole.php`: definisi role Mahasiswa, Super Admin, dan PJMK.
 - `app/Filament/Support/BaseSheetPage.php`: halaman tabel Filament berbasis array record.
-- `app/Filament/Pages/`: halaman admin, User, Program Studi, dan login.
+- `app/Filament/Pages/`: halaman admin, User, Program Studi, pendataan Mahasiswa, dan login.
 - `app/Console/Commands/AssignProdi.php`: pengisian Prodi akun lama melalui CLI.
 - `app/Filament/Portal/Pages/`: halaman portal mahasiswa.
 - `app/Http/Controllers/`: controller halaman publik.
@@ -240,10 +242,10 @@ Test menggunakan `LocalSheetGateway` dengan file JSON sementara. Test tidak meng
 
 - Render halaman publik.
 - Visibilitas pengumuman publik.
-- Login Prodi + email/NPM dan pembatasan peran Mahasiswa, Super Admin, serta PJMK.
+- Login Prodi + email/NIM dan pembatasan peran Mahasiswa, Super Admin, serta PJMK.
 - Penolakan login dengan Prodi salah/kosong dan akun tanpa Prodi.
 - CRUD Program Studi dan pencegahan hapus Prodi yang dipakai.
-- CRUD user untuk seluruh role dan proteksi admin aktif terakhir.
+- CRUD user untuk seluruh role, pendataan mahasiswa, dan proteksi admin aktif terakhir.
 - Migrasi header lama dan role `admin` tanpa menggeser data pengguna.
 - Render seluruh halaman admin dan portal.
 - Mount action tabel dan form pengaturan/profil.

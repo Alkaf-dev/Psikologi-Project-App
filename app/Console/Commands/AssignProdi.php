@@ -9,17 +9,17 @@ use Illuminate\Console\Command;
 class AssignProdi extends Command
 {
     protected $signature = 'sheets:assign-prodi
-                            {login? : Email atau NPM pengguna}
+                            {login? : Email atau NIM pengguna}
                             {--prodi= : Kode Prodi tujuan}';
 
     protected $description = 'Mengisi atau mengubah Prodi milik akun pengguna';
 
     public function handle(): int
     {
-        $login = (string) ($this->argument('login') ?: $this->ask('Email atau NPM pengguna'));
+        $login = (string) ($this->argument('login') ?: $this->ask('Email atau NIM pengguna'));
 
         if (trim($login) === '') {
-            $this->components->error('Email atau NPM wajib diisi.');
+            $this->components->error('Email atau NIM wajib diisi.');
 
             return self::FAILURE;
         }

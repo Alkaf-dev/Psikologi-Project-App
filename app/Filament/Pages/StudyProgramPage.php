@@ -23,9 +23,9 @@ class StudyProgramPage extends BaseSheetPage
 
     protected static string|\BackedEnum|null $navigationIcon = Heroicon::OutlinedAcademicCap;
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Akademik';
+    protected static string|\UnitEnum|null $navigationGroup = 'Administrasi';
 
-    protected static ?int $navigationSort = 0;
+    protected static ?int $navigationSort = 1;
 
     protected array $searchableColumns = ['code', 'name', 'degree'];
 
