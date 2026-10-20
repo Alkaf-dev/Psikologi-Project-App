@@ -9,14 +9,23 @@ class GroupRepository extends BaseSheetRepository
     protected string $table = 'groups';
 
     /**
+     * @param  array<string, mixed>  $student
      * @return Collection<int, array<string, mixed>>
      */
-    public function forStudent(string $userId): Collection
+    public function forStudent(array $student): Collection
     {
-        $groupIds = app(GroupMemberRepository::class)->groupIdsForUser($userId);
+        $groupIds = app(GroupMemberRepository::class)
+            ->groupIdsForUser((string) ($student['id'] ?? ''));
+
+        $courseIds = app(CourseRepository::class)
+            ->forStudent($student)
+            ->pluck('id')
+            ->map(fn (mixed $id): string => (string) $id)
+            ->all();
 
         return $this->all()
-            ->filter(fn (array $group): bool => in_array((string) ($group['id'] ?? ''), $groupIds, true))
+            ->filter(fn (array $group): bool => in_array((string) ($group['id'] ?? ''), $groupIds, true)
+                && in_array((string) ($group['course_id'] ?? ''), $courseIds, true))
             ->values();
     }
 

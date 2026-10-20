@@ -5,6 +5,7 @@ namespace App\Filament\Portal\Pages;
 use App\Filament\Support\BaseSheetPage;
 use App\Repositories\GroupMemberRepository;
 use App\Repositories\GroupRepository;
+use App\Repositories\UserRepository;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -34,6 +35,7 @@ class KelompokPage extends BaseSheetPage
                 int|string $recordsPerPage,
             ) {
                 $userId = (string) auth()->id();
+                $student = app(UserRepository::class)->find($userId);
 
                 $roles = app(GroupMemberRepository::class)
                     ->forUser($userId)
@@ -41,15 +43,18 @@ class KelompokPage extends BaseSheetPage
                         (string) ($member['group_id'] ?? '') => (string) ($member['role'] ?? 'anggota'),
                     ]);
 
-                $records = app(GroupRepository::class)
-                    ->withDetails(app(GroupRepository::class)->forStudent($userId))
-                    ->map(function (array $group) use ($roles): array {
-                        $group['my_role'] = $roles->get((string) $group['id']) === 'ketua'
-                            ? 'Ketua'
-                            : 'Anggota';
+                $groups = app(GroupRepository::class);
 
-                        return $group;
-                    });
+                $records = $student
+                    ? $groups->withDetails($groups->forStudent($student))
+                        ->map(function (array $group) use ($roles): array {
+                            $group['my_role'] = $roles->get((string) $group['id']) === 'ketua'
+                                ? 'Ketua'
+                                : 'Anggota';
+
+                            return $group;
+                        })
+                    : collect();
 
                 return $this->paginateRecords(
                     $records,

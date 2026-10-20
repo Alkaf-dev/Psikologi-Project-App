@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Support\ProdiAssignments;
 use Illuminate\Support\Collection;
 
 class CourseRepository extends BaseSheetRepository
@@ -51,6 +52,48 @@ class CourseRepository extends BaseSheetRepository
         return $this->all()
             ->filter(fn (array $course): bool => trim((string) ($course['class_name'] ?? '')) === $className)
             ->values();
+    }
+
+    /**
+     * @param  array<string, mixed>  $student
+     * @return Collection<int, array<string, mixed>>
+     */
+    public function forStudent(array $student): Collection
+    {
+        return $this->all()
+            ->filter(fn (array $course): bool => $this->isAvailableForStudent($course, $student))
+            ->values();
+    }
+
+    /**
+     * @param  array<string, mixed>  $course
+     * @param  array<string, mixed>  $student
+     */
+    public function isAvailableForStudent(array $course, array $student): bool
+    {
+        return trim((string) ($course['class_name'] ?? '')) === trim((string) ($student['class_name'] ?? ''))
+            && ProdiAssignments::includes($course['prodi_ids'] ?? '', (string) ($student['prodi_id'] ?? ''));
+    }
+
+    /**
+     * @return Collection<int, array<string, mixed>>
+     */
+    public function withProgramNames(?Collection $courses = null): Collection
+    {
+        return ($courses ?? $this->all())
+            ->map(function (array $course): array {
+                $course['prodi_names'] = ProdiAssignments::label($course['prodi_ids'] ?? '', 'Belum diatur');
+
+                return $course;
+            })
+            ->values();
+    }
+
+    public function countByProdi(string $prodiId, bool $withTrashed = false): int
+    {
+        return $this->all($withTrashed)
+            ->filter(fn (array $course): bool => ProdiAssignments::includes($course['prodi_ids'] ?? '', $prodiId))
+            ->count();
     }
 
     /**

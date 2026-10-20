@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Support\ProdiAssignments;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
@@ -12,12 +13,12 @@ class AnnouncementRepository extends BaseSheetRepository
     /**
      * @return Collection<int, array<string, mixed>>
      */
-    public function published(?string $audience = null): Collection
+    public function published(?string $audience = null, ?string $prodiId = null): Collection
     {
         $now = now();
 
         return $this->all()
-            ->filter(function (array $announcement) use ($audience): bool {
+            ->filter(function (array $announcement) use ($audience, $prodiId): bool {
                 $publishedAt = trim((string) ($announcement['published_at'] ?? ''));
 
                 if ($publishedAt === '') {
@@ -28,13 +29,19 @@ class AnnouncementRepository extends BaseSheetRepository
                     return false;
                 }
 
-                if ($audience === null) {
-                    return true;
+                if ($audience !== null) {
+                    $target = (string) ($announcement['audience'] ?? 'all');
+
+                    if (! in_array($target, ['all', $audience], true)) {
+                        return false;
+                    }
                 }
 
-                $target = (string) ($announcement['audience'] ?? 'all');
+                if ($prodiId !== null && (string) ($announcement['audience'] ?? 'all') === 'mahasiswa') {
+                    return ProdiAssignments::includes($announcement['prodi_ids'] ?? '', $prodiId, true);
+                }
 
-                return in_array($target, ['all', $audience], true);
+                return true;
             })
             ->sortByDesc(fn (array $announcement): string => (string) ($announcement['published_at'] ?? ''))
             ->values();
@@ -50,15 +57,30 @@ class AnnouncementRepository extends BaseSheetRepository
         return ($announcements ?? $this->all())
             ->map(function (array $announcement) use ($users): array {
                 $announcement['author_name'] = $users->nameById((string) ($announcement['created_by'] ?? '')) ?: 'Admin';
-                $announcement['audience_label'] = match ((string) ($announcement['audience'] ?? 'all')) {
+                $audience = (string) ($announcement['audience'] ?? 'all');
+
+                $announcement['audience_label'] = match ($audience) {
                     'mahasiswa' => 'Mahasiswa',
                     'admin' => 'Super Admin & PJMK',
                     default => 'Semua',
                 };
+                $announcement['prodi_names'] = $audience === 'mahasiswa'
+                    ? ProdiAssignments::label($announcement['prodi_ids'] ?? '', 'Semua Prodi')
+                    : 'Publik';
 
                 return $announcement;
             })
             ->values();
+    }
+
+    public function countByProdi(string $prodiId, bool $withTrashed = false): int
+    {
+        return $this->all($withTrashed)
+            ->filter(fn (array $announcement): bool => ProdiAssignments::includes(
+                $announcement['prodi_ids'] ?? '',
+                $prodiId,
+            ))
+            ->count();
     }
 
     public function latest(int $limit = 3): Collection

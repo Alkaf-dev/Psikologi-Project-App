@@ -4,16 +4,20 @@ namespace App\Filament\Pages;
 
 use App\Filament\Support\BaseSheetPage;
 use App\Repositories\AnnouncementRepository;
+use App\Repositories\StudyProgramRepository;
+use App\Support\ProdiAssignments;
 use Filament\Actions\Action;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Support\Carbon;
+use Illuminate\Validation\ValidationException;
 
 class PengumumanPage extends BaseSheetPage
 {
@@ -27,7 +31,7 @@ class PengumumanPage extends BaseSheetPage
 
     protected static ?int $navigationSort = 1;
 
-    protected array $searchableColumns = ['title', 'body', 'audience_label', 'author_name'];
+    protected array $searchableColumns = ['title', 'body', 'audience_label', 'prodi_names', 'author_name'];
 
     public function table(Table $table): Table
     {
@@ -67,6 +71,12 @@ class PengumumanPage extends BaseSheetPage
                     ->label('Audiens')
                     ->badge()
                     ->color('info'),
+                TextColumn::make('prodi_names')
+                    ->label('Target Prodi')
+                    ->badge()
+                    ->color('info')
+                    ->searchable()
+                    ->wrap(),
                 TextColumn::make('published_at')
                     ->label('Terbit')
                     ->formatStateUsing(fn (?string $state): string => $state
@@ -98,6 +108,8 @@ class PengumumanPage extends BaseSheetPage
             ->modalWidth('3xl')
             ->schema($this->formSchema())
             ->action(function (array $data): void {
+                $this->validateAnnouncement($data);
+                $this->prepareAnnouncementData($data);
                 $data['created_by'] = (string) auth()->id();
 
                 app(AnnouncementRepository::class)->create($data);
@@ -132,6 +144,9 @@ class PengumumanPage extends BaseSheetPage
             ->fillForm(fn (array $record): array => $this->normalizeAnnouncement($record))
             ->schema($this->formSchema())
             ->action(function (array $data, array $record): void {
+                $this->validateAnnouncement($data);
+                $this->prepareAnnouncementData($data);
+
                 app(AnnouncementRepository::class)->update((string) $record['id'], $data);
 
                 $this->resetTable();
@@ -175,7 +190,17 @@ class PengumumanPage extends BaseSheetPage
                     'admin' => 'Super Admin & PJMK',
                 ])
                 ->default('all')
+                ->live()
                 ->required(),
+            Select::make('prodi_ids')
+                ->label('Target Prodi')
+                ->options(fn (): array => app(StudyProgramRepository::class)->allOptions())
+                ->multiple()
+                ->searchable()
+                ->preload()
+                ->visible(fn (Get $get): bool => $get('audience') === 'mahasiswa')
+                ->helperText('Kosongkan untuk semua Prodi. Target ini hanya berlaku untuk audiens Mahasiswa.')
+                ->columnSpanFull(),
             DateTimePicker::make('published_at')
                 ->label('Waktu terbit')
                 ->seconds(false)
@@ -198,7 +223,41 @@ class PengumumanPage extends BaseSheetPage
         $record['published_at'] = filled($record['published_at'] ?? null)
             ? Carbon::parse($record['published_at'])->format('Y-m-d H:i:s')
             : null;
+        $record['prodi_ids'] = ProdiAssignments::ids($record['prodi_ids'] ?? '');
 
         return $record;
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    protected function prepareAnnouncementData(array &$data): void
+    {
+        $data['prodi_ids'] = ($data['audience'] ?? 'all') === 'mahasiswa'
+            ? ProdiAssignments::csv($data['prodi_ids'] ?? [])
+            : '';
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    protected function validateAnnouncement(array $data): void
+    {
+        if (($data['audience'] ?? 'all') !== 'mahasiswa') {
+            return;
+        }
+
+        if (ProdiAssignments::invalidIds($data['prodi_ids'] ?? []) !== []) {
+            throw ValidationException::withMessages([
+                $this->actionErrorKey('prodi_ids') => 'Pilihan Prodi tidak valid.',
+            ]);
+        }
+    }
+
+    protected function actionErrorKey(string $field): string
+    {
+        $statePath = $this->getMountedActionSchema()?->getStatePath();
+
+        return $statePath ? "{$statePath}.{$field}" : $field;
     }
 }

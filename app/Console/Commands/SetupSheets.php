@@ -3,10 +3,12 @@
 namespace App\Console\Commands;
 
 use App\Enums\UserRole;
+use App\Repositories\CourseRepository;
 use App\Repositories\StudyProgramRepository;
 use App\Repositories\UserRepository;
 use App\Sheets\SpreadsheetGateway;
 use App\Support\DemoData;
+use App\Support\ProdiAssignments;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
@@ -35,7 +37,7 @@ class SetupSheets extends Command
             return self::FAILURE;
         }
 
-        $this->ensureDefaultProgram();
+        $defaultProgram = $this->ensureDefaultProgram();
 
         $users = app(UserRepository::class);
 
@@ -43,6 +45,15 @@ class SetupSheets extends Command
 
         if ($migrated > 0) {
             $this->line('Role dimigrasikan: '.$migrated.' akun admin menjadi Super Admin.');
+        }
+
+        $migratedCourses = $this->migrateCoursePrograms(
+            app(CourseRepository::class),
+            (string) $defaultProgram['id'],
+        );
+
+        if ($migratedCourses > 0) {
+            $this->line('Mata kuliah dimigrasikan ke Prodi default: '.$migratedCourses.' matkul.');
         }
 
         if ($this->option('demo')) {
@@ -124,6 +135,23 @@ class SetupSheets extends Command
         $this->line('Dibuat Prodi: S1 Psikologi');
 
         return $program;
+    }
+
+    protected function migrateCoursePrograms(CourseRepository $courses, string $defaultProgramId): int
+    {
+        $migrated = 0;
+
+        foreach ($courses->all(true) as $course) {
+            if (ProdiAssignments::ids($course['prodi_ids'] ?? '') !== []) {
+                continue;
+            }
+
+            $courses->update((string) $course['id'], ['prodi_ids' => $defaultProgramId]);
+
+            $migrated++;
+        }
+
+        return $migrated;
     }
 
     protected function migrateLegacyRoles(UserRepository $users): int

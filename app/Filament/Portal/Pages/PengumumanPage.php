@@ -4,6 +4,7 @@ namespace App\Filament\Portal\Pages;
 
 use App\Filament\Support\BaseSheetPage;
 use App\Repositories\AnnouncementRepository;
+use App\Repositories\UserRepository;
 use Filament\Actions\Action;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
@@ -34,9 +35,14 @@ class PengumumanPage extends BaseSheetPage
                 int|string $page,
                 int|string $recordsPerPage,
             ) {
-                $records = app(AnnouncementRepository::class)->withAuthor(
-                    app(AnnouncementRepository::class)->published('mahasiswa'),
-                );
+                $student = app(UserRepository::class)->find((string) auth()->id());
+                $announcements = app(AnnouncementRepository::class);
+
+                $records = $student
+                    ? $announcements->withAuthor(
+                        $announcements->published('mahasiswa', (string) ($student['prodi_id'] ?? '')),
+                    )
+                    : collect();
 
                 return $this->paginateRecords(
                     $records,

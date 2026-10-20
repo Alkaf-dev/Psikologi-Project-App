@@ -34,10 +34,11 @@ class JadwalPage extends BaseSheetPage
                 int|string $recordsPerPage,
             ) {
                 $student = app(UserRepository::class)->find((string) auth()->id());
+                $schedules = app(ScheduleRepository::class);
 
-                $records = app(ScheduleRepository::class)->withCourse(
-                    app(ScheduleRepository::class)->forClass((string) ($student['class_name'] ?? '')),
-                );
+                $records = $student
+                    ? $schedules->withCourse($schedules->forStudent($student))
+                    : collect();
 
                 return $this->paginateRecords(
                     $records,
@@ -73,6 +74,6 @@ class JadwalPage extends BaseSheetPage
             ->defaultSort('day')
             ->defaultPaginationPageOption(10)
             ->emptyStateHeading('Belum ada jadwal')
-            ->emptyStateDescription('Jadwal untuk kelas Anda belum diinput oleh admin.');
+            ->emptyStateDescription('Jadwal untuk Prodi dan kelas Anda belum diinput oleh admin.');
     }
 }

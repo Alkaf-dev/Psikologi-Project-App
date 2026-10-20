@@ -3,6 +3,8 @@
 namespace App\Filament\Pages;
 
 use App\Filament\Support\BaseSheetPage;
+use App\Repositories\AnnouncementRepository;
+use App\Repositories\CourseRepository;
 use App\Repositories\StudyProgramRepository;
 use App\Repositories\UserRepository;
 use Filament\Actions\Action;
@@ -129,15 +131,31 @@ class StudyProgramPage extends BaseSheetPage
             ->color('danger')
             ->requiresConfirmation()
             ->modalHeading('Hapus program studi?')
-            ->modalDescription('Prodi yang masih dipakai akun tidak dapat dihapus. Nonaktifkan Prodi untuk mencegah login baru.')
+            ->modalDescription('Prodi yang masih dipakai akun, mata kuliah, atau pengumuman tidak dapat dihapus. Nonaktifkan Prodi untuk mencegah login baru.')
             ->action(function (array $record): void {
                 $programId = (string) $record['id'];
+                $usage = [];
+
                 $userCount = app(UserRepository::class)->countByProdi($programId, true);
+                $courseCount = app(CourseRepository::class)->countByProdi($programId, true);
+                $announcementCount = app(AnnouncementRepository::class)->countByProdi($programId, true);
 
                 if ($userCount > 0) {
+                    $usage[] = "{$userCount} akun";
+                }
+
+                if ($courseCount > 0) {
+                    $usage[] = "{$courseCount} mata kuliah";
+                }
+
+                if ($announcementCount > 0) {
+                    $usage[] = "{$announcementCount} pengumuman";
+                }
+
+                if ($usage !== []) {
                     Notification::make()
                         ->title('Prodi tidak dapat dihapus')
-                        ->body("Masih ada {$userCount} akun yang menggunakan Prodi ini. Nonaktifkan Prodi sebagai gantinya.")
+                        ->body('Masih dipakai oleh '.implode(', ', $usage).'. Nonaktifkan Prodi sebagai gantinya.')
                         ->danger()
                         ->send();
 

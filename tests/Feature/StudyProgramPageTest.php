@@ -4,6 +4,8 @@ namespace Tests\Feature;
 
 use App\Auth\SheetUserProvider;
 use App\Filament\Pages\StudyProgramPage;
+use App\Repositories\AnnouncementRepository;
+use App\Repositories\CourseRepository;
 use App\Repositories\StudyProgramRepository;
 use App\Repositories\UserRepository;
 use Filament\Facades\Filament;
@@ -74,6 +76,60 @@ class StudyProgramPageTest extends TestCase
         $program = $programs->findByCode('psikologi');
 
         $this->assertNotNull($program);
+
+        Livewire::test(StudyProgramPage::class)
+            ->callTableAction('delete', (string) $program['id'])
+            ->assertHasNoTableActionErrors();
+
+        $this->assertNotNull($programs->find((string) $program['id']));
+    }
+
+    public function test_program_used_by_a_course_cannot_be_deleted(): void
+    {
+        $programs = app(StudyProgramRepository::class);
+        $program = $programs->create([
+            'code' => 'bimbingan-konseling',
+            'name' => 'Bimbingan dan Konseling',
+            'degree' => 'S1',
+            'active' => '1',
+        ]);
+
+        app(CourseRepository::class)->create([
+            'code' => 'BK101',
+            'name' => 'Dasar Bimbingan Konseling',
+            'credits' => '3',
+            'lecturer' => 'Dosen BK',
+            'semester' => 'Ganjil',
+            'class_name' => 'BK A',
+            'description' => '',
+            'prodi_ids' => (string) $program['id'],
+        ]);
+
+        Livewire::test(StudyProgramPage::class)
+            ->callTableAction('delete', (string) $program['id'])
+            ->assertHasNoTableActionErrors();
+
+        $this->assertNotNull($programs->find((string) $program['id']));
+    }
+
+    public function test_program_targeted_by_an_announcement_cannot_be_deleted(): void
+    {
+        $programs = app(StudyProgramRepository::class);
+        $program = $programs->create([
+            'code' => 'bimbingan-konseling',
+            'name' => 'Bimbingan dan Konseling',
+            'degree' => 'S1',
+            'active' => '1',
+        ]);
+
+        app(AnnouncementRepository::class)->create([
+            'title' => 'Pengumuman BK',
+            'body' => 'Khusus mahasiswa BK.',
+            'audience' => 'mahasiswa',
+            'prodi_ids' => (string) $program['id'],
+            'published_at' => now()->toIso8601String(),
+            'created_by' => '',
+        ]);
 
         Livewire::test(StudyProgramPage::class)
             ->callTableAction('delete', (string) $program['id'])

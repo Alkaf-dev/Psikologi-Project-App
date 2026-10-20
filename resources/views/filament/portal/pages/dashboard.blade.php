@@ -19,6 +19,10 @@
                 <div style="font-size: 2rem; font-weight: 700; line-height: 1.2;">{{ $groups->count() }}</div>
             </x-filament::section>
             <x-filament::section>
+                <div style="font-size: .8rem; color: rgb(var(--gray-500));">Prodi</div>
+                <div style="font-size: 1.25rem; font-weight: 700; line-height: 1.4;">{{ $prodi_name ?: '-' }}</div>
+            </x-filament::section>
+            <x-filament::section>
                 <div style="font-size: .8rem; color: rgb(var(--gray-500));">Kelas</div>
                 <div style="font-size: 1.25rem; font-weight: 700; line-height: 1.4;">{{ $student['class_name'] ?: '-' }}</div>
             </x-filament::section>
@@ -61,7 +65,7 @@
                         </div>
                     </div>
                 @empty
-                    <p style="color: rgb(var(--gray-500));">Belum ada jadwal untuk kelas Anda.</p>
+                    <p style="color: rgb(var(--gray-500));">Belum ada jadwal untuk Prodi dan kelas Anda.</p>
                 @endforelse
                 <div style="margin-top: .85rem;">
                     <x-filament::link :href="\App\Filament\Portal\Pages\JadwalPage::getUrl()">Lihat jadwal lengkap</x-filament::link>

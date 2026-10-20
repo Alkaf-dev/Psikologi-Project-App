@@ -116,6 +116,7 @@ class DemoData
             'semester' => 'Ganjil',
             'class_name' => 'Psikologi A',
             'description' => 'Pengantar konsep dasar psikologi dan penerapannya.',
+            'prodi_ids' => $prodi['id'],
         ]);
 
         $psi201 = $this->ensureCourse([
@@ -126,6 +127,7 @@ class DemoData
             'semester' => 'Ganjil',
             'class_name' => 'Psikologi A',
             'description' => 'Perkembangan manusia dari masa kanak hingga dewasa.',
+            'prodi_ids' => $prodi['id'],
         ]);
 
         $psi301 = $this->ensureCourse([
@@ -136,6 +138,7 @@ class DemoData
             'semester' => 'Ganjil',
             'class_name' => 'Psikologi A',
             'description' => 'Perancangan penelitian kuantitatif dan kualitatif.',
+            'prodi_ids' => $prodi['id'],
         ]);
 
         $psi102 = $this->ensureCourse([
@@ -146,6 +149,7 @@ class DemoData
             'semester' => 'Ganjil',
             'class_name' => 'Psikologi B',
             'description' => 'Perilaku individu dalam konteks sosial.',
+            'prodi_ids' => $prodi['id'],
         ]);
 
         if ($this->schedules->count() === 0) {
@@ -284,6 +288,7 @@ class DemoData
             'audience' => 'mahasiswa',
             'published_at' => now()->subDay()->toIso8601String(),
             'created_by' => $admin['id'],
+            'prodi_ids' => $prodi['id'],
         ]);
 
         $this->ensureAnnouncement([
@@ -292,6 +297,7 @@ class DemoData
             'audience' => 'mahasiswa',
             'published_at' => now()->toIso8601String(),
             'created_by' => $admin['id'],
+            'prodi_ids' => $prodi['id'],
         ]);
 
         $this->settings->setMany([

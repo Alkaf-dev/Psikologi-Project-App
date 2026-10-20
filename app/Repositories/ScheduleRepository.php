@@ -33,6 +33,30 @@ class ScheduleRepository extends BaseSheetRepository
     }
 
     /**
+     * @param  array<string, mixed>  $student
+     * @return Collection<int, array<string, mixed>>
+     */
+    public function forStudent(array $student): Collection
+    {
+        $courseIds = app(CourseRepository::class)
+            ->forStudent($student)
+            ->pluck('id')
+            ->map(fn (mixed $id): string => (string) $id)
+            ->all();
+
+        $className = trim((string) ($student['class_name'] ?? ''));
+
+        return $this->all()
+            ->filter(fn (array $schedule): bool => in_array((string) ($schedule['course_id'] ?? ''), $courseIds, true)
+                && trim((string) ($schedule['class_name'] ?? '')) === $className)
+            ->sortBy(fn (array $schedule): array => [
+                self::DAYS[(string) ($schedule['day'] ?? '')] ?? 99,
+                (string) ($schedule['start_time'] ?? ''),
+            ])
+            ->values();
+    }
+
+    /**
      * @return Collection<int, array<string, mixed>>
      */
     public function withCourse(?Collection $schedules = null): Collection

@@ -71,7 +71,7 @@ return [
 
         'courses' => [
             'id', 'code', 'name', 'credits', 'lecturer', 'semester', 'class_name',
-            'description', 'created_at', 'updated_at', 'deleted_at',
+            'description', 'created_at', 'updated_at', 'deleted_at', 'prodi_ids',
         ],
 
         'schedules' => [
@@ -100,7 +100,7 @@ return [
 
         'announcements' => [
             'id', 'title', 'body', 'audience', 'published_at', 'created_by',
-            'created_at', 'updated_at', 'deleted_at',
+            'created_at', 'updated_at', 'deleted_at', 'prodi_ids',
         ],
 
         'settings' => [

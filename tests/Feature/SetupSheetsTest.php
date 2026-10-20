@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Repositories\CourseRepository;
 use App\Repositories\StudyProgramRepository;
 use App\Repositories\UserRepository;
 use App\Sheets\LocalSheetGateway;
@@ -72,6 +73,48 @@ class SetupSheetsTest extends TestCase
         $this->assertSame('super_admin', $admin['role']);
         $this->assertSame('', $admin['prodi_id']);
         $this->assertNotNull(app(StudyProgramRepository::class)->findByCode('psikologi'));
+    }
+
+    public function test_setup_assigns_legacy_courses_to_the_default_program(): void
+    {
+        $legacyHeaders = [
+            'id', 'code', 'name', 'credits', 'lecturer', 'semester', 'class_name',
+            'description', 'created_at', 'updated_at', 'deleted_at',
+        ];
+
+        $legacyCourse = [
+            'COURSE-LAMA',
+            'OLD101',
+            'Mata Kuliah Lama',
+            '3',
+            'Dosen Lama',
+            'Ganjil',
+            'Psikologi A',
+            'Data sebelum multi-Prodi.',
+            now()->toIso8601String(),
+            now()->toIso8601String(),
+            '',
+        ];
+
+        $gateway = app(SpreadsheetGateway::class);
+
+        $this->assertInstanceOf(LocalSheetGateway::class, $gateway);
+
+        $gateway->seed('courses', [$legacyHeaders, $legacyCourse]);
+        Cache::flush();
+
+        $this->artisan('sheets:setup', ['--demo' => true])->assertSuccessful();
+
+        $rows = $gateway->read('courses');
+
+        $this->assertSame('prodi_ids', $rows[0][11]);
+
+        $program = app(StudyProgramRepository::class)->findByCode('psikologi');
+        $course = app(CourseRepository::class)->find('COURSE-LAMA');
+
+        $this->assertNotNull($program);
+        $this->assertNotNull($course);
+        $this->assertSame((string) $program['id'], $course['prodi_ids']);
     }
 
     public function test_setup_demo_creates_super_admin_pjmk_and_student_accounts(): void

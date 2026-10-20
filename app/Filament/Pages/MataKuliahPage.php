@@ -4,14 +4,18 @@ namespace App\Filament\Pages;
 
 use App\Filament\Support\BaseSheetPage;
 use App\Repositories\CourseRepository;
+use App\Repositories\StudyProgramRepository;
 use App\Repositories\UserRepository;
+use App\Support\ProdiAssignments;
 use Filament\Actions\Action;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Validation\ValidationException;
 
 class MataKuliahPage extends BaseSheetPage
 {
@@ -25,7 +29,7 @@ class MataKuliahPage extends BaseSheetPage
 
     protected static ?int $navigationSort = 1;
 
-    protected array $searchableColumns = ['code', 'name', 'lecturer', 'semester', 'class_name'];
+    protected array $searchableColumns = ['code', 'name', 'lecturer', 'semester', 'class_name', 'prodi_names'];
 
     public function table(Table $table): Table
     {
@@ -38,7 +42,7 @@ class MataKuliahPage extends BaseSheetPage
                 int|string $recordsPerPage,
             ) {
                 return $this->paginateRecords(
-                    app(CourseRepository::class)->all(),
+                    app(CourseRepository::class)->withProgramNames(),
                     $search,
                     $sortColumn,
                     $sortDirection,
@@ -67,6 +71,11 @@ class MataKuliahPage extends BaseSheetPage
                 TextColumn::make('class_name')
                     ->label('Kelas')
                     ->sortable(),
+                TextColumn::make('prodi_names')
+                    ->label('Prodi')
+                    ->badge()
+                    ->searchable()
+                    ->wrap(),
             ])
             ->headerActions([$this->createAction()])
             ->recordActions([$this->editAction(), $this->deleteAction()])
@@ -85,6 +94,9 @@ class MataKuliahPage extends BaseSheetPage
             ->modalWidth('2xl')
             ->schema($this->formSchema())
             ->action(function (array $data): void {
+                $this->validateCourse($data);
+                $this->prepareCourseData($data);
+
                 app(CourseRepository::class)->create($data);
 
                 $this->resetTable();
@@ -101,9 +113,12 @@ class MataKuliahPage extends BaseSheetPage
             ->modalHeading(fn (array $record): string => 'Ubah '.$record['name'])
             ->modalSubmitActionLabel('Simpan perubahan')
             ->modalWidth('2xl')
-            ->fillForm(fn (array $record): array => $record)
+            ->fillForm(fn (array $record): array => $this->normalizeCourse($record))
             ->schema($this->formSchema())
             ->action(function (array $data, array $record): void {
+                $this->validateCourse($data);
+                $this->prepareCourseData($data);
+
                 app(CourseRepository::class)->update((string) $record['id'], $data);
 
                 $this->resetTable();
@@ -165,10 +180,64 @@ class MataKuliahPage extends BaseSheetPage
                 ->required()
                 ->maxLength(50)
                 ->datalist(fn (): array => app(UserRepository::class)->classNames()),
+            Select::make('prodi_ids')
+                ->label('Program Studi')
+                ->options(fn (): array => app(StudyProgramRepository::class)->allOptions())
+                ->multiple()
+                ->required()
+                ->searchable()
+                ->preload()
+                ->helperText('Satu mata kuliah dapat dipakai beberapa Prodi. Buat data terpisah jika kelasnya berbeda.')
+                ->columnSpanFull(),
             Textarea::make('description')
                 ->label('Deskripsi')
                 ->rows(3)
                 ->columnSpanFull(),
         ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $record
+     * @return array<string, mixed>
+     */
+    protected function normalizeCourse(array $record): array
+    {
+        $record['prodi_ids'] = ProdiAssignments::ids($record['prodi_ids'] ?? '');
+
+        return $record;
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    protected function prepareCourseData(array &$data): void
+    {
+        $data['prodi_ids'] = ProdiAssignments::csv($data['prodi_ids'] ?? []);
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    protected function validateCourse(array $data): void
+    {
+        $ids = ProdiAssignments::ids($data['prodi_ids'] ?? []);
+        $errors = [];
+
+        if ($ids === []) {
+            $errors[$this->actionErrorKey('prodi_ids')] = 'Pilih minimal satu Prodi.';
+        } elseif (ProdiAssignments::invalidIds($ids) !== []) {
+            $errors[$this->actionErrorKey('prodi_ids')] = 'Pilihan Prodi tidak valid.';
+        }
+
+        if ($errors !== []) {
+            throw ValidationException::withMessages($errors);
+        }
+    }
+
+    protected function actionErrorKey(string $field): string
+    {
+        $statePath = $this->getMountedActionSchema()?->getStatePath();
+
+        return $statePath ? "{$statePath}.{$field}" : $field;
     }
 }

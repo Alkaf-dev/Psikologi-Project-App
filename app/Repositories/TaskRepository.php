@@ -35,8 +35,8 @@ class TaskRepository extends BaseSheetRepository
      */
     public function forStudent(array $student): Collection
     {
-        $classCourseIds = app(CourseRepository::class)
-            ->forClass((string) ($student['class_name'] ?? ''))
+        $courseIds = app(CourseRepository::class)
+            ->forStudent($student)
             ->pluck('id')
             ->map(fn (mixed $id): string => (string) $id)
             ->all();
@@ -45,16 +45,16 @@ class TaskRepository extends BaseSheetRepository
             ->groupIdsForUser((string) ($student['id'] ?? ''));
 
         return $this->all()
-            ->filter(function (array $task) use ($classCourseIds, $groupIds): bool {
+            ->filter(function (array $task) use ($courseIds, $groupIds): bool {
+                if (! in_array((string) ($task['course_id'] ?? ''), $courseIds, true)) {
+                    return false;
+                }
+
                 $groupId = ($task['type'] ?? 'individu') === 'kelompok'
                     ? trim((string) ($task['group_id'] ?? ''))
                     : '';
 
-                if ($groupId !== '') {
-                    return in_array($groupId, $groupIds, true);
-                }
-
-                return in_array((string) ($task['course_id'] ?? ''), $classCourseIds, true);
+                return $groupId === '' || in_array($groupId, $groupIds, true);
             })
             ->sortBy('deadline')
             ->values();

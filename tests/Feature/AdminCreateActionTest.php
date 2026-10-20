@@ -14,9 +14,11 @@ use App\Repositories\CourseRepository;
 use App\Repositories\GroupMemberRepository;
 use App\Repositories\GroupRepository;
 use App\Repositories\ScheduleRepository;
+use App\Repositories\StudyProgramRepository;
 use App\Repositories\SubmissionRepository;
 use App\Repositories\TaskRepository;
 use App\Repositories\UserRepository;
+use App\Support\ProdiAssignments;
 use Filament\Facades\Filament;
 use Livewire\Livewire;
 use Tests\Concerns\InteractsWithSheets;
@@ -46,9 +48,11 @@ class AdminCreateActionTest extends TestCase
     {
         $course = app(CourseRepository::class)->findBy('code', 'PSI101');
         $student = app(UserRepository::class)->findActiveByLogin('ayu@psikologi.test');
+        $program = app(StudyProgramRepository::class)->findByCode('psikologi');
 
         $this->assertNotNull($course);
         $this->assertNotNull($student);
+        $this->assertNotNull($program);
 
         Livewire::test(MataKuliahPage::class)
             ->callTableAction('create', null, [
@@ -58,6 +62,7 @@ class AdminCreateActionTest extends TestCase
                 'lecturer' => 'Dosen Pengujian',
                 'semester' => 'Ganjil',
                 'class_name' => 'Psikologi A',
+                'prodi_ids' => [(string) $program['id']],
                 'description' => 'Deskripsi pengujian.',
             ])
             ->assertHasNoTableActionErrors();
@@ -109,13 +114,17 @@ class AdminCreateActionTest extends TestCase
         Livewire::test(PengumumanPage::class)
             ->callTableAction('create', null, [
                 'title' => 'Pengumuman Pengujian',
-                'audience' => 'all',
+                'audience' => 'mahasiswa',
+                'prodi_ids' => [(string) $program['id']],
                 'published_at' => now()->format('Y-m-d H:i:s'),
                 'body' => 'Isi pengumuman pengujian.',
             ])
             ->assertHasNoTableActionErrors();
 
-        $this->assertNotNull(app(AnnouncementRepository::class)->findBy('title', 'Pengumuman Pengujian'));
+        $announcement = app(AnnouncementRepository::class)->findBy('title', 'Pengumuman Pengujian');
+
+        $this->assertNotNull($announcement);
+        $this->assertSame((string) $program['id'], $announcement['prodi_ids']);
 
         Livewire::test(PengumpulanPage::class)
             ->callTableAction('create', null, [
@@ -134,6 +143,41 @@ class AdminCreateActionTest extends TestCase
 
         $this->assertNotNull($submission);
         $this->assertSame('submitted', $submission['status']);
+    }
+
+    public function test_admin_can_assign_a_course_to_multiple_prodi(): void
+    {
+        $psikologi = app(StudyProgramRepository::class)->findByCode('psikologi');
+
+        $this->assertNotNull($psikologi);
+
+        $bimbingan = app(StudyProgramRepository::class)->create([
+            'code' => 'bimbingan-konseling',
+            'name' => 'Bimbingan dan Konseling',
+            'degree' => 'S1',
+            'active' => '1',
+        ]);
+
+        Livewire::test(MataKuliahPage::class)
+            ->callTableAction('create', null, [
+                'code' => 'PSI888',
+                'name' => 'Mata Kuliah Gabungan',
+                'credits' => 3,
+                'lecturer' => 'Dosen Gabungan',
+                'semester' => 'Ganjil',
+                'class_name' => 'Psikologi A',
+                'prodi_ids' => [(string) $psikologi['id'], (string) $bimbingan['id']],
+                'description' => 'Mata kuliah lintas Prodi.',
+            ])
+            ->assertHasNoTableActionErrors();
+
+        $course = app(CourseRepository::class)->findBy('code', 'PSI888');
+
+        $this->assertNotNull($course);
+        $this->assertEqualsCanonicalizing(
+            [(string) $psikologi['id'], (string) $bimbingan['id']],
+            ProdiAssignments::ids($course['prodi_ids']),
+        );
     }
 
     protected function actingAsAdmin(): void

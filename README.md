@@ -12,13 +12,13 @@ Portal akademik **Prodi Psikologi STIT Muhammadiyah Kediri** berbasis **Laravel 
 
 ### Portal mahasiswa
 - Login dengan Prodi, email/NIM, dan password.
-- Dashboard berisi ringkasan tugas, jadwal, kelompok, dan pengumuman.
-- Jadwal kuliah sesuai kelas mahasiswa.
-- Daftar tugas individu dan kelompok.
+- Dashboard berisi ringkasan tugas, jadwal, kelompok, dan pengumuman sesuai Prodi.
+- Jadwal kuliah sesuai Prodi dan kelas mahasiswa.
+- Daftar tugas individu dan kelompok hanya dari mata kuliah Prodi mahasiswa.
 - Pengumpulan tugas berupa tautan, dengan status `submitted`, `late`, atau `graded`.
 - Melihat nilai dan feedback dosen.
-- Daftar kelompok beserta peran, ketua, dan anggota.
-- Pengumuman untuk mahasiswa.
+- Daftar kelompok beserta peran, ketua, dan anggota, hanya dari mata kuliah Prodi mahasiswa.
+- Pengumuman untuk mahasiswa, termasuk target Prodi tertentu atau semua Prodi.
 - Profil dan perubahan password.
 
 ### Panel admin
@@ -26,6 +26,8 @@ Portal akademik **Prodi Psikologi STIT Muhammadiyah Kediri** berbasis **Laravel 
 - Menu **Administrasi** berisi CRUD Program Studi dan pendataan mahasiswa.
 - Pendataan mahasiswa melalui **Administrasi > Mahasiswa**: Prodi, Nama Mahasiswa, NIM, email, kelas, angkatan, WhatsApp, dan akun login.
 - CRUD user, mata kuliah, jadwal, kelompok, tugas, pengumpulan/nilai, dan pengumuman.
+- Mata kuliah dapat ditetapkan ke beberapa Prodi; satu baris mata kuliah tetap memiliki satu kelas.
+- Pengumuman mahasiswa dapat ditargetkan ke Prodi tertentu atau semua Prodi.
 - Login admin juga memilih Prodi; admin tetap dapat melihat data seluruh Prodi.
 - Role user: **Mahasiswa**, **Super Admin**, dan **PJMK**.
 - PJMK memiliki akses panel yang sama dengan Super Admin, tetapi role tetap ditampilkan sebagai PJMK.
@@ -80,7 +82,7 @@ Akun demo:
 
 Login dapat menggunakan email atau NIM, misalnya `ayu@psikologi.test` atau `2024001`, dengan pilihan Prodi **S1 Psikologi**. Data demo selalu diarahkan ke Prodi tersebut.
 
-Gunakan `php artisan sheets:setup --demo` lagi untuk menyegarkan data demo. Data yang sudah ada tidak diduplikasi; header baru seperti `prodi_id` akan ditambahkan otomatis.
+Gunakan `php artisan sheets:setup --demo` lagi untuk menyegarkan data demo. Data yang sudah ada tidak diduplikasi; header baru seperti `prodi_id`, `courses.prodi_ids`, dan `announcements.prodi_ids` akan ditambahkan otomatis. Mata kuliah lama tanpa `prodi_ids` diarahkan ke Prodi default **Psikologi**.
 
 ## Konfigurasi Google Sheets
 
@@ -137,7 +139,7 @@ php artisan sheets:check
 php artisan sheets:setup
 ```
 
-`sheets:setup` akan membuat tab yang belum ada, menambahkan header baru yang belum tersedia tanpa mengubah data lama, dan memigrasikan role lama `admin` menjadi `super_admin`. Tanpa opsi `--demo`, command akan meminta data Super Admin awal beserta Prodinya.
+`sheets:setup` akan membuat tab yang belum ada, menambahkan header baru yang belum tersedia tanpa mengubah data lama, memigrasikan role lama `admin` menjadi `super_admin`, dan mengisi `prodi_ids` mata kuliah lama dengan Prodi default. Tanpa opsi `--demo`, command akan meminta data Super Admin awal beserta Prodinya.
 
 Untuk spreadsheet lama, akun yang sudah ada tidak diisi Prodinya secara otomatis. Setelah setup, isi Prodi admin pertama melalui CLI agar bisa login:
 
@@ -163,23 +165,23 @@ Header setiap tab didefinisikan di `config/sheets.php`:
 | --- | --- |
 | `study_programs` | Daftar Prodi, kode, jenjang, dan status aktif |
 | `users` | Akun Mahasiswa, Super Admin, dan PJMK, termasuk `prodi_id` dan `role` |
-| `courses` | Mata kuliah |
+| `courses` | Mata kuliah, termasuk `prodi_ids` berisi daftar ID Prodi |
 | `schedules` | Jadwal kuliah |
 | `groups` | Kelompok mahasiswa |
 | `group_members` | Anggota dan ketua kelompok |
 | `tasks` | Tugas individu/kelompok |
 | `submissions` | Pengumpulan, nilai, dan feedback |
-| `announcements` | Pengumuman |
+| `announcements` | Pengumuman, termasuk `prodi_ids` untuk target Prodi mahasiswa |
 | `settings` | Pengaturan aplikasi |
 
-Jangan mengubah urutan atau nama header tanpa menyesuaikan `config/sheets.php` dan data yang sudah ada. `prodi_id` pada `users` merujuk ke `study_programs.id`; kolom ini ditambahkan di akhir header agar data lama tidak bergeser.
+Jangan mengubah urutan atau nama header tanpa menyesuaikan `config/sheets.php` dan data yang sudah ada. `prodi_id` pada `users` dan `prodi_ids` pada `courses`/`announcements` merujuk ke `study_programs.id`. Kolom-kolom ini ditambahkan di akhir header agar data lama tidak bergeser. `prodi_ids` berisi beberapa ULID yang dipisahkan koma; kosong pada pengumuman mahasiswa berarti semua Prodi.
 
 ## Perintah Penting
 
 ```bash
 php artisan sheets:check          # cek koneksi, tab, header, dan jumlah baris
-php artisan sheets:setup          # buat tab/header, Prodi awal, Super Admin awal, dan migrasi role
-php artisan sheets:setup --demo   # buat tab/header, migrasi role, dan isi data demo
+php artisan sheets:setup          # buat tab/header, Prodi awal, migrasi role, dan Prodi matkul lama
+php artisan sheets:setup --demo   # buat tab/header, migrasi role/matkul, dan isi data demo
 php artisan sheets:assign-prodi {email} --prodi=psikologi  # isi Prodi akun lama
 php artisan test                  # jalankan seluruh test
 php artisan optimize:clear        # bersihkan cache config/route/view
@@ -209,6 +211,7 @@ Halaman admin dan portal memakai slug default Filament, misalnya `/admin/student
 - `app/Sheets/LocalSheetGateway.php`: implementasi JSON lokal untuk demo/test.
 - `app/Repositories/`: repository per domain dengan cache, ULID, dan soft delete.
 - `app/Repositories/StudyProgramRepository.php`: daftar Prodi dan opsi login.
+- `app/Support/ProdiAssignments.php`: parsing, validasi, dan label daftar Prodi pada kolom `prodi_ids`.
 - `app/Auth/SheetUser.php` dan `SheetUserProvider.php`: autentikasi tanpa Eloquent, termasuk validasi Prodi dan role.
 - `app/Enums/UserRole.php`: definisi role Mahasiswa, Super Admin, dan PJMK.
 - `app/Filament/Support/BaseSheetPage.php`: halaman tabel Filament berbasis array record.
@@ -229,7 +232,8 @@ Setiap pembacaan sheet di-cache selama `SHEETS_CACHE_TTL` detik (default 60). Se
 - Kuota Google Sheets API berlaku; cache membantu mengurangi pembacaan.
 - Pengumuman publik hanya menampilkan audiens `all`.
 - Panel admin dan portal memakai halaman custom, bukan Filament Resource Eloquent.
-- Admin dapat melihat data semua Prodi; belum ada pembatasan data per Prodi.
+- Admin dapat melihat data semua Prodi; pembatasan Prodi hanya berlaku di portal mahasiswa.
+- Satu baris mata kuliah hanya memiliki satu kelas. Mata kuliah gabungan yang dipakai beberapa kelas/Prodi perlu dibuat sebagai baris terpisah.
 - Akun lama tanpa Prodi harus diisi manual dan tidak bisa login sebelum diisi.
 
 ## Testing
@@ -244,9 +248,11 @@ Test menggunakan `LocalSheetGateway` dengan file JSON sementara. Test tidak meng
 - Visibilitas pengumuman publik.
 - Login Prodi + email/NIM dan pembatasan peran Mahasiswa, Super Admin, serta PJMK.
 - Penolakan login dengan Prodi salah/kosong dan akun tanpa Prodi.
-- CRUD Program Studi dan pencegahan hapus Prodi yang dipakai.
+- CRUD Program Studi dan pencegahan hapus Prodi yang dipakai akun, mata kuliah, atau pengumuman.
 - CRUD user untuk seluruh role, pendataan mahasiswa, dan proteksi admin aktif terakhir.
-- Migrasi header lama dan role `admin` tanpa menggeser data pengguna.
+- CRUD mata kuliah multi-Prodi dan pengumuman dengan target Prodi.
+- Filter jadwal, tugas, kelompok, dan pengumuman portal berdasarkan Prodi serta kelas.
+- Migrasi header lama, role `admin`, dan mata kuliah lama tanpa menggeser data.
 - Render seluruh halaman admin dan portal.
 - Mount action tabel dan form pengaturan/profil.
 - CRUD admin, pengumpulan tugas, dan reset password.
@@ -269,7 +275,7 @@ Jalankan:
 php artisan sheets:setup
 ```
 
-Perintah ini membuat tab yang belum ada dan menambahkan header baru seperti `prodi_id` tanpa mengubah data lama. Cek hasilnya dengan `php artisan sheets:check`.
+Perintah ini membuat tab yang belum ada dan menambahkan header baru seperti `prodi_id` atau `prodi_ids` tanpa mengubah data lama. Cek hasilnya dengan `php artisan sheets:check`.
 
 ### Login gagal karena Prodi
 - Pastikan Prodi yang dipilih aktif.
