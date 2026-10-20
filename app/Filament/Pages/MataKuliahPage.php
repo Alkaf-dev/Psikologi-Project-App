@@ -1,0 +1,174 @@
+<?php
+
+namespace App\Filament\Pages;
+
+use App\Filament\Support\BaseSheetPage;
+use App\Repositories\CourseRepository;
+use App\Repositories\UserRepository;
+use Filament\Actions\Action;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
+use Filament\Notifications\Notification;
+use Filament\Support\Icons\Heroicon;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Table;
+
+class MataKuliahPage extends BaseSheetPage
+{
+    protected static ?string $navigationLabel = 'Mata Kuliah';
+
+    protected static ?string $title = 'Mata Kuliah';
+
+    protected static string|\BackedEnum|null $navigationIcon = Heroicon::OutlinedBookOpen;
+
+    protected static string|\UnitEnum|null $navigationGroup = 'Akademik';
+
+    protected static ?int $navigationSort = 1;
+
+    protected array $searchableColumns = ['code', 'name', 'lecturer', 'semester', 'class_name'];
+
+    public function table(Table $table): Table
+    {
+        return $table
+            ->records(function (
+                ?string $search,
+                ?string $sortColumn,
+                ?string $sortDirection,
+                int|string $page,
+                int|string $recordsPerPage,
+            ) {
+                return $this->paginateRecords(
+                    app(CourseRepository::class)->all(),
+                    $search,
+                    $sortColumn,
+                    $sortDirection,
+                    $page,
+                    $recordsPerPage,
+                );
+            })
+            ->columns([
+                TextColumn::make('code')
+                    ->label('Kode')
+                    ->weight('semibold')
+                    ->sortable(),
+                TextColumn::make('name')
+                    ->label('Nama mata kuliah')
+                    ->searchable()
+                    ->sortable(),
+                TextColumn::make('credits')
+                    ->label('SKS')
+                    ->sortable(),
+                TextColumn::make('lecturer')
+                    ->label('Dosen')
+                    ->searchable(),
+                TextColumn::make('semester')
+                    ->label('Semester')
+                    ->sortable(),
+                TextColumn::make('class_name')
+                    ->label('Kelas')
+                    ->sortable(),
+            ])
+            ->headerActions([$this->createAction()])
+            ->recordActions([$this->editAction(), $this->deleteAction()])
+            ->defaultSort('name')
+            ->defaultPaginationPageOption(10)
+            ->emptyStateHeading('Belum ada mata kuliah');
+    }
+
+    protected function createAction(): Action
+    {
+        return Action::make('create')
+            ->label('Tambah Mata Kuliah')
+            ->icon(Heroicon::Plus)
+            ->modalHeading('Tambah Mata Kuliah')
+            ->modalSubmitActionLabel('Simpan')
+            ->modalWidth('2xl')
+            ->schema($this->formSchema())
+            ->action(function (array $data): void {
+                app(CourseRepository::class)->create($data);
+
+                $this->resetTable();
+
+                Notification::make()->title('Mata kuliah ditambahkan')->success()->send();
+            });
+    }
+
+    protected function editAction(): Action
+    {
+        return Action::make('edit')
+            ->label('Ubah')
+            ->icon(Heroicon::PencilSquare)
+            ->modalHeading(fn (array $record): string => 'Ubah '.$record['name'])
+            ->modalSubmitActionLabel('Simpan perubahan')
+            ->modalWidth('2xl')
+            ->fillForm(fn (array $record): array => $record)
+            ->schema($this->formSchema())
+            ->action(function (array $data, array $record): void {
+                app(CourseRepository::class)->update((string) $record['id'], $data);
+
+                $this->resetTable();
+
+                Notification::make()->title('Mata kuliah diperbarui')->success()->send();
+            });
+    }
+
+    protected function deleteAction(): Action
+    {
+        return Action::make('delete')
+            ->label('Hapus')
+            ->icon(Heroicon::Trash)
+            ->color('danger')
+            ->requiresConfirmation()
+            ->modalHeading('Hapus mata kuliah?')
+            ->action(function (array $record): void {
+                app(CourseRepository::class)->delete((string) $record['id']);
+
+                $this->resetTable();
+
+                Notification::make()->title('Mata kuliah dihapus')->success()->send();
+            });
+    }
+
+    /**
+     * @return array<int, mixed>
+     */
+    protected function formSchema(): array
+    {
+        return [
+            TextInput::make('code')
+                ->label('Kode mata kuliah')
+                ->required()
+                ->maxLength(30)
+                ->placeholder('PSI101'),
+            TextInput::make('name')
+                ->label('Nama mata kuliah')
+                ->required()
+                ->maxLength(150),
+            TextInput::make('credits')
+                ->label('SKS')
+                ->numeric()
+                ->required()
+                ->default(2)
+                ->minValue(1)
+                ->maxValue(8),
+            TextInput::make('lecturer')
+                ->label('Dosen pengampu')
+                ->required()
+                ->maxLength(150),
+            TextInput::make('semester')
+                ->label('Semester')
+                ->required()
+                ->maxLength(20)
+                ->placeholder('Ganjil'),
+            TextInput::make('class_name')
+                ->label('Kelas')
+                ->required()
+                ->maxLength(50)
+                ->datalist(fn (): array => app(UserRepository::class)->classNames()),
+            Textarea::make('description')
+                ->label('Deskripsi')
+                ->rows(3)
+                ->columnSpanFull(),
+        ];
+    }
+}
