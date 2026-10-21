@@ -108,13 +108,20 @@ class TugasPage extends BaseSheetPage
                     ->label('Pertemuan')
                     ->badge()
                     ->placeholder('-')
-                    ->sortable(),
+                    ->sortable()
+                    ->extraHeaderAttributes($this->columnDividerAttributes())
+                    ->extraCellAttributes($this->columnDividerAttributes()),
                 TextColumn::make('title')
                     ->label('Tugas')
                     ->weight('semibold')
+                    ->color('primary')
                     ->description(fn (array $record): string => (string) $record['course_name'])
+                    ->action($this->detailAction())
+                    ->tooltip('Klik untuk melihat rincian')
                     ->searchable()
-                    ->wrap(),
+                    ->wrap()
+                    ->extraHeaderAttributes($this->columnDividerAttributes())
+                    ->extraCellAttributes($this->columnDividerAttributes()),
                 TextColumn::make('group_name')
                     ->label('Kelompok')
                     ->wrap(),
@@ -151,6 +158,7 @@ class TugasPage extends BaseSheetPage
                 $this->submitAction(),
                 $this->feedbackAction(),
             ])
+            ->striped()
             ->defaultSort('deadline')
             ->defaultPaginationPageOption(10)
             ->emptyStateHeading('Belum ada tugas')
@@ -166,7 +174,7 @@ class TugasPage extends BaseSheetPage
             ->modalHeading(fn (array $record): string => (string) $record['title'])
             ->modalSubmitAction(false)
             ->modalCancelActionLabel('Tutup')
-            ->modalWidth('2xl')
+            ->modalWidth('3xl')
             ->modalContent(fn (array $record) => view('filament.portal.partials.task-detail', [
                 'task' => $record,
             ]));
@@ -292,6 +300,16 @@ class TugasPage extends BaseSheetPage
                 'grade' => $record['submission_grade'] ?? null,
                 'feedback' => (string) ($record['submission_feedback'] ?? ''),
             ]));
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    protected function columnDividerAttributes(): array
+    {
+        return [
+            'style' => 'border-inline-end: 1px solid rgba(115, 115, 115, .22);',
+        ];
     }
 
     protected function formatDateTime(?string $value): string

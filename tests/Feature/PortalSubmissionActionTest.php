@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Auth\SheetUserProvider;
 use App\Filament\Portal\Pages\TugasPage;
+use App\Repositories\CourseRepository;
 use App\Repositories\GroupRepository;
 use App\Repositories\SubmissionRepository;
 use App\Repositories\TaskRepository;
@@ -171,6 +172,34 @@ class PortalSubmissionActionTest extends TestCase
 
         Livewire::test(TugasPage::class)
             ->assertTableActionHidden('submit', (string) $task['id']);
+    }
+
+    public function test_task_detail_modal_renders_long_multiline_instructions(): void
+    {
+        $this->actingAsStudent('ayu@psikologi.test');
+
+        $course = app(CourseRepository::class)->findBy('code', 'PSI101');
+
+        $this->assertNotNull($course);
+
+        $task = app(TaskRepository::class)->create([
+            'course_id' => $course['id'],
+            'group_id' => '',
+            'group_ids' => '',
+            'meeting_number' => '1',
+            'title' => 'Tugas Instruksi Panjang',
+            'description' => "1. Langkah pertama yang harus dikerjakan.\n2. Langkah kedua dengan penjelasan tambahan.\n\n3. Langkah ketiga sebagai penutup.",
+            'type' => 'individu',
+            'deadline' => now()->addDay()->toIso8601String(),
+            'status' => 'active',
+            'created_by' => '',
+        ]);
+
+        Livewire::test(TugasPage::class)
+            ->mountTableAction('detail', (string) $task['id'])
+            ->assertMountedActionModalSee('Instruksi tugas')
+            ->assertMountedActionModalSee('Langkah pertama yang harus dikerjakan.')
+            ->assertMountedActionModalSee('Langkah ketiga sebagai penutup.');
     }
 
     /**
