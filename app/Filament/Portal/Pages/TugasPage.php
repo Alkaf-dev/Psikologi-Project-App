@@ -3,9 +3,12 @@
 namespace App\Filament\Portal\Pages;
 
 use App\Filament\Support\BaseSheetPage;
+use App\Repositories\GroupMemberRepository;
 use App\Repositories\SubmissionRepository;
 use App\Repositories\TaskRepository;
 use App\Repositories\UserRepository;
+use App\Support\TaskGroups;
+use App\Support\TaskStatus;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -27,7 +30,10 @@ class TugasPage extends BaseSheetPage
 
     protected static ?int $navigationSort = 2;
 
-    protected array $searchableColumns = ['title', 'course_name', 'type_label', 'submission_label'];
+    protected array $searchableColumns = [
+        'meeting_number', 'title', 'description', 'course_name', 'group_name',
+        'type_label', 'status_label', 'submission_label',
+    ];
 
     public function table(Table $table): Table
     {
@@ -41,15 +47,24 @@ class TugasPage extends BaseSheetPage
             ) {
                 $userId = (string) auth()->id();
                 $student = app(UserRepository::class)->find($userId);
-
-                $submissions = app(SubmissionRepository::class)
-                    ->forStudent($userId)
-                    ->keyBy('task_id');
+                $studentGroupIds = app(GroupMemberRepository::class)->groupIdsForUser($userId);
+                $submissions = app(SubmissionRepository::class);
+                $users = app(UserRepository::class);
 
                 $records = app(TaskRepository::class)
                     ->withDetails(app(TaskRepository::class)->forStudent($student ?? []))
-                    ->map(function (array $task) use ($submissions): array {
-                        $submission = $submissions->get((string) $task['id']);
+                    ->map(function (array $task) use ($submissions, $users, $userId, $studentGroupIds): array {
+                        $isGroupTask = ($task['type'] ?? 'individu') === 'kelompok';
+                        $submission = $submissions->forTaskForStudent($task, $userId, $studentGroupIds);
+                        $submissionGroupId = $isGroupTask
+                            ? (string) (TaskGroups::matchingGroupId($task, $studentGroupIds) ?? '')
+                            : '';
+                        $status = TaskStatus::normalize($task['status'] ?? '');
+                        $deadline = filled($task['deadline'] ?? null)
+                            ? Carbon::parse((string) $task['deadline'])
+                            : null;
+                        $isRepresentative = $submission !== null
+                            && (! $isGroupTask || (string) ($submission['user_id'] ?? '') === $userId);
 
                         $task['submission_id'] = $submission['id'] ?? null;
                         $task['submission_status'] = $submission['status'] ?? null;
@@ -57,12 +72,24 @@ class TugasPage extends BaseSheetPage
                         $task['submission_notes'] = $submission['notes'] ?? null;
                         $task['submission_grade'] = $submission['grade'] ?? null;
                         $task['submission_feedback'] = $submission['feedback'] ?? null;
+                        $task['submission_group_id'] = $submissionGroupId;
+                        $task['submission_by_label'] = $isGroupTask && $submission !== null
+                            ? 'oleh '.$users->nameById((string) ($submission['user_id'] ?? ''))
+                            : null;
                         $task['submission_label'] = match ($task['submission_status']) {
                             'graded' => 'Dinilai',
                             'late' => 'Terlambat',
                             'submitted' => 'Dikumpulkan',
                             default => 'Belum dikumpulkan',
                         };
+                        $task['is_representative'] = $isRepresentative;
+                        $task['can_submit'] = $submission === null
+                            && $status === TaskStatus::ACTIVE
+                            && (! $isGroupTask || $submissionGroupId !== '');
+                        $task['can_update'] = $submission !== null
+                            && $status === TaskStatus::ACTIVE
+                            && (! $isGroupTask || $isRepresentative)
+                            && (! $isGroupTask || $deadline === null || now()->lessThanOrEqualTo($deadline));
 
                         return $task;
                     });
@@ -77,25 +104,37 @@ class TugasPage extends BaseSheetPage
                 );
             })
             ->columns([
+                TextColumn::make('meeting_number')
+                    ->label('Pertemuan')
+                    ->badge()
+                    ->placeholder('-')
+                    ->sortable(),
                 TextColumn::make('title')
                     ->label('Tugas')
                     ->weight('semibold')
                     ->description(fn (array $record): string => (string) $record['course_name'])
                     ->searchable()
                     ->wrap(),
-                TextColumn::make('type_label')
-                    ->label('Jenis')
-                    ->badge()
-                    ->color('gray'),
+                TextColumn::make('group_name')
+                    ->label('Kelompok')
+                    ->wrap(),
+                TextColumn::make('start_at')
+                    ->label('Mulai')
+                    ->formatStateUsing(fn (?string $state): string => $this->formatDateTime($state))
+                    ->placeholder('-'),
                 TextColumn::make('deadline')
                     ->label('Deadline')
-                    ->formatStateUsing(fn (?string $state): string => $state
-                        ? Carbon::parse($state)->translatedFormat('d M Y H:i')
-                        : '-')
+                    ->description(fn (array $record): string => (string) ($record['deadline_label'] ?? ''))
+                    ->formatStateUsing(fn (?string $state): string => $this->formatDateTime($state))
                     ->sortable(),
-                TextColumn::make('submission_label')
+                TextColumn::make('status_label')
                     ->label('Status')
                     ->badge()
+                    ->color(fn (array $record): string => TaskStatus::color($record['status'] ?? '')),
+                TextColumn::make('submission_label')
+                    ->label('Pengumpulan')
+                    ->badge()
+                    ->description(fn (array $record): string => (string) ($record['submission_by_label'] ?? ''))
                     ->color(fn (array $record): string => match ($record['submission_status']) {
                         'graded' => 'success',
                         'late' => 'danger',
@@ -108,6 +147,7 @@ class TugasPage extends BaseSheetPage
                     ->placeholder('-'),
             ])
             ->recordActions([
+                $this->detailAction(),
                 $this->submitAction(),
                 $this->feedbackAction(),
             ])
@@ -115,6 +155,21 @@ class TugasPage extends BaseSheetPage
             ->defaultPaginationPageOption(10)
             ->emptyStateHeading('Belum ada tugas')
             ->emptyStateDescription('Tugas dari mata kuliah Anda akan tampil di sini.');
+    }
+
+    protected function detailAction(): Action
+    {
+        return Action::make('detail')
+            ->label('Detail')
+            ->icon(Heroicon::OutlinedEye)
+            ->color('gray')
+            ->modalHeading(fn (array $record): string => (string) $record['title'])
+            ->modalSubmitAction(false)
+            ->modalCancelActionLabel('Tutup')
+            ->modalWidth('2xl')
+            ->modalContent(fn (array $record) => view('filament.portal.partials.task-detail', [
+                'task' => $record,
+            ]));
     }
 
     protected function submitAction(): Action
@@ -125,7 +180,8 @@ class TugasPage extends BaseSheetPage
             ->modalHeading(fn (array $record): string => 'Kumpulkan: '.$record['title'])
             ->modalSubmitActionLabel('Kirim')
             ->modalWidth('2xl')
-            ->visible(fn (array $record): bool => ($record['submission_status'] ?? null) !== 'graded')
+            ->visible(fn (array $record): bool => (bool) ($record['can_submit'] ?? false)
+                || (bool) ($record['can_update'] ?? false))
             ->fillForm(fn (array $record): array => [
                 'link' => $record['submission_link'] ?? '',
                 'notes' => $record['submission_notes'] ?? '',
@@ -142,27 +198,76 @@ class TugasPage extends BaseSheetPage
                     ->rows(3),
             ])
             ->action(function (array $data, array $record): void {
+                $userId = (string) auth()->id();
+                $taskId = (string) $record['id'];
+                $isGroupTask = ($record['type'] ?? 'individu') === 'kelompok';
+                $groupId = (string) ($record['submission_group_id'] ?? '');
+                $repository = app(SubmissionRepository::class);
+
+                if (TaskStatus::normalize($record['status'] ?? '') !== TaskStatus::ACTIVE) {
+                    Notification::make()
+                        ->title('Tugas tidak dapat dikumpulkan')
+                        ->body('Tugas ini sudah selesai atau belum dipublikasikan.')
+                        ->danger()
+                        ->send();
+
+                    return;
+                }
+
                 $deadline = filled($record['deadline'] ?? null)
-                    ? Carbon::parse($record['deadline'])
+                    ? Carbon::parse((string) $record['deadline'])
                     : null;
+                $existing = $isGroupTask
+                    ? $repository->forTaskAndGroup($taskId, $groupId)
+                    : $repository->forTaskAndUser($taskId, $userId);
+
+                if ($isGroupTask) {
+                    if ($groupId === '') {
+                        Notification::make()
+                            ->title('Kelompok tidak ditemukan')
+                            ->body('Hubungi admin untuk memastikan kelompok Anda ditugaskan pada tugas ini.')
+                            ->danger()
+                            ->send();
+
+                        return;
+                    }
+
+                    if ($existing !== null && (string) ($existing['user_id'] ?? '') !== $userId) {
+                        Notification::make()
+                            ->title('Kelompok sudah mengumpulkan')
+                            ->body('Hanya perwakilan kelompok yang dapat memperbarui pengumpulan ini.')
+                            ->danger()
+                            ->send();
+
+                        return;
+                    }
+
+                    if ($existing !== null && $deadline !== null && now()->greaterThan($deadline)) {
+                        Notification::make()
+                            ->title('Batas pembaruan berakhir')
+                            ->body('Pengumpulan kelompok hanya dapat diperbarui sampai deadline. Hubungi admin jika perlu perubahan.')
+                            ->warning()
+                            ->send();
+
+                        return;
+                    }
+                }
 
                 $isLate = $deadline !== null && now()->greaterThan($deadline);
+                $payload = [
+                    'group_id' => $isGroupTask ? $groupId : '',
+                    'status' => $isLate ? 'late' : 'submitted',
+                    'link' => (string) $data['link'],
+                    'notes' => (string) ($data['notes'] ?? ''),
+                    'submitted_at' => now()->toIso8601String(),
+                ];
 
-                $groupId = ($record['type'] ?? 'individu') === 'kelompok'
-                    ? (string) ($record['group_id'] ?? '')
-                    : '';
-
-                app(SubmissionRepository::class)->upsertForTaskAndUser(
-                    (string) $record['id'],
-                    (string) auth()->id(),
-                    [
-                        'group_id' => $groupId,
-                        'status' => $isLate ? 'late' : 'submitted',
-                        'link' => (string) $data['link'],
-                        'notes' => (string) ($data['notes'] ?? ''),
-                        'submitted_at' => now()->toIso8601String(),
-                    ],
-                );
+                if ($isGroupTask) {
+                    $payload['user_id'] = $userId;
+                    $repository->upsertForTaskAndGroup($taskId, $groupId, $payload);
+                } else {
+                    $repository->upsertForTaskAndUser($taskId, $userId, $payload);
+                }
 
                 $this->resetTable();
 
@@ -187,5 +292,12 @@ class TugasPage extends BaseSheetPage
                 'grade' => $record['submission_grade'] ?? null,
                 'feedback' => (string) ($record['submission_feedback'] ?? ''),
             ]));
+    }
+
+    protected function formatDateTime(?string $value): string
+    {
+        return filled($value)
+            ? Carbon::parse($value)->translatedFormat('d M Y H:i')
+            : '-';
     }
 }

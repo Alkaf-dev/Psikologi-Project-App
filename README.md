@@ -15,7 +15,10 @@ Portal akademik **Prodi Psikologi STIT Muhammadiyah Kediri** berbasis **Laravel 
 - Dashboard berisi ringkasan tugas, jadwal, kelompok, dan pengumuman sesuai Prodi.
 - Jadwal kuliah sesuai Prodi dan kelas mahasiswa.
 - Daftar tugas individu dan kelompok hanya dari mata kuliah Prodi mahasiswa.
+- Tugas dapat memuat pertemuan, materi, banyak kelompok, tanggal mulai, deadline, keterangan deadline, link pengumpulan, dan status.
 - Pengumpulan tugas berupa tautan, dengan status `submitted`, `late`, atau `graded`.
+- Tugas kelompok dikumpulkan satu kali per kelompok oleh salah satu anggota sebagai perwakilan; anggota lain melihat status, tautan, nilai, dan feedback yang sama.
+- Perwakilan dapat memperbarui pengumpulan sampai deadline; setelah deadline perubahan hanya dapat dilakukan admin/PJMK.
 - Melihat nilai dan feedback dosen.
 - Daftar kelompok beserta peran, ketua, dan anggota, hanya dari mata kuliah Prodi mahasiswa.
 - Pengumuman untuk mahasiswa, termasuk target Prodi tertentu atau semua Prodi.
@@ -27,6 +30,7 @@ Portal akademik **Prodi Psikologi STIT Muhammadiyah Kediri** berbasis **Laravel 
 - Menu **Administrasi** berisi pendataan mahasiswa dan CRUD Program Studi.
 - Pendataan mahasiswa melalui **Administrasi > Mahasiswa**: Prodi, Nama Mahasiswa, NIM, email, kelas, angkatan, WhatsApp, dan akun login.
 - CRUD user, mata kuliah, jadwal, kelompok, tugas, pengumpulan/nilai, dan pengumuman.
+- Form tugas mendukung pertemuan, instruksi, materi, banyak kelompok, tanggal mulai, deadline, keterangan deadline, link pengumpulan, dan status `Draf`/`Aktif`/`Selesai`.
 - Mata kuliah dapat ditetapkan ke beberapa Prodi; satu baris mata kuliah tetap memiliki satu kelas.
 - Pengumuman mahasiswa dapat ditargetkan ke Prodi tertentu atau semua Prodi.
 - Login admin juga memilih Prodi; admin tetap dapat melihat data seluruh Prodi.
@@ -170,12 +174,14 @@ Header setiap tab didefinisikan di `config/sheets.php`:
 | `schedules` | Jadwal kuliah |
 | `groups` | Kelompok mahasiswa |
 | `group_members` | Anggota dan ketua kelompok |
-| `tasks` | Tugas individu/kelompok |
-| `submissions` | Pengumpulan, nilai, dan feedback |
+| `tasks` | Tugas individu/kelompok, termasuk `group_ids`, pertemuan, materi, status, dan link pengumpulan |
+| `submissions` | Pengumpulan, nilai, dan feedback; tugas kelompok memakai satu baris per `task_id` + `group_id` |
 | `announcements` | Pengumuman, termasuk `prodi_ids` untuk target Prodi mahasiswa |
 | `settings` | Pengaturan aplikasi |
 
 Jangan mengubah urutan atau nama header tanpa menyesuaikan `config/sheets.php` dan data yang sudah ada. `prodi_id` pada `users` dan `prodi_ids` pada `courses`/`announcements` merujuk ke `study_programs.id`. Kolom-kolom ini ditambahkan di akhir header agar data lama tidak bergeser. `prodi_ids` berisi beberapa ULID yang dipisahkan koma; kosong pada pengumuman mahasiswa berarti semua Prodi.
+
+`tasks.group_ids` berisi beberapa ID kelompok yang dipisahkan koma. Kolom `tasks.group_id` lama tetap dipertahankan untuk kompatibilitas. Status tugas: `draft` (tidak tampil di portal), `active` (tampil dan dapat dikumpulkan), serta `completed` (tampil tetapi read-only). Pengumpulan kelompok disimpan sekali per kombinasi `task_id` dan `group_id`; `user_id` pada baris tersebut adalah anggota yang menjadi perwakilan.
 
 ## Perintah Penting
 
@@ -213,6 +219,8 @@ Halaman admin dan portal memakai slug default Filament, misalnya `/admin/student
 - `app/Repositories/`: repository per domain dengan cache, ULID, dan soft delete.
 - `app/Repositories/StudyProgramRepository.php`: daftar Prodi dan opsi login.
 - `app/Support/ProdiAssignments.php`: parsing, validasi, dan label daftar Prodi pada kolom `prodi_ids`.
+- `app/Support/TaskGroups.php`: parsing, validasi, dan label kelompok pada kolom `group_ids`.
+- `app/Support/TaskStatus.php`: normalisasi dan label status tugas `Draf`/`Aktif`/`Selesai`.
 - `app/Auth/SheetUser.php` dan `SheetUserProvider.php`: autentikasi tanpa Eloquent, termasuk validasi Prodi dan role.
 - `app/Enums/UserRole.php`: definisi role Mahasiswa, Super Admin, dan PJMK.
 - `app/Filament/Support/BaseSheetPage.php`: halaman tabel Filament berbasis array record.
@@ -229,6 +237,7 @@ Setiap pembacaan sheet di-cache selama `SHEETS_CACHE_TTL` detik (default 60). Se
 
 - Google Sheets bukan database transaksional. Tidak ada row locking; penulisan bersamaan dapat saling menimpa.
 - Pengumpulan tugas berupa tautan; aplikasi tidak mengunggah atau menyimpan file.
+- Pengumpulan kelompok memakai satu perwakilan per kelompok. Perwakilan adalah anggota pertama yang mengumpulkan dan hanya dia yang dapat memperbarui sampai deadline.
 - Tidak ada registrasi publik, OAuth, email notifikasi, atau remember-me.
 - Kuota Google Sheets API berlaku; cache membantu mengurangi pembacaan.
 - Pengumuman publik hanya menampilkan audiens `all`.
@@ -253,6 +262,7 @@ Test menggunakan `LocalSheetGateway` dengan file JSON sementara. Test tidak meng
 - CRUD user untuk seluruh role, pendataan mahasiswa, dan proteksi admin aktif terakhir.
 - CRUD mata kuliah multi-Prodi dan pengumuman dengan target Prodi.
 - Filter jadwal, tugas, kelompok, dan pengumuman portal berdasarkan Prodi serta kelas.
+- Tugas multi-kelompok, status draf/selesai, pengumpulan kelompok bersama, dan pembatasan revisi setelah deadline.
 - Migrasi header lama, role `admin`, dan mata kuliah lama tanpa menggeser data.
 - Render seluruh halaman admin dan portal.
 - Mount action tabel dan form pengaturan/profil.

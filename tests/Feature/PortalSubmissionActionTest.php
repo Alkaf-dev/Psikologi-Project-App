@@ -82,6 +82,97 @@ class PortalSubmissionActionTest extends TestCase
         $this->assertSame((string) $group['id'], (string) $submission['group_id']);
     }
 
+    public function test_group_task_submission_is_shared_with_the_whole_group(): void
+    {
+        $ayu = $this->actingAsStudent('ayu@psikologi.test');
+        $group = app(GroupRepository::class)->findBy('name', 'Kelompok 1 - Observasi');
+
+        $this->assertNotNull($group);
+
+        $task = app(TaskRepository::class)->create([
+            'course_id' => $group['course_id'],
+            'group_id' => $group['id'],
+            'group_ids' => $group['id'],
+            'title' => 'Tugas Kelompok Berbagi',
+            'description' => '',
+            'type' => 'kelompok',
+            'deadline' => now()->addDay()->toIso8601String(),
+            'status' => 'active',
+            'created_by' => '',
+        ]);
+
+        Livewire::test(TugasPage::class)
+            ->callTableAction('submit', (string) $task['id'], ['link' => 'https://example.com/awal'])
+            ->assertHasNoTableActionErrors();
+
+        $submission = app(SubmissionRepository::class)
+            ->forTaskAndGroup((string) $task['id'], (string) $group['id']);
+
+        $this->assertNotNull($submission);
+        $this->assertSame((string) $ayu['id'], (string) $submission['user_id']);
+
+        $this->actingAsStudent('bima@psikologi.test');
+
+        Livewire::test(TugasPage::class)
+            ->assertCanSeeTableRecords([(string) $task['id']])
+            ->assertTableActionHidden('submit', (string) $task['id'])
+            ->assertSee('Dikumpulkan');
+
+        $this->actingAsStudent('ayu@psikologi.test');
+
+        Livewire::test(TugasPage::class)
+            ->callTableAction('submit', (string) $task['id'], ['link' => 'https://example.com/revisi'])
+            ->assertHasNoTableActionErrors();
+
+        $updated = app(SubmissionRepository::class)
+            ->forTaskAndGroup((string) $task['id'], (string) $group['id']);
+
+        $this->assertNotNull($updated);
+        $this->assertSame((string) $submission['id'], (string) $updated['id']);
+        $this->assertSame('https://example.com/revisi', $updated['link']);
+        $this->assertCount(1, app(SubmissionRepository::class)
+            ->all()
+            ->filter(fn (array $submission): bool => (string) ($submission['task_id'] ?? '') === (string) $task['id']));
+    }
+
+    public function test_group_submission_cannot_be_updated_after_the_deadline(): void
+    {
+        $ayu = $this->actingAsStudent('ayu@psikologi.test');
+        $group = app(GroupRepository::class)->findBy('name', 'Kelompok 1 - Observasi');
+
+        $this->assertNotNull($group);
+
+        $task = app(TaskRepository::class)->create([
+            'course_id' => $group['course_id'],
+            'group_id' => $group['id'],
+            'group_ids' => $group['id'],
+            'title' => 'Tugas Kelompok Lewat Deadline',
+            'description' => '',
+            'type' => 'kelompok',
+            'deadline' => now()->subDay()->toIso8601String(),
+            'status' => 'active',
+            'created_by' => '',
+        ]);
+
+        app(SubmissionRepository::class)->create([
+            'task_id' => (string) $task['id'],
+            'user_id' => (string) $ayu['id'],
+            'group_id' => (string) $group['id'],
+            'status' => 'late',
+            'link' => 'https://example.com/terlambat',
+            'notes' => '',
+            'submitted_at' => now()->subDay()->toIso8601String(),
+        ]);
+
+        Livewire::test(TugasPage::class)
+            ->assertTableActionHidden('submit', (string) $task['id']);
+
+        $this->actingAsStudent('bima@psikologi.test');
+
+        Livewire::test(TugasPage::class)
+            ->assertTableActionHidden('submit', (string) $task['id']);
+    }
+
     /**
      * @return array<string, mixed>
      */

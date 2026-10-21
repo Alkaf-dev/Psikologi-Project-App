@@ -2,6 +2,9 @@
 
 namespace App\Repositories;
 
+use App\Support\TaskGroups;
+use App\Support\TaskStatus;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
 class TaskRepository extends BaseSheetRepository
@@ -21,9 +24,21 @@ class TaskRepository extends BaseSheetRepository
                 $task['course_name'] = $courses->nameById((string) ($task['course_id'] ?? ''));
                 $task['course_code'] = (string) ($courses->find((string) ($task['course_id'] ?? ''))['code'] ?? '');
                 $isGroupTask = ($task['type'] ?? 'individu') === 'kelompok';
-                $group = $isGroupTask ? $groups->find((string) ($task['group_id'] ?? '')) : null;
-                $task['group_name'] = $group['name'] ?? 'Semua mahasiswa';
+                $assignedGroupIds = $isGroupTask ? TaskGroups::assignedIds($task) : [];
+
+                $groupNames = array_values(array_filter(array_map(
+                    fn (string $groupId): string => (string) ($groups->find($groupId)['name'] ?? ''),
+                    $assignedGroupIds,
+                )));
+
+                $task['group_name'] = $isGroupTask
+                    ? ($groupNames !== [] ? implode(', ', $groupNames) : 'Semua mahasiswa')
+                    : 'Semua mahasiswa';
+                $task['group_ids'] = TaskGroups::csv($assignedGroupIds);
                 $task['type_label'] = $isGroupTask ? 'Kelompok' : 'Individu';
+                $task['status'] = TaskStatus::normalize($task['status'] ?? '');
+                $task['status_label'] = TaskStatus::label($task['status']);
+                $task['deadline_label'] = $this->deadlineLabel($task);
 
                 return $task;
             });
@@ -50,11 +65,18 @@ class TaskRepository extends BaseSheetRepository
                     return false;
                 }
 
-                $groupId = ($task['type'] ?? 'individu') === 'kelompok'
-                    ? trim((string) ($task['group_id'] ?? ''))
-                    : '';
+                if (TaskStatus::normalize($task['status'] ?? '') === TaskStatus::DRAFT) {
+                    return false;
+                }
 
-                return $groupId === '' || in_array($groupId, $groupIds, true);
+                if (($task['type'] ?? 'individu') !== 'kelompok') {
+                    return true;
+                }
+
+                $assignedGroupIds = TaskGroups::assignedIds($task);
+
+                return $assignedGroupIds === []
+                    || TaskGroups::matchingGroupId($task, $groupIds) !== null;
             })
             ->sortBy('deadline')
             ->values();
@@ -86,5 +108,32 @@ class TaskRepository extends BaseSheetRepository
         return $this->all()
             ->filter(fn (array $task): bool => (string) ($task['course_id'] ?? '') === $courseId)
             ->values();
+    }
+
+    /**
+     * @param  array<string, mixed>  $task
+     */
+    protected function deadlineLabel(array $task): string
+    {
+        $note = trim((string) ($task['deadline_note'] ?? ''));
+
+        if ($note !== '') {
+            return $note;
+        }
+
+        if (blank($task['deadline'] ?? null)) {
+            return '-';
+        }
+
+        $deadline = Carbon::parse((string) $task['deadline']);
+
+        if ($deadline->isPast()) {
+            return 'Deadline terlewati';
+        }
+
+        $remainingHours = max(0, (int) ceil(($deadline->getTimestamp() - now()->getTimestamp()) / 3600));
+        $remainingDays = max(1, (int) ceil($remainingHours / 24));
+
+        return "Batas waktu tersisa {$remainingDays} hari";
     }
 }

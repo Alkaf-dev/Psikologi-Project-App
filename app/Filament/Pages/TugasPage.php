@@ -7,6 +7,8 @@ use App\Repositories\CourseRepository;
 use App\Repositories\GroupRepository;
 use App\Repositories\SubmissionRepository;
 use App\Repositories\TaskRepository;
+use App\Support\TaskGroups;
+use App\Support\TaskStatus;
 use Filament\Actions\Action;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
@@ -18,6 +20,7 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Support\Carbon;
+use Illuminate\Validation\ValidationException;
 
 class TugasPage extends BaseSheetPage
 {
@@ -31,7 +34,10 @@ class TugasPage extends BaseSheetPage
 
     protected static ?int $navigationSort = 3;
 
-    protected array $searchableColumns = ['title', 'course_name', 'group_name', 'type_label'];
+    protected array $searchableColumns = [
+        'title', 'description', 'course_name', 'group_name', 'type_label',
+        'meeting_number', 'status_label',
+    ];
 
     public function table(Table $table): Table
     {
@@ -63,11 +69,17 @@ class TugasPage extends BaseSheetPage
                 );
             })
             ->columns([
-                TextColumn::make('title')
-                    ->label('Judul tugas')
-                    ->weight('semibold')
-                    ->searchable()
+                TextColumn::make('meeting_number')
+                    ->label('Pertemuan')
+                    ->badge()
+                    ->placeholder('-')
                     ->sortable(),
+                TextColumn::make('title')
+                    ->label('Tugas')
+                    ->weight('semibold')
+                    ->description(fn (array $record): string => str((string) ($record['description'] ?? ''))->stripTags()->limit(80)->toString())
+                    ->searchable()
+                    ->wrap(),
                 TextColumn::make('course_name')
                     ->label('Mata kuliah')
                     ->searchable(),
@@ -78,12 +90,19 @@ class TugasPage extends BaseSheetPage
                 TextColumn::make('group_name')
                     ->label('Kelompok')
                     ->wrap(),
+                TextColumn::make('start_at')
+                    ->label('Mulai')
+                    ->formatStateUsing(fn (?string $state): string => $this->formatDateTime($state))
+                    ->placeholder('-'),
                 TextColumn::make('deadline')
                     ->label('Deadline')
-                    ->formatStateUsing(fn (?string $state): string => $state
-                        ? Carbon::parse($state)->translatedFormat('d M Y H:i')
-                        : '-')
+                    ->description(fn (array $record): string => (string) ($record['deadline_label'] ?? ''))
+                    ->formatStateUsing(fn (?string $state): string => $this->formatDateTime($state))
                     ->sortable(),
+                TextColumn::make('status_label')
+                    ->label('Status')
+                    ->badge()
+                    ->color(fn (array $record): string => TaskStatus::color($record['status'] ?? '')),
                 TextColumn::make('submission_count')
                     ->label('Dikumpulkan')
                     ->badge()
@@ -103,9 +122,11 @@ class TugasPage extends BaseSheetPage
             ->icon(Heroicon::Plus)
             ->modalHeading('Tambah Tugas')
             ->modalSubmitActionLabel('Simpan')
-            ->modalWidth('3xl')
+            ->modalWidth('4xl')
             ->schema($this->formSchema())
             ->action(function (array $data): void {
+                $data = $this->prepareTaskData($data);
+                $this->validateTaskData($data);
                 $data['created_by'] = (string) auth()->id();
 
                 app(TaskRepository::class)->create($data);
@@ -123,16 +144,29 @@ class TugasPage extends BaseSheetPage
             ->icon(Heroicon::PencilSquare)
             ->modalHeading(fn (array $record): string => 'Ubah '.$record['title'])
             ->modalSubmitActionLabel('Simpan perubahan')
-            ->modalWidth('3xl')
+            ->modalWidth('4xl')
             ->fillForm(function (array $record): array {
                 $record['deadline'] = filled($record['deadline'] ?? null)
                     ? Carbon::parse($record['deadline'])->format('Y-m-d H:i:s')
                     : null;
+                $record['start_at'] = filled($record['start_at'] ?? null)
+                    ? Carbon::parse($record['start_at'])->format('Y-m-d H:i:s')
+                    : null;
+                $record['group_ids'] = TaskGroups::ids($record['group_ids'] ?? '');
+
+                if ($record['group_ids'] === [] && filled($record['group_id'] ?? null)) {
+                    $record['group_ids'] = [(string) $record['group_id']];
+                }
+
+                $record['status'] = TaskStatus::normalize($record['status'] ?? '');
 
                 return $record;
             })
             ->schema($this->formSchema())
             ->action(function (array $data, array $record): void {
+                $data = $this->prepareTaskData($data);
+                $this->validateTaskData($data);
+
                 app(TaskRepository::class)->update((string) $record['id'], $data);
 
                 $this->resetTable();
@@ -180,13 +214,40 @@ class TugasPage extends BaseSheetPage
                 ->default('individu')
                 ->live()
                 ->required(),
-            Select::make('group_id')
-                ->label('Kelompok')
+            TextInput::make('meeting_number')
+                ->label('Pertemuan')
+                ->numeric()
+                ->minValue(1)
+                ->maxValue(99),
+            Select::make('status')
+                ->label('Keterangan')
+                ->options(TaskStatus::options())
+                ->default(TaskStatus::ACTIVE)
+                ->required(),
+            TextInput::make('title')
+                ->label('Judul tugas / topik')
+                ->required()
+                ->maxLength(180)
+                ->columnSpanFull(),
+            Textarea::make('description')
+                ->label('Tugas / instruksi')
+                ->rows(5)
+                ->columnSpanFull(),
+            TextInput::make('material_url')
+                ->label('Materi (tautan)')
+                ->url()
+                ->maxLength(500),
+            TextInput::make('collection_link')
+                ->label('Link pengumpulan (Drive)')
+                ->url()
+                ->maxLength(500),
+            Select::make('group_ids')
+                ->label('Kelompok yang bertugas')
                 ->options(function (Get $get): array {
                     $courseId = (string) ($get('course_id') ?? '');
 
                     if ($courseId === '') {
-                        return app(GroupRepository::class)->options();
+                        return [];
                     }
 
                     return app(GroupRepository::class)
@@ -196,22 +257,87 @@ class TugasPage extends BaseSheetPage
                         ])
                         ->all();
                 })
+                ->multiple()
                 ->searchable()
-                ->placeholder('Semua mahasiswa')
+                ->preload()
+                ->placeholder('Pilih kelompok')
                 ->visible(fn (Get $get): bool => $get('type') === 'kelompok')
-                ->required(fn (Get $get): bool => $get('type') === 'kelompok'),
-            TextInput::make('title')
-                ->label('Judul tugas')
-                ->required()
-                ->maxLength(180),
+                ->required(fn (Get $get): bool => $get('type') === 'kelompok')
+                ->helperText('Satu tugas dapat ditugaskan ke beberapa kelompok.')
+                ->columnSpanFull(),
+            DateTimePicker::make('start_at')
+                ->label('Tanggal mulai')
+                ->seconds(false),
             DateTimePicker::make('deadline')
                 ->label('Deadline')
                 ->seconds(false)
                 ->required(),
-            Textarea::make('description')
-                ->label('Deskripsi / instruksi')
-                ->rows(4)
-                ->columnSpanFull(),
+            TextInput::make('deadline_note')
+                ->label('Keterangan deadline')
+                ->maxLength(150)
+                ->helperText('Kosongkan untuk dihitung otomatis dari deadline.'),
         ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    protected function prepareTaskData(array $data): array
+    {
+        $groupIds = ($data['type'] ?? 'individu') === 'kelompok'
+            ? TaskGroups::ids($data['group_ids'] ?? [])
+            : [];
+
+        $data['group_ids'] = TaskGroups::csv($groupIds);
+        $data['group_id'] = $groupIds[0] ?? '';
+        $data['status'] = TaskStatus::normalize($data['status'] ?? '');
+
+        return $data;
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    protected function validateTaskData(array $data): void
+    {
+        if (($data['type'] ?? 'individu') !== 'kelompok') {
+            return;
+        }
+
+        $groupIds = TaskGroups::ids($data['group_ids'] ?? '');
+        $errors = [];
+
+        if ($groupIds === []) {
+            $errors[$this->actionErrorKey('group_ids')] = 'Pilih minimal satu kelompok.';
+        } else {
+            $allowedGroupIds = app(GroupRepository::class)
+                ->forCourse((string) ($data['course_id'] ?? ''))
+                ->pluck('id')
+                ->map(fn (mixed $id): string => (string) $id)
+                ->all();
+
+            if (array_diff($groupIds, $allowedGroupIds) !== []) {
+                $errors[$this->actionErrorKey('group_ids')] = 'Kelompok harus berasal dari mata kuliah yang dipilih.';
+            }
+        }
+
+        if ($errors !== []) {
+            throw ValidationException::withMessages($errors);
+        }
+    }
+
+    protected function actionErrorKey(string $field): string
+    {
+        $statePath = $this->getMountedActionSchema()?->getStatePath();
+
+        return $statePath ? "{$statePath}.{$field}" : $field;
+    }
+
+    protected function formatDateTime(?string $value): string
+    {
+        return filled($value)
+            ? Carbon::parse($value)->translatedFormat('d M Y H:i')
+            : '-';
     }
 }

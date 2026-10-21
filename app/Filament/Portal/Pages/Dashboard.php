@@ -3,6 +3,7 @@
 namespace App\Filament\Portal\Pages;
 
 use App\Repositories\AnnouncementRepository;
+use App\Repositories\GroupMemberRepository;
 use App\Repositories\GroupRepository;
 use App\Repositories\ScheduleRepository;
 use App\Repositories\SettingsRepository;
@@ -59,14 +60,13 @@ class Dashboard extends BaseDashboard
 
         $prodiName = app(StudyProgramRepository::class)->nameById((string) ($student['prodi_id'] ?? ''));
 
-        $submissions = app(SubmissionRepository::class)
-            ->forStudent($userId)
-            ->keyBy('task_id');
+        $studentGroupIds = app(GroupMemberRepository::class)->groupIdsForUser($userId);
+        $submissions = app(SubmissionRepository::class);
 
         $tasks = app(TaskRepository::class)
             ->withDetails(app(TaskRepository::class)->forStudent($student))
-            ->map(function (array $task) use ($submissions): array {
-                $submission = $submissions->get((string) $task['id']);
+            ->map(function (array $task) use ($submissions, $userId, $studentGroupIds): array {
+                $submission = $submissions->forTaskForStudent($task, $userId, $studentGroupIds);
                 $task['submission_status'] = $submission['status'] ?? null;
                 $task['submission_grade'] = $submission['grade'] ?? null;
 

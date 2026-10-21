@@ -91,6 +91,8 @@ return [
         'tasks' => [
             'id', 'course_id', 'group_id', 'title', 'description', 'type', 'deadline',
             'created_by', 'created_at', 'updated_at', 'deleted_at',
+            'group_ids', 'meeting_number', 'material_url', 'start_at', 'deadline_note',
+            'collection_link', 'status',
         ],
 
         'submissions' => [

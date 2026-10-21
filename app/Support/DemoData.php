@@ -211,40 +211,68 @@ class DemoData
         $taskOne = $this->ensureTask([
             'course_id' => $psi101['id'],
             'group_id' => '',
+            'group_ids' => '',
+            'meeting_number' => '1',
             'title' => 'Refleksi Psikologi Umum',
             'description' => 'Tuliskan refleksi 500 kata tentang konsep psikologi yang paling relevan dengan pengalaman Anda.',
             'type' => 'individu',
+            'material_url' => 'https://www.bookcreator.com/',
+            'start_at' => now()->subDays(2)->setTime(8, 0)->toIso8601String(),
             'deadline' => now()->addDays(3)->setTime(23, 59)->toIso8601String(),
+            'deadline_note' => '',
+            'collection_link' => '',
+            'status' => 'active',
             'created_by' => $admin['id'],
         ]);
 
         $taskTwo = $this->ensureTask([
             'course_id' => $psi201['id'],
             'group_id' => '',
+            'group_ids' => '',
+            'meeting_number' => '2',
             'title' => 'Laporan Observasi Perkembangan Anak',
             'description' => 'Laporan observasi kelompok dalam format PDF. Cantumkan metode, temuan, dan refleksi.',
             'type' => 'individu',
+            'material_url' => 'https://www.bookcreator.com/',
+            'start_at' => now()->subDay()->setTime(8, 0)->toIso8601String(),
             'deadline' => now()->addDays(7)->setTime(23, 59)->toIso8601String(),
+            'deadline_note' => '',
+            'collection_link' => '',
+            'status' => 'active',
             'created_by' => $admin['id'],
         ]);
 
         $taskThree = $this->ensureTask([
             'course_id' => $psi301['id'],
             'group_id' => $groupTwo['id'],
+            'group_ids' => $groupTwo['id'],
+            'meeting_number' => '3',
             'title' => 'Proposal Penelitian Kelompok',
             'description' => 'Susun proposal penelitian lengkap dengan latar belakang, rumusan masalah, dan metode.',
             'type' => 'kelompok',
+            'material_url' => 'https://www.bookcreator.com/',
+            'start_at' => now()->setTime(8, 0)->toIso8601String(),
             'deadline' => now()->addDays(14)->setTime(23, 59)->toIso8601String(),
+            'deadline_note' => '',
+            'collection_link' => 'https://drive.google.com/drive/folders/contoh-pengumpulan-kelompok',
+            'status' => 'active',
             'created_by' => $admin['id'],
         ]);
 
         $taskFour = $this->ensureTask([
             'course_id' => $psi102['id'],
             'group_id' => '',
+            'group_ids' => '',
+            'meeting_number' => '4',
             'title' => 'Studi Kasus Psikologi Sosial',
             'description' => 'Analisis satu fenomena sosial di sekitar Anda menggunakan teori psikologi sosial.',
             'type' => 'individu',
+            'material_url' => 'https://www.bookcreator.com/',
+            'start_at' => now()->addDay()->setTime(8, 0)->toIso8601String(),
             'deadline' => now()->addDays(5)->setTime(23, 59)->toIso8601String(),
+            'deadline_note' => '',
+            'collection_link' => '',
+            'status' => 'active',
             'created_by' => $admin['id'],
         ]);
 
