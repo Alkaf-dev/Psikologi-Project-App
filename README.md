@@ -22,7 +22,7 @@ Portal akademik **Prodi Psikologi STIT Muhammadiyah Kediri** berbasis **Laravel 
 - Melihat nilai dan feedback dosen.
 - Daftar kelompok beserta peran, ketua, dan anggota, hanya dari mata kuliah Prodi mahasiswa.
 - Pengumuman untuk mahasiswa, termasuk target Prodi tertentu atau semua Prodi.
-- Lonceng notifikasi dan halaman Notifikasi untuk tugas aktif serta jadwal hari ini dan besok.
+- Lonceng notifikasi dengan panel geser dari kanan dan halaman Notifikasi untuk tugas aktif serta jadwal hari ini dan besok.
 - Status baca notifikasi tersimpan per akun di tab `notification_reads`.
 - Profil dan perubahan password.
 
@@ -39,7 +39,7 @@ Portal akademik **Prodi Psikologi STIT Muhammadiyah Kediri** berbasis **Laravel 
 - Role user: **Mahasiswa**, **Super Admin**, dan **PJMK**.
 - PJMK memiliki akses panel yang sama dengan Super Admin, tetapi role tetap ditampilkan sebagai PJMK.
 - Reset password user.
-- Lonceng dan halaman Notifikasi global untuk tugas aktif serta jadwal hari ini dan besok.
+- Lonceng dengan panel notifikasi geser dari kanan dan halaman Notifikasi global untuk tugas aktif serta jadwal hari ini dan besok.
 - Pengaturan identitas program, kontak, dan konten halaman publik.
 - Penghapusan menggunakan soft delete; riwayat tetap ada di spreadsheet.
 
@@ -229,7 +229,7 @@ Halaman admin dan portal memakai slug default Filament, misalnya `/admin/student
 - `app/Support/TaskStatus.php`: normalisasi dan label status tugas `Draf`/`Aktif`/`Selesai`.
 - `app/Support/NotificationCenter.php`: perhitungan notifikasi tugas dan jadwal per user.
 - `app/Repositories/NotificationReadRepository.php`: status baca notifikasi di sheet.
-- `app/Livewire/NotificationBell.php`: lonceng notifikasi pada topbar kedua panel.
+- `app/Livewire/NotificationBell.php`: lonceng dan panel notifikasi geser kanan pada topbar kedua panel.
 - `app/Auth/SheetUser.php` dan `SheetUserProvider.php`: autentikasi tanpa Eloquent, termasuk validasi Prodi dan role.
 - `app/Enums/UserRole.php`: definisi role Mahasiswa, Super Admin, dan PJMK.
 - `app/Filament/Support/BaseSheetPage.php`: halaman tabel Filament berbasis array record.

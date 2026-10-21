@@ -48,7 +48,10 @@ class NotificationUiTest extends TestCase
 
         $this->get('/admin')
             ->assertOk()
-            ->assertSee('aria-label="Notifikasi"', false);
+            ->assertSee('aria-label="Notifikasi"', false)
+            ->assertSee('fi-modal-slide-over', false)
+            ->assertSee('notification-panel', false)
+            ->assertSee('Lihat semua notifikasi');
     }
 
     public function test_student_notification_page_and_bell_render(): void
@@ -66,7 +69,10 @@ class NotificationUiTest extends TestCase
 
         $this->get('/portal')
             ->assertOk()
-            ->assertSee('aria-label="Notifikasi"', false);
+            ->assertSee('aria-label="Notifikasi"', false)
+            ->assertSee('fi-modal-slide-over', false)
+            ->assertSee('notification-panel', false)
+            ->assertSee('Lihat semua notifikasi');
     }
 
     public function test_bell_marks_all_notifications_as_read(): void
@@ -75,6 +81,7 @@ class NotificationUiTest extends TestCase
         $student = $this->actingAsStudent();
 
         Livewire::test(NotificationBell::class)
+            ->assertSee('fi-modal-slide-over', false)
             ->assertSee('Notifikasi')
             ->assertSee('Refleksi Psikologi Umum')
             ->assertSee('belum dibaca')
