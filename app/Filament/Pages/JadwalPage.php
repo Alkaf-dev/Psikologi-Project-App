@@ -56,12 +56,15 @@ class JadwalPage extends BaseSheetPage
                     ->label('Hari')
                     ->badge()
                     ->color('gray')
-                    ->sortable(),
+                    ->sortable()
+                    ->alignCenter(),
                 TextColumn::make('start_time')
                     ->label('Mulai')
-                    ->sortable(),
+                    ->sortable()
+                    ->alignCenter(),
                 TextColumn::make('end_time')
-                    ->label('Selesai'),
+                    ->label('Selesai')
+                    ->alignCenter(),
                 TextColumn::make('course_name')
                     ->label('Mata kuliah')
                     ->weight('semibold')

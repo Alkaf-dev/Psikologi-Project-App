@@ -74,7 +74,8 @@ class TugasPage extends BaseSheetPage
                         ->label('Pertemuan')
                         ->badge()
                         ->placeholder('-')
-                        ->sortable(),
+                        ->sortable()
+                        ->alignCenter(),
                 ),
                 $this->spreadsheetColumn(
                     TextColumn::make('title')
@@ -96,7 +97,8 @@ class TugasPage extends BaseSheetPage
                     TextColumn::make('type_label')
                         ->label('Jenis')
                         ->badge()
-                        ->color(fn (string $state): string => $state === 'Kelompok' ? 'info' : 'gray'),
+                        ->color(fn (string $state): string => $state === 'Kelompok' ? 'info' : 'gray')
+                        ->alignCenter(),
                 ),
                 $this->spreadsheetColumn(
                     TextColumn::make('group_name')
@@ -107,26 +109,30 @@ class TugasPage extends BaseSheetPage
                     TextColumn::make('start_at')
                         ->label('Mulai')
                         ->formatStateUsing(fn (?string $state): string => $this->formatDateTime($state))
-                        ->placeholder('-'),
+                        ->placeholder('-')
+                        ->alignCenter(),
                 ),
                 $this->spreadsheetColumn(
                     TextColumn::make('deadline')
                         ->label('Deadline')
                         ->description(fn (array $record): string => (string) ($record['deadline_label'] ?? ''))
                         ->formatStateUsing(fn (?string $state): string => $this->formatDateTime($state))
-                        ->sortable(),
+                        ->sortable()
+                        ->alignCenter(),
                 ),
                 $this->spreadsheetColumn(
                     TextColumn::make('status_label')
                         ->label('Status')
                         ->badge()
-                        ->color(fn (array $record): string => TaskStatus::color($record['status'] ?? '')),
+                        ->color(fn (array $record): string => TaskStatus::color($record['status'] ?? ''))
+                        ->alignCenter(),
                 ),
                 $this->spreadsheetColumn(
                     TextColumn::make('submission_count')
                         ->label('Dikumpulkan')
                         ->badge()
-                        ->color('success'),
+                        ->color('success')
+                        ->alignCenter(),
                 ),
             ])
             ->headerActions([$this->createAction()])

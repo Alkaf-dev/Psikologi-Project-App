@@ -66,7 +66,8 @@ class StudyProgramPage extends BaseSheetPage
                 IconColumn::make('active')
                     ->label('Aktif')
                     ->boolean()
-                    ->sortable(),
+                    ->sortable()
+                    ->alignCenter(),
             ])
             ->headerActions([$this->createAction()])
             ->recordActions([$this->editAction(), $this->deleteAction()])

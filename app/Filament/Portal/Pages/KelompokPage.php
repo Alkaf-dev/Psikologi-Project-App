@@ -76,14 +76,16 @@ class KelompokPage extends BaseSheetPage
                 TextColumn::make('my_role')
                     ->label('Peran saya')
                     ->badge()
-                    ->color(fn (string $state): string => $state === 'Ketua' ? 'success' : 'gray'),
+                    ->color(fn (string $state): string => $state === 'Ketua' ? 'success' : 'gray')
+                    ->alignCenter(),
                 TextColumn::make('leader_name')
                     ->label('Ketua')
                     ->searchable(),
                 TextColumn::make('members_count')
                     ->label('Jumlah anggota')
                     ->badge()
-                    ->color('info'),
+                    ->color('info')
+                    ->alignCenter(),
                 TextColumn::make('member_names')
                     ->label('Anggota')
                     ->wrap(),

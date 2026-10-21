@@ -61,13 +61,15 @@ class MataKuliahPage extends BaseSheetPage
                     ->sortable(),
                 TextColumn::make('credits')
                     ->label('SKS')
-                    ->sortable(),
+                    ->sortable()
+                    ->alignEnd(),
                 TextColumn::make('lecturer')
                     ->label('Dosen')
                     ->searchable(),
                 TextColumn::make('semester')
                     ->label('Semester')
-                    ->sortable(),
+                    ->sortable()
+                    ->alignEnd(),
                 TextColumn::make('class_name')
                     ->label('Kelas')
                     ->sortable(),
@@ -75,7 +77,8 @@ class MataKuliahPage extends BaseSheetPage
                     ->label('Prodi')
                     ->badge()
                     ->searchable()
-                    ->wrap(),
+                    ->wrap()
+                    ->alignCenter(),
             ])
             ->headerActions([$this->createAction()])
             ->recordActions([$this->editAction(), $this->deleteAction()])

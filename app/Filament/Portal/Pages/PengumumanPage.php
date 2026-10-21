@@ -68,7 +68,8 @@ class PengumumanPage extends BaseSheetPage
                     ->formatStateUsing(fn (?string $state): string => $state
                         ? Carbon::parse($state)->translatedFormat('d M Y H:i')
                         : '-')
-                    ->sortable(),
+                    ->sortable()
+                    ->alignCenter(),
                 TextColumn::make('author_name')
                     ->label('Dari'),
             ])

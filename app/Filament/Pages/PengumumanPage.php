@@ -70,19 +70,22 @@ class PengumumanPage extends BaseSheetPage
                 TextColumn::make('audience_label')
                     ->label('Audiens')
                     ->badge()
-                    ->color('info'),
+                    ->color('info')
+                    ->alignCenter(),
                 TextColumn::make('prodi_names')
                     ->label('Target Prodi')
                     ->badge()
                     ->color('info')
                     ->searchable()
-                    ->wrap(),
+                    ->wrap()
+                    ->alignCenter(),
                 TextColumn::make('published_at')
                     ->label('Terbit')
                     ->formatStateUsing(fn (?string $state): string => $state
                         ? Carbon::parse($state)->translatedFormat('d M Y H:i')
                         : 'Draft')
-                    ->sortable(),
+                    ->sortable()
+                    ->alignCenter(),
                 TextColumn::make('author_name')
                     ->label('Penulis')
                     ->placeholder('-'),

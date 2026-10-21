@@ -83,7 +83,8 @@ class UserPage extends BaseSheetPage
                     ->badge()
                     ->formatStateUsing(fn (string $state): string => UserRole::tryFromLegacy($state)?->label() ?? $state)
                     ->color(fn (string $state): string => UserRole::tryFromLegacy($state)?->color() ?? 'gray')
-                    ->sortable(),
+                    ->sortable()
+                    ->alignCenter(),
                 TextColumn::make('prodi_name')
                     ->label('Prodi')
                     ->searchable()
@@ -96,14 +97,16 @@ class UserPage extends BaseSheetPage
                 TextColumn::make('cohort')
                     ->label('Angkatan')
                     ->placeholder('-')
-                    ->sortable(),
+                    ->sortable()
+                    ->alignEnd(),
                 TextColumn::make('phone')
                     ->label('WhatsApp')
                     ->placeholder('-'),
                 IconColumn::make('active')
                     ->label('Aktif')
                     ->boolean()
-                    ->sortable(),
+                    ->sortable()
+                    ->alignCenter(),
             ])
             ->headerActions([
                 $this->createAction(),

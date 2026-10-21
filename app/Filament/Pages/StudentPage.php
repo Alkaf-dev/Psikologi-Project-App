@@ -85,14 +85,16 @@ class StudentPage extends BaseSheetPage
                 TextColumn::make('cohort')
                     ->label('Angkatan')
                     ->placeholder('-')
-                    ->sortable(),
+                    ->sortable()
+                    ->alignEnd(),
                 TextColumn::make('phone')
                     ->label('WhatsApp')
                     ->placeholder('-'),
                 IconColumn::make('active')
                     ->label('Aktif')
                     ->boolean()
-                    ->sortable(),
+                    ->sortable()
+                    ->alignCenter(),
             ])
             ->headerActions([
                 $this->createAction(),

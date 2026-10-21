@@ -67,7 +67,8 @@ class KelompokPage extends BaseSheetPage
                 TextColumn::make('members_count')
                     ->label('Anggota')
                     ->badge()
-                    ->color('info'),
+                    ->color('info')
+                    ->alignCenter(),
                 TextColumn::make('member_names')
                     ->label('Daftar anggota')
                     ->limit(70)

@@ -109,7 +109,8 @@ class TugasPage extends BaseSheetPage
                         ->label('Pertemuan')
                         ->badge()
                         ->placeholder('-')
-                        ->sortable(),
+                        ->sortable()
+                        ->alignCenter(),
                 ),
                 $this->spreadsheetColumn(
                     TextColumn::make('title')
@@ -131,20 +132,23 @@ class TugasPage extends BaseSheetPage
                     TextColumn::make('start_at')
                         ->label('Mulai')
                         ->formatStateUsing(fn (?string $state): string => $this->formatDateTime($state))
-                        ->placeholder('-'),
+                        ->placeholder('-')
+                        ->alignCenter(),
                 ),
                 $this->spreadsheetColumn(
                     TextColumn::make('deadline')
                         ->label('Deadline')
                         ->description(fn (array $record): string => (string) ($record['deadline_label'] ?? ''))
                         ->formatStateUsing(fn (?string $state): string => $this->formatDateTime($state))
-                        ->sortable(),
+                        ->sortable()
+                        ->alignCenter(),
                 ),
                 $this->spreadsheetColumn(
                     TextColumn::make('status_label')
                         ->label('Status')
                         ->badge()
-                        ->color(fn (array $record): string => TaskStatus::color($record['status'] ?? '')),
+                        ->color(fn (array $record): string => TaskStatus::color($record['status'] ?? ''))
+                        ->alignCenter(),
                 ),
                 $this->spreadsheetColumn(
                     TextColumn::make('submission_label')
@@ -156,13 +160,15 @@ class TugasPage extends BaseSheetPage
                             'late' => 'danger',
                             'submitted' => 'info',
                             default => 'warning',
-                        }),
+                        })
+                        ->alignCenter(),
                 ),
                 $this->spreadsheetColumn(
                     TextColumn::make('submission_grade')
                         ->label('Nilai')
                         ->badge()
-                        ->placeholder('-'),
+                        ->placeholder('-')
+                        ->alignCenter(),
                 ),
             ])
             ->recordActions([

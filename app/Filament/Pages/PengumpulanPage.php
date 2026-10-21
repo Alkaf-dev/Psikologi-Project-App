@@ -81,7 +81,8 @@ class PengumpulanPage extends BaseSheetPage
                         'graded' => 'success',
                         'late' => 'danger',
                         default => 'warning',
-                    }),
+                    })
+                    ->alignCenter(),
                 TextColumn::make('link')
                     ->label('Tautan')
                     ->url(fn (array $record): ?string => filled($record['link'] ?? null) ? (string) $record['link'] : null, true)
@@ -90,13 +91,15 @@ class PengumpulanPage extends BaseSheetPage
                 TextColumn::make('grade')
                     ->label('Nilai')
                     ->badge()
-                    ->placeholder('-'),
+                    ->placeholder('-')
+                    ->alignCenter(),
                 TextColumn::make('submitted_at')
                     ->label('Dikumpulkan')
                     ->formatStateUsing(fn (?string $state): string => $state
                         ? Carbon::parse($state)->translatedFormat('d M Y H:i')
                         : '-')
-                    ->sortable(),
+                    ->sortable()
+                    ->alignCenter(),
             ])
             ->headerActions([$this->createAction()])
             ->recordActions([
