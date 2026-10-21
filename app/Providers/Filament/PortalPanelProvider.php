@@ -12,7 +12,6 @@ use Filament\Navigation\NavigationGroup;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
-use Filament\Support\Icons\Heroicon;
 use Filament\Widgets\AccountWidget;
 use Filament\Widgets\FilamentInfoWidget;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
@@ -36,9 +35,9 @@ class PortalPanelProvider extends PanelProvider
                 'primary' => Color::Teal,
             ])
             ->navigationGroups([
-                NavigationGroup::make('Akademik')->icon(Heroicon::OutlinedAcademicCap),
-                NavigationGroup::make('Informasi')->icon(Heroicon::OutlinedMegaphone),
-                NavigationGroup::make('Akun')->icon(Heroicon::OutlinedUsers),
+                NavigationGroup::make('Akademik'),
+                NavigationGroup::make('Informasi'),
+                NavigationGroup::make('Akun'),
             ])
             ->discoverResources(in: app_path('Filament/Portal/Resources'), for: 'App\Filament\Portal\Resources')
             ->discoverPages(in: app_path('Filament/Portal/Pages'), for: 'App\Filament\Portal\Pages')

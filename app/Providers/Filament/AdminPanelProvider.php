@@ -12,7 +12,6 @@ use Filament\Navigation\NavigationGroup;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
-use Filament\Support\Icons\Heroicon;
 use Filament\Widgets\AccountWidget;
 use Filament\Widgets\FilamentInfoWidget;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
@@ -37,11 +36,11 @@ class AdminPanelProvider extends PanelProvider
                 'primary' => Color::Indigo,
             ])
             ->navigationGroups([
-                NavigationGroup::make('Akademik')->icon(Heroicon::OutlinedAcademicCap),
-                NavigationGroup::make('Administrasi')->icon(Heroicon::OutlinedIdentification),
-                NavigationGroup::make('Konten')->icon(Heroicon::OutlinedMegaphone),
-                NavigationGroup::make('Akun')->icon(Heroicon::OutlinedUsers),
-                NavigationGroup::make('Sistem')->icon(Heroicon::OutlinedCog6Tooth),
+                NavigationGroup::make('Akademik'),
+                NavigationGroup::make('Administrasi'),
+                NavigationGroup::make('Konten'),
+                NavigationGroup::make('Akun'),
+                NavigationGroup::make('Sistem'),
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
