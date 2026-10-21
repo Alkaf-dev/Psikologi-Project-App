@@ -22,6 +22,8 @@ Portal akademik **Prodi Psikologi STIT Muhammadiyah Kediri** berbasis **Laravel 
 - Melihat nilai dan feedback dosen.
 - Daftar kelompok beserta peran, ketua, dan anggota, hanya dari mata kuliah Prodi mahasiswa.
 - Pengumuman untuk mahasiswa, termasuk target Prodi tertentu atau semua Prodi.
+- Lonceng notifikasi dan halaman Notifikasi untuk tugas aktif serta jadwal hari ini dan besok.
+- Status baca notifikasi tersimpan per akun di tab `notification_reads`.
 - Profil dan perubahan password.
 
 ### Panel admin
@@ -37,6 +39,7 @@ Portal akademik **Prodi Psikologi STIT Muhammadiyah Kediri** berbasis **Laravel 
 - Role user: **Mahasiswa**, **Super Admin**, dan **PJMK**.
 - PJMK memiliki akses panel yang sama dengan Super Admin, tetapi role tetap ditampilkan sebagai PJMK.
 - Reset password user.
+- Lonceng dan halaman Notifikasi global untuk tugas aktif serta jadwal hari ini dan besok.
 - Pengaturan identitas program, kontak, dan konten halaman publik.
 - Penghapusan menggunakan soft delete; riwayat tetap ada di spreadsheet.
 
@@ -178,10 +181,13 @@ Header setiap tab didefinisikan di `config/sheets.php`:
 | `submissions` | Pengumpulan, nilai, dan feedback; tugas kelompok memakai satu baris per `task_id` + `group_id` |
 | `announcements` | Pengumuman, termasuk `prodi_ids` untuk target Prodi mahasiswa |
 | `settings` | Pengaturan aplikasi |
+| `notification_reads` | Status baca notifikasi per user dan kunci notifikasi |
 
 Jangan mengubah urutan atau nama header tanpa menyesuaikan `config/sheets.php` dan data yang sudah ada. `prodi_id` pada `users` dan `prodi_ids` pada `courses`/`announcements` merujuk ke `study_programs.id`. Kolom-kolom ini ditambahkan di akhir header agar data lama tidak bergeser. `prodi_ids` berisi beberapa ULID yang dipisahkan koma; kosong pada pengumuman mahasiswa berarti semua Prodi.
 
 `tasks.group_ids` berisi beberapa ID kelompok yang dipisahkan koma. Kolom `tasks.group_id` lama tetap dipertahankan untuk kompatibilitas. Status tugas: `draft` (tidak tampil di portal), `active` (tampil dan dapat dikumpulkan), serta `completed` (tampil tetapi read-only). Pengumpulan kelompok disimpan sekali per kombinasi `task_id` dan `group_id`; `user_id` pada baris tersebut adalah anggota yang menjadi perwakilan.
+
+Notifikasi tidak disimpan sebagai daftar event. Aplikasi menghitung notifikasi langsung dari tugas aktif dan jadwal, lalu menyimpan hanya status baca per akun di `notification_reads`. Kunci tugas memakai `task:{id}:{timestamp deadline}`, sedangkan jadwal memakai `schedule:{id}:{tanggal}`; perubahan deadline atau pergantian hari dapat menghasilkan notifikasi baru. Tugas yang ditampilkan adalah tugas `active` dengan deadline pada pekan berjalan atau setelahnya, tanpa deadline tidak ditampilkan. Jadwal yang ditampilkan hanya jadwal hari ini dan besok.
 
 ## Perintah Penting
 
@@ -221,6 +227,9 @@ Halaman admin dan portal memakai slug default Filament, misalnya `/admin/student
 - `app/Support/ProdiAssignments.php`: parsing, validasi, dan label daftar Prodi pada kolom `prodi_ids`.
 - `app/Support/TaskGroups.php`: parsing, validasi, dan label kelompok pada kolom `group_ids`.
 - `app/Support/TaskStatus.php`: normalisasi dan label status tugas `Draf`/`Aktif`/`Selesai`.
+- `app/Support/NotificationCenter.php`: perhitungan notifikasi tugas dan jadwal per user.
+- `app/Repositories/NotificationReadRepository.php`: status baca notifikasi di sheet.
+- `app/Livewire/NotificationBell.php`: lonceng notifikasi pada topbar kedua panel.
 - `app/Auth/SheetUser.php` dan `SheetUserProvider.php`: autentikasi tanpa Eloquent, termasuk validasi Prodi dan role.
 - `app/Enums/UserRole.php`: definisi role Mahasiswa, Super Admin, dan PJMK.
 - `app/Filament/Support/BaseSheetPage.php`: halaman tabel Filament berbasis array record.
@@ -238,8 +247,8 @@ Setiap pembacaan sheet di-cache selama `SHEETS_CACHE_TTL` detik (default 60). Se
 - Google Sheets bukan database transaksional. Tidak ada row locking; penulisan bersamaan dapat saling menimpa.
 - Pengumpulan tugas berupa tautan; aplikasi tidak mengunggah atau menyimpan file.
 - Pengumpulan kelompok memakai satu perwakilan per kelompok. Perwakilan adalah anggota pertama yang mengumpulkan dan hanya dia yang dapat memperbarui sampai deadline.
-- Tidak ada registrasi publik, OAuth, email notifikasi, atau remember-me.
-- Kuota Google Sheets API berlaku; cache membantu mengurangi pembacaan.
+- Tidak ada registrasi publik, OAuth, atau remember-me. Notifikasi hanya tersedia di dalam aplikasi; tidak ada email, WhatsApp, atau browser push.
+- Kuota Google Sheets API berlaku; cache membantu mengurangi pembacaan. Notifikasi dihitung ulang setiap kali halaman dimuat.
 - Pengumuman publik hanya menampilkan audiens `all`.
 - Panel admin dan portal memakai halaman custom, bukan Filament Resource Eloquent.
 - Admin dapat melihat data semua Prodi; pembatasan Prodi hanya berlaku di portal mahasiswa.
@@ -262,6 +271,7 @@ Test menggunakan `LocalSheetGateway` dengan file JSON sementara. Test tidak meng
 - CRUD user untuk seluruh role, pendataan mahasiswa, dan proteksi admin aktif terakhir.
 - CRUD mata kuliah multi-Prodi dan pengumuman dengan target Prodi.
 - Filter jadwal, tugas, kelompok, dan pengumuman portal berdasarkan Prodi serta kelas.
+- Notifikasi tugas/jadwal, scope per user, tautan rapat online, dan status baca.
 - Tugas multi-kelompok, status draf/selesai, pengumpulan kelompok bersama, dan pembatasan revisi setelah deadline.
 - Migrasi header lama, role `admin`, dan mata kuliah lama tanpa menggeser data.
 - Render seluruh halaman admin dan portal.

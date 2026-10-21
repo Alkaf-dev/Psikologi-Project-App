@@ -42,6 +42,7 @@ class FilamentPagesTest extends TestCase
             '/admin/tugas-page' => 'Manajemen Tugas',
             '/admin/pengumpulan-page' => 'Pengumpulan & Penilaian',
             '/admin/pengumuman-page' => 'Pengumuman',
+            '/admin/notifikasi-page' => 'Notifikasi',
             '/admin/pengaturan-page' => 'Pengaturan Aplikasi',
         ] as $url => $text) {
             $this->get($url)->assertOk()->assertSee($text);
@@ -99,6 +100,7 @@ class FilamentPagesTest extends TestCase
             '/portal/tugas-page' => 'Tugas Saya',
             '/portal/kelompok-page' => 'Kelompok Saya',
             '/portal/pengumuman-page' => 'Pengumuman',
+            '/portal/notifikasi-page' => 'Notifikasi',
             '/portal/profil-page' => 'Profil Saya',
         ] as $url => $text) {
             $this->get($url)->assertOk()->assertSee($text);

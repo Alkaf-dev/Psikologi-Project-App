@@ -109,6 +109,11 @@ return [
             'key', 'value', 'updated_at',
         ],
 
+        'notification_reads' => [
+            'id', 'user_id', 'notification_key', 'read_at',
+            'created_at', 'updated_at', 'deleted_at',
+        ],
+
     ],
 
 ];

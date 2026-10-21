@@ -167,6 +167,22 @@ class SetupSheetsTest extends TestCase
         $this->assertSame('Ruang Lama', $details['location_label']);
     }
 
+    public function test_setup_creates_notification_reads_tab(): void
+    {
+        $this->artisan('sheets:setup', ['--demo' => true])->assertSuccessful();
+
+        $gateway = app(SpreadsheetGateway::class);
+
+        $this->assertInstanceOf(LocalSheetGateway::class, $gateway);
+
+        $rows = $gateway->read('notification_reads');
+
+        $this->assertSame(
+            (array) config('sheets.tabs.notification_reads'),
+            array_values($rows[0]),
+        );
+    }
+
     public function test_setup_demo_creates_super_admin_pjmk_and_student_accounts(): void
     {
         $this->artisan('sheets:setup', ['--demo' => true])->assertSuccessful();
