@@ -30,6 +30,7 @@ class PortalPanelProvider extends PanelProvider
         return $panel
             ->id('portal')
             ->path('portal')
+            ->spa()
             ->brandName(config('app.name'))
             ->login(Login::class)
             ->sidebarCollapsibleOnDesktop()

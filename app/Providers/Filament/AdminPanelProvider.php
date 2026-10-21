@@ -31,6 +31,7 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
+            ->spa()
             ->brandName(config('app.name'))
             ->login(Login::class)
             ->sidebarCollapsibleOnDesktop()
