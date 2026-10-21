@@ -13,7 +13,7 @@ Portal akademik **Prodi Psikologi STIT Muhammadiyah Kediri** berbasis **Laravel 
 ### Portal mahasiswa
 - Login dengan Prodi, email/NIM, dan password.
 - Dashboard berisi ringkasan tugas, jadwal, kelompok, dan pengumuman sesuai Prodi.
-- Jadwal kuliah sesuai Prodi dan kelas mahasiswa.
+- Jadwal kuliah sesuai Prodi dan kelas mahasiswa, termasuk ruangan atau tautan Zoom/Google Meet untuk sesi online.
 - Daftar tugas individu dan kelompok hanya dari mata kuliah Prodi mahasiswa.
 - Tugas dapat memuat pertemuan, materi, banyak kelompok, tanggal mulai, deadline, keterangan deadline, link pengumpulan, dan status.
 - Pengumpulan tugas berupa tautan, dengan status `submitted`, `late`, atau `graded`.
@@ -29,7 +29,7 @@ Portal akademik **Prodi Psikologi STIT Muhammadiyah Kediri** berbasis **Laravel 
 - Menu diurutkan dari yang paling operasional: **Akademik**, **Administrasi**, **Konten**, lalu **Akun** dan **Sistem**.
 - Menu **Administrasi** berisi pendataan mahasiswa dan CRUD Program Studi.
 - Pendataan mahasiswa melalui **Administrasi > Mahasiswa**: Prodi, Nama Mahasiswa, NIM, email, kelas, angkatan, WhatsApp, dan akun login.
-- CRUD user, mata kuliah, jadwal, kelompok, tugas, pengumpulan/nilai, dan pengumuman.
+- CRUD user, mata kuliah, jadwal offline/online (Zoom atau Google Meet), kelompok, tugas, pengumpulan/nilai, dan pengumuman.
 - Form tugas mendukung pertemuan, instruksi, materi, banyak kelompok, tanggal mulai, deadline, keterangan deadline, link pengumpulan, dan status `Draf`/`Aktif`/`Selesai`.
 - Mata kuliah dapat ditetapkan ke beberapa Prodi; satu baris mata kuliah tetap memiliki satu kelas.
 - Pengumuman mahasiswa dapat ditargetkan ke Prodi tertentu atau semua Prodi.
@@ -171,7 +171,7 @@ Header setiap tab didefinisikan di `config/sheets.php`:
 | `study_programs` | Daftar Prodi, kode, jenjang, dan status aktif |
 | `users` | Akun Mahasiswa, Super Admin, dan PJMK, termasuk `prodi_id` dan `role` |
 | `courses` | Mata kuliah, termasuk `prodi_ids` berisi daftar ID Prodi |
-| `schedules` | Jadwal kuliah |
+| `schedules` | Jadwal kuliah, mode offline/online, platform, dan tautan rapat |
 | `groups` | Kelompok mahasiswa |
 | `group_members` | Anggota dan ketua kelompok |
 | `tasks` | Tugas individu/kelompok, termasuk `group_ids`, pertemuan, materi, status, dan link pengumpulan |

@@ -160,6 +160,9 @@ class DemoData
                 'end_time' => '10:30',
                 'room' => 'Ruang A201',
                 'class_name' => 'Psikologi A',
+                'mode' => 'offline',
+                'platform' => '',
+                'meeting_link' => '',
             ]);
             $this->schedules->create([
                 'course_id' => $psi201['id'],
@@ -168,22 +171,31 @@ class DemoData
                 'end_time' => '12:30',
                 'room' => 'Ruang A203',
                 'class_name' => 'Psikologi A',
+                'mode' => 'offline',
+                'platform' => '',
+                'meeting_link' => '',
             ]);
             $this->schedules->create([
                 'course_id' => $psi301['id'],
                 'day' => 'Kamis',
                 'start_time' => '13:00',
                 'end_time' => '15:00',
-                'room' => 'Lab Riset',
+                'room' => '',
                 'class_name' => 'Psikologi A',
+                'mode' => 'online',
+                'platform' => 'zoom',
+                'meeting_link' => 'https://zoom.us/j/1234567890',
             ]);
             $this->schedules->create([
                 'course_id' => $psi102['id'],
                 'day' => 'Jumat',
                 'start_time' => '08:00',
                 'end_time' => '10:30',
-                'room' => 'Ruang B101',
+                'room' => '',
                 'class_name' => 'Psikologi B',
+                'mode' => 'online',
+                'platform' => 'google_meet',
+                'meeting_link' => 'https://meet.google.com/abc-defg-hij',
             ]);
         }
 

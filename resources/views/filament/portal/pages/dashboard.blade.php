@@ -60,7 +60,16 @@
                         <div>
                             <div style="font-weight: 600;">{{ $schedule['course_name'] }}</div>
                             <div style="font-size: .8rem; color: rgb(var(--gray-500));">
-                                {{ $schedule['start_time'] }} - {{ $schedule['end_time'] }} &middot; {{ $schedule['room'] }}
+                                {{ $schedule['start_time'] }} - {{ $schedule['end_time'] }} &middot;
+                                @if (($schedule['mode'] ?? 'offline') === 'online')
+                                    Online via {{ $schedule['platform_label'] ?: 'tautan rapat' }}
+                                    @if (filled($schedule['meeting_link'] ?? null))
+                                        &middot;
+                                        <x-filament::link :href="$schedule['meeting_link']" target="_blank">Gabung</x-filament::link>
+                                    @endif
+                                @else
+                                    {{ $schedule['location_label'] }}
+                                @endif
                             </div>
                         </div>
                     </div>

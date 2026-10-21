@@ -76,7 +76,7 @@ return [
 
         'schedules' => [
             'id', 'course_id', 'day', 'start_time', 'end_time', 'room', 'class_name',
-            'created_at', 'updated_at', 'deleted_at',
+            'created_at', 'updated_at', 'deleted_at', 'mode', 'platform', 'meeting_link',
         ],
 
         'groups' => [

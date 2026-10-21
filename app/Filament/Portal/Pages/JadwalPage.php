@@ -21,7 +21,7 @@ class JadwalPage extends BaseSheetPage
 
     protected static ?int $navigationSort = 1;
 
-    protected array $searchableColumns = ['day', 'course_name', 'room', 'class_name'];
+    protected array $searchableColumns = ['day', 'course_name', 'room', 'class_name', 'mode_label', 'location_label'];
 
     public function table(Table $table): Table
     {
@@ -69,8 +69,16 @@ class JadwalPage extends BaseSheetPage
                     ->searchable(),
                 TextColumn::make('course_lecturer')
                     ->label('Dosen'),
-                TextColumn::make('room')
-                    ->label('Ruangan'),
+                TextColumn::make('mode_label')
+                    ->label('Mode')
+                    ->badge()
+                    ->color(fn (array $record): string => ($record['mode'] ?? 'offline') === 'online' ? 'info' : 'gray')
+                    ->alignCenter(),
+                TextColumn::make('location_label')
+                    ->label('Ruang / Online')
+                    ->weight('semibold')
+                    ->url(fn (array $record): ?string => ($record['mode'] ?? 'offline') === 'online' && filled($record['meeting_link'] ?? null) ? (string) $record['meeting_link'] : null, true)
+                    ->color(fn (array $record): ?string => ($record['mode'] ?? 'offline') === 'online' ? 'primary' : null),
                 TextColumn::make('class_name')
                     ->label('Kelas'),
             ])

@@ -18,6 +18,16 @@ class ScheduleRepository extends BaseSheetRepository
         'Minggu' => 7,
     ];
 
+    public const MODES = [
+        'offline' => 'Offline',
+        'online' => 'Online',
+    ];
+
+    public const PLATFORMS = [
+        'zoom' => 'Zoom',
+        'google_meet' => 'Google Meet',
+    ];
+
     /**
      * @return Collection<int, array<string, mixed>>
      */
@@ -71,6 +81,24 @@ class ScheduleRepository extends BaseSheetRepository
                 $schedule['course_code'] = $course['code'] ?? '';
                 $schedule['course_lecturer'] = $course['lecturer'] ?? '';
 
+                $mode = self::normalizeMode($schedule['mode'] ?? null);
+                $platform = $mode === 'online'
+                    ? self::normalizePlatform($schedule['platform'] ?? null)
+                    : '';
+                $room = trim((string) ($schedule['room'] ?? ''));
+
+                $schedule['mode'] = $mode;
+                $schedule['mode_label'] = self::MODES[$mode];
+                $schedule['platform'] = $platform;
+                $schedule['platform_label'] = $platform !== '' ? self::PLATFORMS[$platform] : '';
+                $schedule['meeting_link'] = $mode === 'online'
+                    ? trim((string) ($schedule['meeting_link'] ?? ''))
+                    : '';
+                $schedule['room'] = $room;
+                $schedule['location_label'] = $mode === 'online'
+                    ? ($schedule['platform_label'] ?: 'Online')
+                    : ($room !== '' ? $room : '-');
+
                 return $schedule;
             });
     }
@@ -81,5 +109,35 @@ class ScheduleRepository extends BaseSheetRepository
     public static function days(): array
     {
         return array_keys(self::DAYS);
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public static function modes(): array
+    {
+        return self::MODES;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public static function platforms(): array
+    {
+        return self::PLATFORMS;
+    }
+
+    public static function normalizeMode(?string $mode): string
+    {
+        $mode = mb_strtolower(trim((string) $mode));
+
+        return array_key_exists($mode, self::MODES) ? $mode : 'offline';
+    }
+
+    public static function normalizePlatform(?string $platform): string
+    {
+        $platform = str_replace([' ', '-'], '_', mb_strtolower(trim((string) $platform)));
+
+        return array_key_exists($platform, self::PLATFORMS) ? $platform : '';
     }
 }

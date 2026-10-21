@@ -64,7 +64,7 @@
             <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
                 <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-teal-50 text-xl">&#128197;</div>
                 <h3 class="mt-4 text-lg font-semibold text-slate-900">Jadwal Kuliah</h3>
-                <p class="mt-2 text-sm leading-6 text-slate-600">Lihat jadwal kelas, ruangan, dan dosen pengampu tanpa perlu membuka banyak file.</p>
+                <p class="mt-2 text-sm leading-6 text-slate-600">Lihat jadwal kelas, ruangan atau tautan online, dan dosen pengampu tanpa perlu membuka banyak file.</p>
             </div>
             <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
                 <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-sky-50 text-xl">&#128221;</div>

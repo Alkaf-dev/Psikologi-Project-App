@@ -76,6 +76,7 @@ class AdminCreateActionTest extends TestCase
                 'day' => 'Sabtu',
                 'start_time' => '16:00',
                 'end_time' => '17:30',
+                'mode' => 'offline',
                 'room' => 'Ruang Uji',
                 'class_name' => 'Psikologi A',
             ])

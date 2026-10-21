@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Repositories\CourseRepository;
+use App\Repositories\ScheduleRepository;
 use App\Repositories\StudyProgramRepository;
 use App\Repositories\UserRepository;
 use App\Sheets\LocalSheetGateway;
@@ -115,6 +116,55 @@ class SetupSheetsTest extends TestCase
         $this->assertNotNull($program);
         $this->assertNotNull($course);
         $this->assertSame((string) $program['id'], $course['prodi_ids']);
+    }
+
+    public function test_setup_adds_online_schedule_headers_without_moving_room_data(): void
+    {
+        $legacyHeaders = [
+            'id', 'course_id', 'day', 'start_time', 'end_time', 'room', 'class_name',
+            'created_at', 'updated_at', 'deleted_at',
+        ];
+
+        $legacySchedule = [
+            'SCHEDULE-LAMA',
+            'COURSE-LAMA',
+            'Senin',
+            '08:00',
+            '09:40',
+            'Ruang Lama',
+            'Psikologi A',
+            now()->toIso8601String(),
+            now()->toIso8601String(),
+            '',
+        ];
+
+        $gateway = app(SpreadsheetGateway::class);
+
+        $this->assertInstanceOf(LocalSheetGateway::class, $gateway);
+
+        $gateway->seed('schedules', [$legacyHeaders, $legacySchedule]);
+        Cache::flush();
+
+        $this->artisan('sheets:setup', ['--demo' => true])->assertSuccessful();
+
+        $rows = $gateway->read('schedules');
+
+        $this->assertSame('mode', $rows[0][10]);
+        $this->assertSame('platform', $rows[0][11]);
+        $this->assertSame('meeting_link', $rows[0][12]);
+        $this->assertSame('Ruang Lama', $rows[1][5]);
+
+        $schedule = app(ScheduleRepository::class)->find('SCHEDULE-LAMA');
+
+        $this->assertNotNull($schedule);
+
+        $details = app(ScheduleRepository::class)
+            ->withCourse(collect([$schedule]))
+            ->first();
+
+        $this->assertNotNull($details);
+        $this->assertSame('offline', $details['mode']);
+        $this->assertSame('Ruang Lama', $details['location_label']);
     }
 
     public function test_setup_demo_creates_super_admin_pjmk_and_student_accounts(): void

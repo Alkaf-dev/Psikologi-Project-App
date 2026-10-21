@@ -11,6 +11,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\TimePicker;
 use Filament\Notifications\Notification;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -27,7 +28,7 @@ class JadwalPage extends BaseSheetPage
 
     protected static ?int $navigationSort = 2;
 
-    protected array $searchableColumns = ['day', 'course_name', 'room', 'class_name'];
+    protected array $searchableColumns = ['day', 'course_name', 'room', 'class_name', 'mode_label', 'location_label'];
 
     public function table(Table $table): Table
     {
@@ -69,9 +70,16 @@ class JadwalPage extends BaseSheetPage
                     ->label('Mata kuliah')
                     ->weight('semibold')
                     ->searchable(),
-                TextColumn::make('room')
-                    ->label('Ruangan')
-                    ->searchable(),
+                TextColumn::make('mode_label')
+                    ->label('Mode')
+                    ->badge()
+                    ->color(fn (array $record): string => ($record['mode'] ?? 'offline') === 'online' ? 'info' : 'gray')
+                    ->alignCenter(),
+                TextColumn::make('location_label')
+                    ->label('Ruang / Online')
+                    ->weight('semibold')
+                    ->url(fn (array $record): ?string => ($record['mode'] ?? 'offline') === 'online' && filled($record['meeting_link'] ?? null) ? (string) $record['meeting_link'] : null, true)
+                    ->color(fn (array $record): ?string => ($record['mode'] ?? 'offline') === 'online' ? 'primary' : null),
                 TextColumn::make('class_name')
                     ->label('Kelas')
                     ->sortable(),
@@ -93,6 +101,7 @@ class JadwalPage extends BaseSheetPage
             ->modalWidth('2xl')
             ->schema($this->formSchema())
             ->action(function (array $data): void {
+                $data = $this->prepareScheduleData($data);
                 app(ScheduleRepository::class)->create($data);
 
                 $this->resetTable();
@@ -112,6 +121,7 @@ class JadwalPage extends BaseSheetPage
             ->fillForm(fn (array $record): array => $record)
             ->schema($this->formSchema())
             ->action(function (array $data, array $record): void {
+                $data = $this->prepareScheduleData($data);
                 app(ScheduleRepository::class)->update((string) $record['id'], $data);
 
                 $this->resetTable();
@@ -160,15 +170,58 @@ class JadwalPage extends BaseSheetPage
                 ->label('Jam selesai')
                 ->seconds(false)
                 ->required(),
+            Select::make('mode')
+                ->label('Mode perkuliahan')
+                ->options(ScheduleRepository::modes())
+                ->default('offline')
+                ->live()
+                ->required(),
             TextInput::make('room')
                 ->label('Ruangan')
-                ->required()
+                ->visible(fn (Get $get): bool => ($get('mode') ?? 'offline') !== 'online')
+                ->required(fn (Get $get): bool => ($get('mode') ?? 'offline') !== 'online')
                 ->maxLength(60),
+            Select::make('platform')
+                ->label('Platform online')
+                ->options(ScheduleRepository::platforms())
+                ->placeholder('Pilih platform')
+                ->visible(fn (Get $get): bool => $get('mode') === 'online')
+                ->required(fn (Get $get): bool => $get('mode') === 'online'),
+            TextInput::make('meeting_link')
+                ->label('Tautan Zoom / Google Meet')
+                ->url()
+                ->maxLength(500)
+                ->visible(fn (Get $get): bool => $get('mode') === 'online')
+                ->required(fn (Get $get): bool => $get('mode') === 'online')
+                ->helperText('Tempel tautan rapat Zoom atau Google Meet.'),
             TextInput::make('class_name')
                 ->label('Kelas')
                 ->required()
                 ->maxLength(50)
                 ->datalist(fn (): array => app(UserRepository::class)->classNames()),
         ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    protected function prepareScheduleData(array $data): array
+    {
+        $mode = ScheduleRepository::normalizeMode($data['mode'] ?? null);
+        $data['mode'] = $mode;
+
+        if ($mode === 'online') {
+            $data['room'] = '';
+            $data['platform'] = ScheduleRepository::normalizePlatform($data['platform'] ?? null);
+            $data['meeting_link'] = trim((string) ($data['meeting_link'] ?? ''));
+
+            return $data;
+        }
+
+        $data['platform'] = '';
+        $data['meeting_link'] = '';
+
+        return $data;
     }
 }

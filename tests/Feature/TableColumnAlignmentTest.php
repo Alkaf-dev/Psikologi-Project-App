@@ -58,9 +58,11 @@ class TableColumnAlignmentTest extends TestCase
             ],
             JadwalPage::class => [
                 'course_name' => null,
+                'location_label' => null,
                 'day' => Alignment::Center,
                 'start_time' => Alignment::Center,
                 'end_time' => Alignment::Center,
+                'mode_label' => Alignment::Center,
             ],
             KelompokPage::class => [
                 'name' => null,
@@ -119,9 +121,11 @@ class TableColumnAlignmentTest extends TestCase
             ],
             PortalJadwalPage::class => [
                 'course_name' => null,
+                'location_label' => null,
                 'day' => Alignment::Center,
                 'start_time' => Alignment::Center,
                 'end_time' => Alignment::Center,
+                'mode_label' => Alignment::Center,
             ],
             PortalKelompokPage::class => [
                 'name' => null,
