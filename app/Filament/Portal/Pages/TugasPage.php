@@ -104,61 +104,73 @@ class TugasPage extends BaseSheetPage
                 );
             })
             ->columns([
-                TextColumn::make('meeting_number')
-                    ->label('Pertemuan')
-                    ->badge()
-                    ->placeholder('-')
-                    ->sortable()
-                    ->extraHeaderAttributes($this->columnDividerAttributes())
-                    ->extraCellAttributes($this->columnDividerAttributes()),
-                TextColumn::make('title')
-                    ->label('Tugas')
-                    ->weight('semibold')
-                    ->color('primary')
-                    ->description(fn (array $record): string => (string) $record['course_name'])
-                    ->action($this->detailAction())
-                    ->tooltip('Klik untuk melihat rincian')
-                    ->searchable()
-                    ->wrap()
-                    ->extraHeaderAttributes($this->columnDividerAttributes())
-                    ->extraCellAttributes($this->columnDividerAttributes()),
-                TextColumn::make('group_name')
-                    ->label('Kelompok')
-                    ->wrap(),
-                TextColumn::make('start_at')
-                    ->label('Mulai')
-                    ->formatStateUsing(fn (?string $state): string => $this->formatDateTime($state))
-                    ->placeholder('-'),
-                TextColumn::make('deadline')
-                    ->label('Deadline')
-                    ->description(fn (array $record): string => (string) ($record['deadline_label'] ?? ''))
-                    ->formatStateUsing(fn (?string $state): string => $this->formatDateTime($state))
-                    ->sortable(),
-                TextColumn::make('status_label')
-                    ->label('Status')
-                    ->badge()
-                    ->color(fn (array $record): string => TaskStatus::color($record['status'] ?? '')),
-                TextColumn::make('submission_label')
-                    ->label('Pengumpulan')
-                    ->badge()
-                    ->description(fn (array $record): string => (string) ($record['submission_by_label'] ?? ''))
-                    ->color(fn (array $record): string => match ($record['submission_status']) {
-                        'graded' => 'success',
-                        'late' => 'danger',
-                        'submitted' => 'info',
-                        default => 'warning',
-                    }),
-                TextColumn::make('submission_grade')
-                    ->label('Nilai')
-                    ->badge()
-                    ->placeholder('-'),
+                $this->spreadsheetColumn(
+                    TextColumn::make('meeting_number')
+                        ->label('Pertemuan')
+                        ->badge()
+                        ->placeholder('-')
+                        ->sortable(),
+                ),
+                $this->spreadsheetColumn(
+                    TextColumn::make('title')
+                        ->label('Tugas')
+                        ->weight('semibold')
+                        ->color('primary')
+                        ->description(fn (array $record): string => (string) $record['course_name'])
+                        ->action($this->detailAction())
+                        ->tooltip('Klik untuk melihat rincian')
+                        ->searchable()
+                        ->wrap(),
+                ),
+                $this->spreadsheetColumn(
+                    TextColumn::make('group_name')
+                        ->label('Kelompok')
+                        ->wrap(),
+                ),
+                $this->spreadsheetColumn(
+                    TextColumn::make('start_at')
+                        ->label('Mulai')
+                        ->formatStateUsing(fn (?string $state): string => $this->formatDateTime($state))
+                        ->placeholder('-'),
+                ),
+                $this->spreadsheetColumn(
+                    TextColumn::make('deadline')
+                        ->label('Deadline')
+                        ->description(fn (array $record): string => (string) ($record['deadline_label'] ?? ''))
+                        ->formatStateUsing(fn (?string $state): string => $this->formatDateTime($state))
+                        ->sortable(),
+                ),
+                $this->spreadsheetColumn(
+                    TextColumn::make('status_label')
+                        ->label('Status')
+                        ->badge()
+                        ->color(fn (array $record): string => TaskStatus::color($record['status'] ?? '')),
+                ),
+                $this->spreadsheetColumn(
+                    TextColumn::make('submission_label')
+                        ->label('Pengumpulan')
+                        ->badge()
+                        ->description(fn (array $record): string => (string) ($record['submission_by_label'] ?? ''))
+                        ->color(fn (array $record): string => match ($record['submission_status']) {
+                            'graded' => 'success',
+                            'late' => 'danger',
+                            'submitted' => 'info',
+                            default => 'warning',
+                        }),
+                ),
+                $this->spreadsheetColumn(
+                    TextColumn::make('submission_grade')
+                        ->label('Nilai')
+                        ->badge()
+                        ->placeholder('-'),
+                ),
             ])
             ->recordActions([
                 $this->detailAction(),
                 $this->submitAction(),
                 $this->feedbackAction(),
             ])
-            ->striped()
+            ->recordAction('detail')
             ->defaultSort('deadline')
             ->defaultPaginationPageOption(10)
             ->emptyStateHeading('Belum ada tugas')
@@ -300,16 +312,6 @@ class TugasPage extends BaseSheetPage
                 'grade' => $record['submission_grade'] ?? null,
                 'feedback' => (string) ($record['submission_feedback'] ?? ''),
             ]));
-    }
-
-    /**
-     * @return array<string, string>
-     */
-    protected function columnDividerAttributes(): array
-    {
-        return [
-            'style' => 'border-inline-end: 1px solid rgba(115, 115, 115, .22);',
-        ];
     }
 
     protected function formatDateTime(?string $value): string

@@ -78,6 +78,7 @@ class AdminActionMountTest extends TestCase
             [KelompokPage::class, 'edit', (string) $group['id']],
             [KelompokPage::class, 'delete', (string) $group['id']],
             [TugasPage::class, 'create', null],
+            [TugasPage::class, 'detail', (string) $task['id']],
             [TugasPage::class, 'edit', (string) $task['id']],
             [TugasPage::class, 'delete', (string) $task['id']],
             [PengumpulanPage::class, 'create', null],
@@ -95,6 +96,33 @@ class AdminActionMountTest extends TestCase
         }
 
         $this->assertTrue(true);
+    }
+
+    public function test_admin_task_detail_modal_shows_full_instructions(): void
+    {
+        $course = app(CourseRepository::class)->findBy('code', 'PSI101');
+
+        $this->assertNotNull($course);
+
+        $description = 'Instruksi lengkap untuk admin. '.str_repeat('Detail tugas yang harus dibaca sampai selesai. ', 3).'Langkah terakhir.';
+        $task = app(TaskRepository::class)->create([
+            'course_id' => (string) $course['id'],
+            'group_id' => '',
+            'group_ids' => '',
+            'meeting_number' => '2',
+            'title' => 'Tugas Instruksi Panjang Admin',
+            'description' => $description,
+            'type' => 'individu',
+            'deadline' => now()->addDay()->toIso8601String(),
+            'status' => 'active',
+            'created_by' => '',
+        ]);
+
+        Livewire::test(TugasPage::class)
+            ->mountTableAction('detail', (string) $task['id'])
+            ->assertMountedActionModalSee('Instruksi tugas')
+            ->assertMountedActionModalSee($description)
+            ->assertMountedActionModalDontSee('Pengumpulan');
     }
 
     protected function actingAsAdmin(): void

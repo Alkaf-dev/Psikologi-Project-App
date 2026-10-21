@@ -69,50 +69,87 @@ class TugasPage extends BaseSheetPage
                 );
             })
             ->columns([
-                TextColumn::make('meeting_number')
-                    ->label('Pertemuan')
-                    ->badge()
-                    ->placeholder('-')
-                    ->sortable(),
-                TextColumn::make('title')
-                    ->label('Tugas')
-                    ->weight('semibold')
-                    ->description(fn (array $record): string => str((string) ($record['description'] ?? ''))->stripTags()->limit(80)->toString())
-                    ->searchable()
-                    ->wrap(),
-                TextColumn::make('course_name')
-                    ->label('Mata kuliah')
-                    ->searchable(),
-                TextColumn::make('type_label')
-                    ->label('Jenis')
-                    ->badge()
-                    ->color(fn (string $state): string => $state === 'Kelompok' ? 'info' : 'gray'),
-                TextColumn::make('group_name')
-                    ->label('Kelompok')
-                    ->wrap(),
-                TextColumn::make('start_at')
-                    ->label('Mulai')
-                    ->formatStateUsing(fn (?string $state): string => $this->formatDateTime($state))
-                    ->placeholder('-'),
-                TextColumn::make('deadline')
-                    ->label('Deadline')
-                    ->description(fn (array $record): string => (string) ($record['deadline_label'] ?? ''))
-                    ->formatStateUsing(fn (?string $state): string => $this->formatDateTime($state))
-                    ->sortable(),
-                TextColumn::make('status_label')
-                    ->label('Status')
-                    ->badge()
-                    ->color(fn (array $record): string => TaskStatus::color($record['status'] ?? '')),
-                TextColumn::make('submission_count')
-                    ->label('Dikumpulkan')
-                    ->badge()
-                    ->color('success'),
+                $this->spreadsheetColumn(
+                    TextColumn::make('meeting_number')
+                        ->label('Pertemuan')
+                        ->badge()
+                        ->placeholder('-')
+                        ->sortable(),
+                ),
+                $this->spreadsheetColumn(
+                    TextColumn::make('title')
+                        ->label('Tugas')
+                        ->weight('semibold')
+                        ->color('primary')
+                        ->description(fn (array $record): string => str((string) ($record['description'] ?? ''))->stripTags()->limit(80)->toString())
+                        ->action($this->detailAction())
+                        ->tooltip('Klik untuk melihat rincian')
+                        ->searchable()
+                        ->wrap(),
+                ),
+                $this->spreadsheetColumn(
+                    TextColumn::make('course_name')
+                        ->label('Mata kuliah')
+                        ->searchable(),
+                ),
+                $this->spreadsheetColumn(
+                    TextColumn::make('type_label')
+                        ->label('Jenis')
+                        ->badge()
+                        ->color(fn (string $state): string => $state === 'Kelompok' ? 'info' : 'gray'),
+                ),
+                $this->spreadsheetColumn(
+                    TextColumn::make('group_name')
+                        ->label('Kelompok')
+                        ->wrap(),
+                ),
+                $this->spreadsheetColumn(
+                    TextColumn::make('start_at')
+                        ->label('Mulai')
+                        ->formatStateUsing(fn (?string $state): string => $this->formatDateTime($state))
+                        ->placeholder('-'),
+                ),
+                $this->spreadsheetColumn(
+                    TextColumn::make('deadline')
+                        ->label('Deadline')
+                        ->description(fn (array $record): string => (string) ($record['deadline_label'] ?? ''))
+                        ->formatStateUsing(fn (?string $state): string => $this->formatDateTime($state))
+                        ->sortable(),
+                ),
+                $this->spreadsheetColumn(
+                    TextColumn::make('status_label')
+                        ->label('Status')
+                        ->badge()
+                        ->color(fn (array $record): string => TaskStatus::color($record['status'] ?? '')),
+                ),
+                $this->spreadsheetColumn(
+                    TextColumn::make('submission_count')
+                        ->label('Dikumpulkan')
+                        ->badge()
+                        ->color('success'),
+                ),
             ])
             ->headerActions([$this->createAction()])
-            ->recordActions([$this->editAction(), $this->deleteAction()])
+            ->recordActions([$this->detailAction(), $this->editAction(), $this->deleteAction()])
+            ->recordAction('detail')
             ->defaultSort('deadline')
             ->defaultPaginationPageOption(10)
             ->emptyStateHeading('Belum ada tugas');
+    }
+
+    protected function detailAction(): Action
+    {
+        return Action::make('detail')
+            ->label('Detail')
+            ->icon(Heroicon::OutlinedEye)
+            ->color('gray')
+            ->modalHeading(fn (array $record): string => (string) $record['title'])
+            ->modalSubmitAction(false)
+            ->modalCancelActionLabel('Tutup')
+            ->modalWidth('3xl')
+            ->modalContent(fn (array $record) => view('filament.portal.partials.task-detail', [
+                'task' => $record,
+            ]));
     }
 
     protected function createAction(): Action

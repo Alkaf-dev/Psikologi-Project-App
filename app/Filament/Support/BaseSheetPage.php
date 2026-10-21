@@ -3,6 +3,7 @@
 namespace App\Filament\Support;
 
 use Filament\Pages\Page;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Table;
@@ -21,6 +22,17 @@ abstract class BaseSheetPage extends Page implements HasTable
     protected array $searchableColumns = [];
 
     abstract public function table(Table $table): Table;
+
+    protected function spreadsheetColumn(TextColumn $column): TextColumn
+    {
+        return $column
+            ->extraHeaderAttributes([
+                'style' => 'border-inline-end: 1px solid rgba(115, 115, 115, .30); border-block-end: 1px solid rgba(115, 115, 115, .30);',
+            ])
+            ->extraCellAttributes([
+                'style' => 'border-inline-end: 1px solid rgba(115, 115, 115, .22); border-block-end: 1px solid rgba(115, 115, 115, .18);',
+            ]);
+    }
 
     /**
      * @param  Collection<int, array<string, mixed>>  $records
