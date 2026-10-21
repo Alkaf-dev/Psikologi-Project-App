@@ -43,6 +43,15 @@ class AuthTest extends TestCase
             ->assertSee('S1 Psikologi');
     }
 
+    public function test_forwarded_https_requests_generate_secure_asset_urls(): void
+    {
+        $this->withServerVariables(['REMOTE_ADDR' => '127.0.0.1'])
+            ->withHeader('X-Forwarded-Proto', 'https')
+            ->get('/portal/login')
+            ->assertOk()
+            ->assertSee('https://localhost:8000/css/filament/filament/app.css', false);
+    }
+
     public function test_login_route_redirects_to_portal_login(): void
     {
         $this->get('/login')
