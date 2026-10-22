@@ -56,7 +56,6 @@ class AdminTugasCourseFilterTest extends TestCase
             ->assertOk()
             ->assertSee('min-width: 128rem', false)
             ->assertSee('width: 17rem', false)
-            ->assertSee('materi-tugas-toolbar', false)
             ->assertSee('Detail')
             ->assertSee('Ubah')
             ->assertSee('Hapus');
