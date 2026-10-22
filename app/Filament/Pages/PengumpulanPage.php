@@ -124,10 +124,11 @@ class PengumpulanPage extends BaseSheetPage
                 $this->spreadsheetColumn(
                     TextColumn::make('link')
                         ->label('Tautan')
-                        ->url(fn (array $record): ?string => filled($record['link'] ?? null) ? (string) $record['link'] : null, true)
-                        ->limit(28)
-                        ->tooltip(fn (array $record): ?string => filled($record['link'] ?? null) ? (string) $record['link'] : null)
-                        ->placeholder('-')
+                        ->formatStateUsing(fn (array $record): string => $this->submissionLink($record) !== null ? 'Kirim' : '-')
+                        ->url(fn (array $record): ?string => $this->submissionLink($record))
+                        ->openUrlInNewTab()
+                        ->color(fn (array $record): ?string => $this->submissionLink($record) !== null ? 'primary' : null)
+                        ->tooltip(fn (array $record): ?string => $this->submissionLink($record) !== null ? 'Buka tautan pengumpulan di tab baru' : null)
                         ->width('14rem'),
                 ),
                 $this->spreadsheetColumn(
@@ -435,6 +436,22 @@ class PengumpulanPage extends BaseSheetPage
         $statePath = $this->getMountedActionSchema()?->getStatePath();
 
         return $statePath ? "{$statePath}.{$field}" : $field;
+    }
+
+    /**
+     * @param  array<string, mixed>  $record
+     */
+    protected function submissionLink(array $record): ?string
+    {
+        $link = trim((string) ($record['link'] ?? ''));
+
+        if ($link === '' || filter_var($link, FILTER_VALIDATE_URL) === false) {
+            return null;
+        }
+
+        $scheme = strtolower((string) parse_url($link, PHP_URL_SCHEME));
+
+        return in_array($scheme, ['http', 'https'], true) ? $link : null;
     }
 
     /**
