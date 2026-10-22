@@ -44,8 +44,13 @@
         }
 
         .materi-tugas-table .fi-ta-table {
-            min-width: 102rem;
+            min-width: 109rem;
             table-layout: fixed;
+        }
+
+        .materi-tugas-table .fi-ta-table td,
+        .materi-tugas-table .fi-ta-table th {
+            overflow: hidden;
         }
 
         .materi-tugas-table .fi-ta-header-cell-label {
@@ -86,6 +91,9 @@
 
         .materi-tugas-table .fi-ta-text-description {
             line-height: 1.25;
+            max-width: 100%;
+            white-space: normal;
+            word-break: break-word;
         }
 
         .dark .materi-tugas-chip[aria-current="true"] {

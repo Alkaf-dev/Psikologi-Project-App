@@ -15,6 +15,22 @@
 
         .task-table-compact .fi-ta-text-description {
             margin-top: 0.15rem;
+            max-width: 100%;
+            white-space: normal;
+            word-break: break-word;
+            line-height: 1.25;
+        }
+
+        .task-table-compact .fi-ta-text-item:not(.fi-ta-text-has-badges) {
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .task-table-compact .fi-ta-table td,
+        .task-table-compact .fi-ta-table th {
+            overflow: hidden;
         }
 
         .submission-table {
@@ -57,6 +73,11 @@
             padding-block: 0.625rem;
         }
 
+        .submission-table .fi-ta-table td,
+        .submission-table .fi-ta-table th {
+            overflow: hidden;
+        }
+
         .submission-table .fi-ta-text-item:not(.fi-ta-text-has-badges) {
             max-width: 100%;
             overflow: hidden;
@@ -66,6 +87,9 @@
 
         .submission-table .fi-ta-text-description {
             line-height: 1.25;
+            max-width: 100%;
+            white-space: normal;
+            word-break: break-word;
         }
     </style>
 @endpush

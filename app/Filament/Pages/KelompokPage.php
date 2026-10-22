@@ -68,9 +68,17 @@ class KelompokPage extends BaseKelompokPage
     /**
      * @return array<int, Action>
      */
-    protected function getHeaderActions(): array
+    protected function getActions(): array
     {
         return [$this->createAction()];
+    }
+
+    /**
+     * @return array<int, Action>
+     */
+    protected function getHeaderActions(): array
+    {
+        return [];
     }
 
     /**

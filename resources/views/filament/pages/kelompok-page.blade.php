@@ -269,33 +269,44 @@
                     </div>
                 </div>
 
-                @if ($canManage && $selectedGroup)
+                @if ($canManage)
                     <div style="display: flex; flex-wrap: wrap; gap: .5rem;">
                         <x-filament::button
                             size="sm"
-                            icon="heroicon-o-user-plus"
-                            wire:click="mountAction('addMember')"
+                            icon="heroicon-o-plus"
+                            wire:click="mountAction('create')"
                         >
-                            Tambah Anggota
+                            Tambah Kelompok
                         </x-filament::button>
 
-                        <x-filament::button
-                            size="sm"
-                            color="gray"
-                            icon="heroicon-o-pencil-square"
-                            wire:click="mountAction('edit')"
-                        >
-                            Ubah Kelompok
-                        </x-filament::button>
+                        @if ($selectedGroup)
+                            <x-filament::button
+                                size="sm"
+                                color="gray"
+                                icon="heroicon-o-user-plus"
+                                wire:click="mountAction('addMember')"
+                            >
+                                Tambah Anggota
+                            </x-filament::button>
 
-                        <x-filament::button
-                            size="sm"
-                            color="danger"
-                            icon="heroicon-o-trash"
-                            wire:click="mountAction('delete')"
-                        >
-                            Hapus Kelompok
-                        </x-filament::button>
+                            <x-filament::button
+                                size="sm"
+                                color="gray"
+                                icon="heroicon-o-pencil-square"
+                                wire:click="mountAction('edit')"
+                            >
+                                Ubah Kelompok
+                            </x-filament::button>
+
+                            <x-filament::button
+                                size="sm"
+                                color="danger"
+                                icon="heroicon-o-trash"
+                                wire:click="mountAction('delete')"
+                            >
+                                Hapus Kelompok
+                            </x-filament::button>
+                        @endif
                     </div>
                 @endif
             </div>

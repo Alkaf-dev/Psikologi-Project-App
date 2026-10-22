@@ -247,13 +247,13 @@ class TugasPage extends BaseSheetPage
                         ->iconPosition(IconPosition::After)
                         ->color(fn (array $record): ?string => filled($record['collection_link'] ?? null) ? 'primary' : null)
                         ->tooltip(fn (array $record): ?string => filled($record['collection_link'] ?? null) ? 'Buka link pengumpulan di tab baru' : null)
-                        ->width('10rem'),
+                        ->width('11rem'),
                 ),
                 $this->spreadsheetColumn(
                     TextColumn::make('course_name')
                         ->label('Mata kuliah')
                         ->searchable()
-                        ->width('12rem'),
+                        ->width('13rem'),
                 ),
                 $this->spreadsheetColumn(
                     TextColumn::make('type_label')
@@ -261,12 +261,12 @@ class TugasPage extends BaseSheetPage
                         ->badge()
                         ->color(fn (string $state): string => $state === 'Kelompok' ? 'info' : 'gray')
                         ->alignCenter()
-                        ->width('6rem'),
+                        ->width('7rem'),
                 ),
                 $this->spreadsheetColumn(
                     TextColumn::make('group_name')
                         ->label('Kelompok')
-                        ->width('10rem'),
+                        ->width('12rem'),
                 ),
                 $this->spreadsheetColumn(
                     TextColumn::make('start_at')
@@ -274,7 +274,7 @@ class TugasPage extends BaseSheetPage
                         ->formatStateUsing(fn (?string $state): string => $this->formatDateTime($state))
                         ->placeholder('-')
                         ->alignCenter()
-                        ->width('10rem'),
+                        ->width('11rem'),
                 ),
                 $this->spreadsheetColumn(
                     TextColumn::make('deadline')
@@ -284,7 +284,7 @@ class TugasPage extends BaseSheetPage
                         ->formatStateUsing(fn (?string $state): string => $this->formatDateTime($state))
                         ->sortable()
                         ->alignCenter()
-                        ->width('11rem'),
+                        ->width('14.5rem'),
                 ),
                 $this->spreadsheetColumn(
                     TextColumn::make('status_label')
@@ -297,7 +297,7 @@ class TugasPage extends BaseSheetPage
                             default => Heroicon::OutlinedPlayCircle,
                         })
                         ->alignCenter()
-                        ->width('7rem'),
+                        ->width('8.5rem'),
                 ),
                 $this->spreadsheetColumn(
                     TextColumn::make('submission_count')
@@ -305,7 +305,7 @@ class TugasPage extends BaseSheetPage
                         ->badge()
                         ->color('success')
                         ->alignCenter()
-                        ->width('7rem'),
+                        ->width('8rem'),
                 ),
             ])
             ->searchPlaceholder('Cari tugas, mata kuliah, atau kelompok...')

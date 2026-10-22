@@ -85,10 +85,10 @@ class MateriTugasPageTest extends TestCase
             'material_url' => '6.5rem',
             'type_label' => '6.5rem',
             'portal_group_name' => '10rem',
-            'start_at' => '9rem',
-            'deadline' => '10rem',
+            'start_at' => '10rem',
+            'deadline' => '14.5rem',
             'status_label' => '7.5rem',
-            'submission_label' => '10.5rem',
+            'submission_label' => '12rem',
         ];
 
         foreach ($widths as $columnName => $width) {

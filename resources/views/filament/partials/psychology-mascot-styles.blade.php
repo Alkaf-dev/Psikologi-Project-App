@@ -648,11 +648,27 @@
         0% {
             box-shadow: 0 0 0 0 rgb(var(--primary-500) / 0.35);
         }
-        70% {
-            box-shadow: 0 0 0 7px rgb(var(--primary-500) / 0);
-        }
         100% {
             box-shadow: 0 0 0 0 rgb(var(--primary-500) / 0);
         }
+    }
+
+    /* Table column collisions guard across all pages */
+    .fi-ta-table td,
+    .fi-ta-table th {
+        overflow: hidden;
+    }
+
+    .fi-ta-text-description {
+        max-width: 100%;
+        white-space: normal;
+        word-break: break-word;
+        line-height: 1.25;
+    }
+
+    .fi-ta-text-item:not(.fi-ta-text-has-badges) {
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 </style>

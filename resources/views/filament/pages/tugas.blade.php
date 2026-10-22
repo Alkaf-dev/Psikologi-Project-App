@@ -1,5 +1,24 @@
 @push('styles')
     <style>
+        .materi-tugas-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .materi-tugas-toolbar .materi-tugas-filter {
+            margin-bottom: 0;
+            flex: 1 1 auto;
+        }
+
+        .materi-tugas-toolbar-action {
+            flex-shrink: 0;
+            margin-left: auto;
+        }
+
         .materi-tugas-filter {
             display: flex;
             flex-wrap: wrap;
@@ -43,6 +62,10 @@
             background: rgb(255 255 255 / 0.22);
         }
 
+        .task-table-compact .fi-ta-header {
+            display: none;
+        }
+
         .task-table-compact .fi-ta-text:not(.fi-inline) {
             padding-block: 0.4rem;
         }
@@ -58,6 +81,10 @@
 
         .task-table-compact .fi-ta-text-description {
             margin-top: 0.15rem;
+            max-width: 100%;
+            white-space: normal;
+            word-break: break-word;
+            line-height: 1.25;
         }
 
         .task-table-compact .fi-ta-header-cell-label {
@@ -65,8 +92,13 @@
         }
 
         .task-table-compact .fi-ta-table {
-            min-width: 118rem;
+            min-width: 128rem;
             table-layout: fixed;
+        }
+
+        .task-table-compact .fi-ta-table td,
+        .task-table-compact .fi-ta-table th {
+            overflow: hidden;
         }
 
         .task-table-compact .fi-ta-table > thead > tr > th:last-child,
@@ -122,11 +154,23 @@
         <x-psychology-mascot-gif :mascot="$this->pageMascot()" class="psychology-page-mascot" />
     @endif
 
-    @include('filament.partials.course-filter', [
-        'selectedCourseId' => $selectedCourseId,
-        'totalTasks' => $totalTasks,
-        'courseFilters' => $courseFilters,
-    ])
+    <div class="materi-tugas-toolbar">
+        @include('filament.partials.course-filter', [
+            'selectedCourseId' => $selectedCourseId,
+            'totalTasks' => $totalTasks,
+            'courseFilters' => $courseFilters,
+        ])
+
+        <div class="materi-tugas-toolbar-action">
+            <x-filament::button
+                size="sm"
+                icon="heroicon-o-plus"
+                wire:click="mountTableAction('create')"
+            >
+                Tambah Tugas
+            </x-filament::button>
+        </div>
+    </div>
 
     {{ $this->table }}
 

@@ -339,7 +339,7 @@ class TugasPage extends BaseSheetPage
                         ->formatStateUsing(fn (?string $state): string => $this->formatDateTime($state))
                         ->placeholder('-')
                         ->alignCenter()
-                        ->width('9rem'),
+                        ->width('10rem'),
                 ),
                 $this->spreadsheetColumn(
                     TextColumn::make('deadline')
@@ -348,7 +348,7 @@ class TugasPage extends BaseSheetPage
                         ->formatStateUsing(fn (?string $state): string => $this->formatDateTime($state))
                         ->sortable()
                         ->alignCenter()
-                        ->width('10rem'),
+                        ->width('14.5rem'),
                 ),
                 $this->spreadsheetColumn(
                     TextColumn::make('status_label')
@@ -375,7 +375,7 @@ class TugasPage extends BaseSheetPage
                             ? 'Buka tautan pengumpulan di tab baru'
                             : null)
                         ->alignCenter()
-                        ->width('10.5rem'),
+                        ->width('12rem'),
                 ),
             ])
             ->searchPlaceholder('Cari tugas atau mata kuliah...')

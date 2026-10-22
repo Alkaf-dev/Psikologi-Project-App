@@ -39,10 +39,13 @@ class AdminTugasCourseFilterTest extends TestCase
             ->assertSee('Semua')
             ->assertSee('Pertemuan')
             ->assertSee('Link Pengumpulan')
+            ->assertSee('Tambah Tugas')
             ->instance()
             ->getTable();
 
         $this->assertSame('8rem', $table->getColumn('meeting_number')?->getWidth());
+        $this->assertSame('11rem', $table->getColumn('collection_link')?->getWidth());
+        $this->assertSame('14.5rem', $table->getColumn('deadline')?->getWidth());
     }
 
     public function test_admin_task_table_loads_non_overlapping_action_styles(): void
@@ -51,8 +54,9 @@ class AdminTugasCourseFilterTest extends TestCase
 
         $this->get('/admin/tugas-page')
             ->assertOk()
-            ->assertSee('min-width: 118rem', false)
+            ->assertSee('min-width: 128rem', false)
             ->assertSee('width: 17rem', false)
+            ->assertSee('materi-tugas-toolbar', false)
             ->assertSee('Detail')
             ->assertSee('Ubah')
             ->assertSee('Hapus');
