@@ -42,10 +42,10 @@ abstract class BaseSheetPage extends Page implements HasTable
     {
         return $column
             ->extraHeaderAttributes([
-                'style' => 'border-inline-end: 1px solid rgba(115, 115, 115, .30); border-block-end: 1px solid rgba(115, 115, 115, .30);',
+                'style' => 'border-inline-end: 1px solid var(--sheet-table-border, rgba(115, 115, 115, .30)); border-block-end: 1px solid var(--sheet-table-border, rgba(115, 115, 115, .30));',
             ])
             ->extraCellAttributes([
-                'style' => 'border-inline-end: 1px solid rgba(115, 115, 115, .22); border-block-end: 1px solid rgba(115, 115, 115, .18);',
+                'style' => 'border-inline-end: 1px solid var(--sheet-table-border, rgba(115, 115, 115, .22)); border-block-end: 1px solid var(--sheet-table-border, rgba(115, 115, 115, .18));',
             ]);
     }
 

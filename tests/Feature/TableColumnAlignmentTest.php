@@ -79,7 +79,10 @@ class TableColumnAlignmentTest extends TestCase
             ],
             PengumpulanPage::class => [
                 'task_title' => null,
+                'student_name' => null,
+                'group_name' => null,
                 'status' => Alignment::Center,
+                'link' => null,
                 'grade' => Alignment::Center,
                 'submitted_at' => Alignment::Center,
             ],
@@ -142,6 +145,46 @@ class TableColumnAlignmentTest extends TestCase
                 'published_at' => Alignment::Center,
             ],
         ]);
+    }
+
+    public function test_pengumpulan_table_uses_the_compact_spreadsheet_layout(): void
+    {
+        Filament::setCurrentPanel('admin');
+        $this->actingAsAdmin();
+
+        $table = Livewire::test(PengumpulanPage::class)->instance()->getTable();
+        $tableClass = (string) ($table->getExtraAttributes()['class'] ?? '');
+
+        $this->assertStringContainsString('submission-table', $tableClass);
+        $this->assertStringContainsString('task-table-compact', $tableClass);
+
+        $widths = [
+            'task_title' => '17rem',
+            'student_name' => '12.5rem',
+            'group_name' => '8.5rem',
+            'status' => '8rem',
+            'link' => '14rem',
+            'grade' => '5rem',
+            'submitted_at' => '9.5rem',
+        ];
+
+        foreach ($widths as $columnName => $width) {
+            $this->assertSame(
+                $width,
+                $table->getColumn($columnName)?->getWidth(),
+                "Pengumpulan column [{$columnName}] has unexpected width.",
+            );
+        }
+
+        foreach (array_keys($widths) as $columnName) {
+            $style = (string) ($table->getColumn($columnName)->getExtraCellAttributes()['style'] ?? '');
+
+            $this->assertStringContainsString(
+                '--sheet-table-border',
+                $style,
+                "Pengumpulan column [{$columnName}] does not use the shared border color.",
+            );
+        }
     }
 
     /**

@@ -44,6 +44,7 @@ class PengumpulanPage extends BaseSheetPage
     public function table(Table $table): Table
     {
         return $table
+            ->extraAttributes(['class' => 'submission-table task-table-compact'])
             ->records(function (
                 ?string $search,
                 ?string $sortColumn,
@@ -63,49 +64,92 @@ class PengumpulanPage extends BaseSheetPage
                 );
             })
             ->columns([
-                TextColumn::make('task_title')
-                    ->label('Tugas')
-                    ->weight('semibold')
-                    ->searchable(),
-                TextColumn::make('student_name')
-                    ->label('Mahasiswa / perwakilan')
-                    ->description(fn (array $record): string => (string) ($record['student_npm'] ?? ''))
-                    ->searchable(),
-                TextColumn::make('group_name')
-                    ->label('Kelompok')
-                    ->searchable(),
-                TextColumn::make('status')
-                    ->label('Status')
-                    ->badge()
-                    ->formatStateUsing(fn (string $state): string => match ($state) {
-                        'graded' => 'Dinilai',
-                        'late' => 'Terlambat',
-                        default => 'Dikumpulkan',
-                    })
-                    ->color(fn (string $state): string => match ($state) {
-                        'graded' => 'success',
-                        'late' => 'danger',
-                        default => 'warning',
-                    })
-                    ->alignCenter(),
-                TextColumn::make('link')
-                    ->label('Tautan')
-                    ->url(fn (array $record): ?string => filled($record['link'] ?? null) ? (string) $record['link'] : null, true)
-                    ->limit(35)
-                    ->placeholder('-'),
-                TextColumn::make('grade')
-                    ->label('Nilai')
-                    ->badge()
-                    ->placeholder('-')
-                    ->alignCenter(),
-                TextColumn::make('submitted_at')
-                    ->label('Dikumpulkan')
-                    ->formatStateUsing(fn (?string $state): string => $state
-                        ? Carbon::parse($state)->translatedFormat('d M Y H:i')
-                        : '-')
-                    ->sortable()
-                    ->alignCenter(),
+                $this->spreadsheetColumn(
+                    TextColumn::make('task_title')
+                        ->label('Tugas')
+                        ->weight('semibold')
+                        ->limit(48)
+                        ->tooltip(function (array $record): ?string {
+                            $title = trim((string) ($record['task_title'] ?? ''));
+
+                            return $title !== '' ? $title : null;
+                        })
+                        ->searchable()
+                        ->width('17rem'),
+                ),
+                $this->spreadsheetColumn(
+                    TextColumn::make('student_name')
+                        ->label('Mahasiswa / Perwakilan')
+                        ->description(fn (array $record): string => (string) ($record['student_npm'] ?? ''))
+                        ->limit(32)
+                        ->tooltip(function (array $record): ?string {
+                            $label = trim(
+                                (string) ($record['student_name'] ?? '').' '.(string) ($record['student_npm'] ?? ''),
+                            );
+
+                            return $label !== '' ? $label : null;
+                        })
+                        ->searchable()
+                        ->width('12.5rem'),
+                ),
+                $this->spreadsheetColumn(
+                    TextColumn::make('group_name')
+                        ->label('Kelompok')
+                        ->limit(22)
+                        ->tooltip(function (array $record): ?string {
+                            $group = trim((string) ($record['group_name'] ?? ''));
+
+                            return $group !== '' ? $group : null;
+                        })
+                        ->searchable()
+                        ->width('8.5rem'),
+                ),
+                $this->spreadsheetColumn(
+                    TextColumn::make('status')
+                        ->label('Status')
+                        ->badge()
+                        ->formatStateUsing(fn (string $state): string => match ($state) {
+                            'graded' => 'Dinilai',
+                            'late' => 'Terlambat',
+                            default => 'Dikumpulkan',
+                        })
+                        ->color(fn (string $state): string => match ($state) {
+                            'graded' => 'success',
+                            'late' => 'danger',
+                            default => 'warning',
+                        })
+                        ->alignCenter()
+                        ->width('8rem'),
+                ),
+                $this->spreadsheetColumn(
+                    TextColumn::make('link')
+                        ->label('Tautan')
+                        ->url(fn (array $record): ?string => filled($record['link'] ?? null) ? (string) $record['link'] : null, true)
+                        ->limit(28)
+                        ->tooltip(fn (array $record): ?string => filled($record['link'] ?? null) ? (string) $record['link'] : null)
+                        ->placeholder('-')
+                        ->width('14rem'),
+                ),
+                $this->spreadsheetColumn(
+                    TextColumn::make('grade')
+                        ->label('Nilai')
+                        ->badge()
+                        ->placeholder('-')
+                        ->alignCenter()
+                        ->width('5rem'),
+                ),
+                $this->spreadsheetColumn(
+                    TextColumn::make('submitted_at')
+                        ->label('Dikumpulkan')
+                        ->formatStateUsing(fn (?string $state): string => $state
+                            ? Carbon::parse($state)->translatedFormat('d M Y H:i')
+                            : '-')
+                        ->sortable()
+                        ->alignCenter()
+                        ->width('9.5rem'),
+                ),
             ])
+            ->searchPlaceholder('Cari tugas, mahasiswa, atau kelompok...')
             ->headerActions([$this->createAction()])
             ->recordActions([
                 $this->gradeAction(),
