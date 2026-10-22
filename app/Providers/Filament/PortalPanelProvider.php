@@ -42,6 +42,10 @@ class PortalPanelProvider extends PanelProvider
                 fn (): View => view('filament.partials.notification-bell'),
             )
             ->renderHook(
+                PanelsRenderHook::AUTH_LOGIN_FORM_AFTER,
+                fn (): View => view('filament.partials.login-mascot'),
+            )
+            ->renderHook(
                 PanelsRenderHook::HEAD_END,
                 fn (): View => view('filament.partials.psychology-mascot-styles'),
             )

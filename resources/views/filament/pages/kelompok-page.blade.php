@@ -1,4 +1,8 @@
 <x-filament-panels::page>
+    @if (filled($this->pageMascot()))
+        <x-psychology-mascot-gif :mascot="$this->pageMascot()" class="psychology-page-mascot" />
+    @endif
+
     <style>
         .kelompok-course-grid {
             display: grid;

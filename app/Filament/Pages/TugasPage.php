@@ -50,6 +50,11 @@ class TugasPage extends BaseSheetPage
         return 'admin-tasks';
     }
 
+    public function pageMascot(): ?string
+    {
+        return 'membaca';
+    }
+
     public function table(Table $table): Table
     {
         return $table

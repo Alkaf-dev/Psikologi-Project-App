@@ -100,6 +100,125 @@
         -webkit-user-drag: none;
     }
 
+    .psychology-mascot-gif {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 0.85rem 1rem;
+        border: 1px solid rgb(var(--gray-200));
+        border-radius: 1rem;
+        background: linear-gradient(135deg, rgb(var(--primary-500) / 0.09) 0%, rgb(var(--gray-50)) 65%);
+    }
+
+    .dark .psychology-mascot-gif {
+        border-color: rgb(var(--gray-700));
+        background: rgb(var(--gray-900));
+        background: linear-gradient(135deg, rgb(var(--primary-500) / 0.12) 0%, rgb(var(--gray-900)) 65%);
+    }
+
+    .psychology-mascot-gif__image {
+        display: block;
+        flex: 0 0 auto;
+        width: auto;
+        height: clamp(72px, 8vw, 96px);
+        max-width: 45%;
+        object-fit: contain;
+        user-select: none;
+        -webkit-user-drag: none;
+    }
+
+    .psychology-mascot-gif__copy {
+        min-width: 0;
+    }
+
+    .psychology-mascot-gif__title {
+        margin: 0;
+        color: rgb(var(--gray-950));
+        font-size: 0.9rem;
+        font-weight: 700;
+        line-height: 1.35;
+        overflow-wrap: anywhere;
+    }
+
+    .dark .psychology-mascot-gif__title {
+        color: rgb(var(--gray-50));
+    }
+
+    .psychology-mascot-gif__message {
+        margin: 0.18rem 0 0;
+        color: rgb(var(--gray-600));
+        font-size: 0.8rem;
+        line-height: 1.55;
+    }
+
+    .dark .psychology-mascot-gif__message {
+        color: rgb(var(--gray-300));
+    }
+
+    .psychology-mascot-gif--note {
+        gap: 0.8rem;
+        padding: 0.7rem 0.85rem;
+        background: rgb(var(--gray-50));
+    }
+
+    .dark .psychology-mascot-gif--note {
+        background: rgb(var(--gray-900));
+    }
+
+    .psychology-mascot-gif--note .psychology-mascot-gif__image {
+        height: clamp(62px, 7vw, 82px);
+        max-width: 40%;
+    }
+
+    .psychology-mascot-gif--empty {
+        flex-direction: column;
+        gap: 0.65rem;
+        padding: 0.75rem 1rem 1.25rem;
+        border: 0;
+        background: transparent;
+        text-align: center;
+    }
+
+    .dark .psychology-mascot-gif--empty {
+        background: transparent;
+    }
+
+    .psychology-mascot-gif--empty .psychology-mascot-gif__image {
+        height: clamp(96px, 14vw, 132px);
+        max-width: 100%;
+    }
+
+    .psychology-mascot-gif--empty .psychology-mascot-gif__copy {
+        max-width: 34rem;
+    }
+
+    .psychology-mascot-gif--empty .psychology-mascot-gif__title {
+        font-size: 0.95rem;
+    }
+
+    .psychology-mascot-gif--login {
+        margin-top: 1rem;
+    }
+
+    .psychology-page-mascot {
+        margin-bottom: 1rem;
+    }
+
+    @media (max-width: 640px) {
+        .psychology-mascot-gif {
+            gap: 0.7rem;
+            padding: 0.7rem 0.8rem;
+        }
+
+        .psychology-mascot-gif__image {
+            max-width: 42%;
+        }
+
+        .psychology-mascot-gif--empty .psychology-mascot-gif__image {
+            max-width: 100%;
+        }
+    }
+
     .psychology-greeting__copy {
         min-width: 0;
     }

@@ -31,6 +31,11 @@ class StudyProgramPage extends BaseSheetPage
 
     protected array $searchableColumns = ['code', 'name', 'degree'];
 
+    public function pageMascot(): ?string
+    {
+        return 'berpikir';
+    }
+
     public function table(Table $table): Table
     {
         return $table

@@ -40,6 +40,11 @@ class StudentPage extends BaseSheetPage
 
     protected array $searchableColumns = ['name', 'npm', 'email', 'prodi_name', 'class_name', 'cohort'];
 
+    public function pageMascot(): ?string
+    {
+        return 'memegang-buku';
+    }
+
     public function table(Table $table): Table
     {
         return $table

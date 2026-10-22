@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Auth\SheetUserProvider;
 use App\Repositories\UserRepository;
+use App\Support\NotificationCenter;
 use Filament\Facades\Filament;
 use Illuminate\Support\Facades\Blade;
 use Tests\Concerns\InteractsWithSheets;
@@ -62,6 +63,177 @@ class PsychologyMascotTest extends TestCase
         $html = Blade::render('<x-psychology-mascot :size="88" />');
 
         $this->assertStringContainsString('--psychology-mascot-size: 88px', $html);
+    }
+
+    public function test_contextual_gif_assets_are_available_and_correctly_sized(): void
+    {
+        $config = config('psychology-mascots');
+
+        $this->assertIsArray($config);
+        $this->assertCount(11, $config);
+
+        foreach ($config as $key => $mascot) {
+            $path = public_path((string) $mascot['file']);
+
+            $this->assertFileExists($path, "Aset {$key} tidak ditemukan.");
+
+            $image = getimagesize($path);
+            $size = filesize($path);
+
+            $this->assertIsArray($image);
+            $this->assertSame('image/gif', $image['mime']);
+            $this->assertSame(
+                in_array($key, ['laptop', 'tertidur'], true) ? 180 : 112,
+                $image[0],
+                "Lebar {$key} tidak sesuai.",
+            );
+            $this->assertSame(
+                in_array($key, ['laptop', 'tertidur'], true) ? 101 : 200,
+                $image[1],
+                "Tinggi {$key} tidak sesuai.",
+            );
+            $this->assertIsInt($size);
+            $this->assertLessThan(2_000_000, $size, "Ukuran {$key} terlalu besar.");
+            $this->assertSame(
+                $key === 'menunjuk' ? 7200 : 8000,
+                $this->gifTotalDurationMs($path),
+                "Durasi {$key} tidak sesuai.",
+            );
+        }
+    }
+
+    public function test_contextual_gif_component_renders_the_configured_copy(): void
+    {
+        $html = Blade::render('<x-psychology-mascot-gif mascot="membaca" />');
+
+        $this->assertStringContainsString('data-mascot-gif="membaca"', $html);
+        $this->assertStringContainsString('psychology-mascot-gif--banner', $html);
+        $this->assertStringContainsString('images/psychology/mascot/membaca.gif', $html);
+        $this->assertStringContainsString('Baca tugas dengan saksama.', $html);
+        $this->assertStringContainsString('loading="eager"', $html);
+        $this->assertStringContainsString('width="112"', $html);
+        $this->assertStringContainsString('height="200"', $html);
+    }
+
+    public function test_contextual_gif_component_keeps_landscape_dimensions_and_empty_variant(): void
+    {
+        $html = Blade::render('<x-psychology-mascot-gif mascot="laptop" variant="empty" title="Judul uji" message="Pesan uji" />');
+
+        $this->assertStringContainsString('psychology-mascot-gif--empty', $html);
+        $this->assertStringContainsString('images/psychology/mascot/laptop.gif', $html);
+        $this->assertStringContainsString('width="180"', $html);
+        $this->assertStringContainsString('height="101"', $html);
+        $this->assertStringContainsString('Judul uji', $html);
+        $this->assertStringContainsString('Pesan uji', $html);
+        $this->assertStringContainsString('loading="lazy"', $html);
+    }
+
+    public function test_contextual_gif_component_rejects_unknown_mascots(): void
+    {
+        $html = Blade::render('<x-psychology-mascot-gif mascot="../../etc/passwd" />');
+
+        $this->assertStringNotContainsString('data-mascot-gif', $html);
+        $this->assertStringNotContainsString('/etc/passwd', $html);
+    }
+
+    public function test_admin_sheet_pages_render_one_expected_contextual_gif(): void
+    {
+        Filament::setCurrentPanel('admin');
+        $this->actingAsAdmin();
+
+        $pages = [
+            '/admin/mata-kuliah-page' => 'memegang-buku.gif',
+            '/admin/student-page' => 'memegang-buku.gif',
+            '/admin/tugas-page' => 'membaca.gif',
+            '/admin/jadwal-page' => 'berjalan.gif',
+            '/admin/kelompok-page' => 'semangat.gif',
+            '/admin/pengumpulan-page' => 'menunjuk.gif',
+            '/admin/pengumuman-page' => 'menunjuk.gif',
+            '/admin/study-program-page' => 'berpikir.gif',
+        ];
+
+        foreach ($pages as $route => $gif) {
+            $response = $this->get($route)->assertOk();
+
+            $response->assertSee($gif, false);
+            $this->assertSame(
+                1,
+                substr_count((string) $response->getContent(), 'data-mascot-gif="'),
+                "Jumlah GIF pada {$route} tidak sesuai.",
+            );
+        }
+    }
+
+    public function test_portal_pages_render_one_expected_contextual_gif(): void
+    {
+        Filament::setCurrentPanel('portal');
+        $this->actingAsStudent();
+
+        $pages = [
+            '/portal/tugas-page' => 'membaca.gif',
+            '/portal/jadwal-page' => 'berjalan.gif',
+            '/portal/pengumuman-page' => 'menunjuk.gif',
+            '/portal/kelompok-page' => 'semangat.gif',
+        ];
+
+        foreach ($pages as $route => $gif) {
+            $response = $this->get($route)->assertOk();
+
+            $response->assertSee($gif, false);
+            $this->assertSame(
+                1,
+                substr_count((string) $response->getContent(), 'data-mascot-gif="'),
+                "Jumlah GIF pada {$route} tidak sesuai.",
+            );
+        }
+    }
+
+    public function test_portal_dashboard_renders_one_contextual_gif(): void
+    {
+        Filament::setCurrentPanel('portal');
+        $this->actingAsStudent();
+
+        $response = $this->get('/portal')->assertOk();
+        $html = (string) $response->getContent();
+
+        $this->assertSame(1, substr_count($html, 'data-mascot-gif="'));
+        $this->assertMatchesRegularExpression(
+            '/images\/psychology\/mascot\/(kewalahan|tertidur|minum)\.gif/',
+            $html,
+        );
+    }
+
+    public function test_notification_empty_state_uses_the_heart_gif(): void
+    {
+        Filament::setCurrentPanel('admin');
+        $this->actingAsAdmin();
+
+        $admin = app(UserRepository::class)->findActiveByLogin('admin@psikologi.test');
+
+        $this->assertNotNull($admin);
+
+        app(NotificationCenter::class)->markAllAsRead($admin);
+
+        $this->get('/admin/notifikasi-page?filter=unread')
+            ->assertOk()
+            ->assertSee('images/psychology/mascot/memeluk-hati.gif', false)
+            ->assertSee('psychology-mascot-gif--empty', false)
+            ->assertSee('Semua notifikasi sudah dibaca', false);
+    }
+
+    public function test_both_login_pages_render_the_laptop_gif(): void
+    {
+        Filament::setCurrentPanel('admin');
+        $this->get('/admin/login')
+            ->assertOk()
+            ->assertSee('data-mascot-gif="laptop"', false)
+            ->assertSee('images/psychology/mascot/laptop.gif', false);
+
+        Filament::setCurrentPanel('portal');
+        $this->get('/portal/login')
+            ->assertOk()
+            ->assertSee('data-mascot-gif="laptop"', false)
+            ->assertSee('images/psychology/mascot/laptop.gif', false);
     }
 
     public function test_admin_dashboard_renders_the_greeting_with_the_waving_gif(): void
@@ -141,6 +313,83 @@ class PsychologyMascotTest extends TestCase
         $this->get('/admin/student-page')
             ->assertOk()
             ->assertDontSee('class="psychology-launcher"', false);
+    }
+
+    private function gifTotalDurationMs(string $path): int
+    {
+        $data = file_get_contents($path);
+
+        $this->assertIsString($data);
+
+        $length = strlen($data);
+        $position = 13;
+        $packed = ord($data[10]);
+
+        if (($packed & 0x80) !== 0) {
+            $position += 3 * (2 ** (($packed & 0x07) + 1));
+        }
+
+        $total = 0;
+
+        while ($position < $length) {
+            $block = ord($data[$position]);
+
+            if ($block === 0x3B) {
+                break;
+            }
+
+            if ($block === 0x21) {
+                $label = ord($data[$position + 1]);
+                $position += 2;
+
+                if ($label === 0xF9) {
+                    $size = ord($data[$position]);
+                    $delay = unpack('v', substr($data, $position + 2, 2));
+
+                    $this->assertIsArray($delay);
+
+                    $total += $delay[1] * 10;
+                    $position += $size + 2;
+
+                    continue;
+                }
+
+                $position = $this->skipGifSubBlocks($data, $position);
+
+                continue;
+            }
+
+            $this->assertSame(0x2C, $block);
+            $position += 10;
+            $packed = ord($data[$position - 1]);
+
+            if (($packed & 0x80) !== 0) {
+                $position += 3 * (2 ** (($packed & 0x07) + 1));
+            }
+
+            $position++;
+            $position = $this->skipGifSubBlocks($data, $position);
+        }
+
+        return $total;
+    }
+
+    private function skipGifSubBlocks(string $data, int $position): int
+    {
+        $length = strlen($data);
+
+        while ($position < $length) {
+            $size = ord($data[$position]);
+            $position++;
+
+            if ($size === 0) {
+                break;
+            }
+
+            $position += $size;
+        }
+
+        return $position;
     }
 
     protected function actingAsAdmin(): void

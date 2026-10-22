@@ -25,6 +25,11 @@ class PengumumanPage extends BaseSheetPage
 
     protected array $searchableColumns = ['title', 'body', 'author_name'];
 
+    public function pageMascot(): ?string
+    {
+        return 'menunjuk';
+    }
+
     public function table(Table $table): Table
     {
         return $table

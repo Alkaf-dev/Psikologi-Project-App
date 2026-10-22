@@ -37,16 +37,14 @@
 
         @if ($notifications->isEmpty())
             <x-filament::section>
-                <div style="padding: 2rem 1rem; text-align: center;">
-                    <div style="font-weight: 700; margin-bottom: .35rem;">
-                        {{ $filter === 'unread' ? 'Semua notifikasi sudah dibaca' : 'Belum ada notifikasi' }}
-                    </div>
-                    <div style="font-size: .875rem; color: rgb(var(--gray-500));">
-                        {{ $filter === 'unread'
-                            ? 'Notifikasi baru akan muncul di sini.'
-                            : 'Tugas aktif dan jadwal hari ini atau besok akan tampil di sini.' }}
-                    </div>
-                </div>
+                <x-psychology-mascot-gif
+                    mascot="memeluk-hati"
+                    variant="empty"
+                    :title="$filter === 'unread' ? 'Semua notifikasi sudah dibaca' : 'Belum ada notifikasi'"
+                    :message="$filter === 'unread'
+                        ? 'Notifikasi baru akan muncul di sini.'
+                        : 'Tugas aktif dan jadwal hari ini atau besok akan tampil di sini.'"
+                />
             </x-filament::section>
         @else
             @foreach ($groups as $group)

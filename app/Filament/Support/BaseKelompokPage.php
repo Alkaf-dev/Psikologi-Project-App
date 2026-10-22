@@ -18,6 +18,11 @@ abstract class BaseKelompokPage extends BaseSheetPage
 
     protected array $searchableColumns = ['user_name', 'user_npm', 'course_name', 'role_label'];
 
+    public function pageMascot(): ?string
+    {
+        return 'semangat';
+    }
+
     protected ?Collection $cachedGroupDetails = null;
 
     /**

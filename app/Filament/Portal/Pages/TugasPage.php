@@ -46,6 +46,11 @@ class TugasPage extends BaseSheetPage
         return 'portal-tasks';
     }
 
+    public function pageMascot(): ?string
+    {
+        return 'membaca';
+    }
+
     public function table(Table $table): Table
     {
         return $table

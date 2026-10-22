@@ -23,6 +23,11 @@ class JadwalPage extends BaseSheetPage
 
     protected array $searchableColumns = ['day', 'course_name', 'room', 'class_name', 'mode_label', 'location_label'];
 
+    public function pageMascot(): ?string
+    {
+        return 'berjalan';
+    }
+
     public function table(Table $table): Table
     {
         return $table

@@ -33,6 +33,11 @@ abstract class BaseSheetPage extends Page implements HasTable
         return 'tasks';
     }
 
+    public function pageMascot(): ?string
+    {
+        return null;
+    }
+
     protected function spreadsheetColumn(Column $column): Column
     {
         return $column

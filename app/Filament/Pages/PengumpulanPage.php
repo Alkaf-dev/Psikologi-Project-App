@@ -36,6 +36,11 @@ class PengumpulanPage extends BaseSheetPage
 
     protected array $searchableColumns = ['task_title', 'student_name', 'student_npm', 'group_name', 'status'];
 
+    public function pageMascot(): ?string
+    {
+        return 'menunjuk';
+    }
+
     public function table(Table $table): Table
     {
         return $table

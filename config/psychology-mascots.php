@@ -1,0 +1,70 @@
+<?php
+
+return [
+    'memegang-buku' => [
+        'file' => 'images/psychology/mascot/memegang-buku.gif',
+        'title' => 'Data akademik rapi dan siap dibaca.',
+        'message' => 'Kelola mata kuliah dan data mahasiswa dengan teliti agar setiap kegiatan belajar berjalan lancar.',
+        'alt' => 'Maskot Psikologi Connect memegang buku',
+    ],
+    'membaca' => [
+        'file' => 'images/psychology/mascot/membaca.gif',
+        'title' => 'Baca tugas dengan saksama.',
+        'message' => 'Periksa instruksi, deadline, dan tautan pengumpulan sebelum mulai mengerjakan.',
+        'alt' => 'Maskot Psikologi Connect sedang membaca',
+    ],
+    'semangat' => [
+        'file' => 'images/psychology/mascot/semangat.gif',
+        'title' => 'Semangat berkolaborasi!',
+        'message' => 'Kelompok yang solid membuat tugas dan diskusi terasa lebih ringan.',
+        'alt' => 'Maskot Psikologi Connect memberi semangat',
+    ],
+    'laptop' => [
+        'file' => 'images/psychology/mascot/laptop.gif',
+        'title' => 'Siap masuk ke ruang akademik digital?',
+        'message' => 'Gunakan email atau NIM terdaftar, pilih Prodi, lalu mulai akses jadwal, tugas, dan pengumuman.',
+        'alt' => 'Maskot Psikologi Connect di depan laptop',
+    ],
+    'kewalahan' => [
+        'file' => 'images/psychology/mascot/kewalahan.gif',
+        'title' => 'Tugas menumpuk? Mulai dari satu langkah kecil.',
+        'message' => 'Urutkan tugas berdasarkan deadline terdekat, pecah menjadi bagian kecil, dan kerjakan satu per satu.',
+        'alt' => 'Maskot Psikologi Connect merasa kewalahan',
+    ],
+    'minum' => [
+        'file' => 'images/psychology/mascot/minum.gif',
+        'title' => 'Jeda sejenak, minum air.',
+        'message' => 'Jadwal padat tetap butuh istirahat. Minum air dan regangkan badan sebelum lanjut belajar.',
+        'alt' => 'Maskot Psikologi Connect sedang minum',
+    ],
+    'menunjuk' => [
+        'file' => 'images/psychology/mascot/menunjuk.gif',
+        'title' => 'Informasi dan pengumpulan ada di sini.',
+        'message' => 'Cek pengumuman terbaru dan pastikan tugas dikumpulkan melalui tautan yang benar.',
+        'alt' => 'Maskot Psikologi Connect menunjuk informasi',
+    ],
+    'tertidur' => [
+        'file' => 'images/psychology/mascot/tertidur.gif',
+        'title' => 'Belum ada jadwal. Waktu yang tepat untuk istirahat.',
+        'message' => 'Cukup tidur membantu fokus. Atur ulang prioritas belajar saat sudah siap kembali.',
+        'alt' => 'Maskot Psikologi Connect tertidur',
+    ],
+    'berpikir' => [
+        'file' => 'images/psychology/mascot/berpikir.gif',
+        'title' => 'Susun program studi dengan matang.',
+        'message' => 'Pastikan setiap Prodi aktif dan terhubung dengan mata kuliah serta pengguna yang tepat.',
+        'alt' => 'Maskot Psikologi Connect sedang berpikir',
+    ],
+    'berjalan' => [
+        'file' => 'images/psychology/mascot/berjalan.gif',
+        'title' => 'Jadwal membantu menjaga ritme akademik.',
+        'message' => 'Lihat waktu, ruang, dan tautan kelas agar aktivitas belajar hari ini lebih terarah.',
+        'alt' => 'Maskot Psikologi Connect berjalan',
+    ],
+    'memeluk-hati' => [
+        'file' => 'images/psychology/mascot/memeluk-hati.gif',
+        'title' => 'Tidak ada notifikasi baru.',
+        'message' => 'Tugas aktif dan jadwal terdekat akan muncul di sini. Tetap tenang dan istirahat cukup.',
+        'alt' => 'Maskot Psikologi Connect memeluk hati',
+    ],
+];

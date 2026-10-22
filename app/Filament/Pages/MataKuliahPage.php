@@ -31,6 +31,11 @@ class MataKuliahPage extends BaseSheetPage
 
     protected array $searchableColumns = ['code', 'name', 'lecturer', 'semester', 'class_name', 'prodi_names'];
 
+    public function pageMascot(): ?string
+    {
+        return 'memegang-buku';
+    }
+
     public function table(Table $table): Table
     {
         return $table
