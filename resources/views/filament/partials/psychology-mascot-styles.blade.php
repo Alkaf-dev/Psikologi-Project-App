@@ -1,4 +1,26 @@
 <style>
+    :root {
+        --psy-gray-50: var(--color-gray-50, var(--gray-50, #fafafa));
+        --psy-gray-100: var(--color-gray-100, var(--gray-100, #f4f4f5));
+        --psy-gray-200: var(--color-gray-200, var(--gray-200, #e4e4e7));
+        --psy-gray-300: var(--color-gray-300, var(--gray-300, #d4d4d8));
+        --psy-gray-400: var(--color-gray-400, var(--gray-400, #a1a1aa));
+        --psy-gray-500: var(--color-gray-500, var(--gray-500, #71717a));
+        --psy-gray-600: var(--color-gray-600, var(--gray-600, #52525b));
+        --psy-gray-700: var(--color-gray-700, var(--gray-700, #3f3f46));
+        --psy-gray-800: var(--color-gray-800, var(--gray-800, #27272a));
+        --psy-gray-900: var(--color-gray-900, var(--gray-900, #18181b));
+        --psy-gray-950: var(--color-gray-950, var(--gray-950, #09090b));
+        --psy-primary-50: var(--color-primary-50, var(--primary-50, #eef2ff));
+        --psy-primary-100: var(--color-primary-100, var(--primary-100, #e0e7ff));
+        --psy-primary-200: var(--color-primary-200, var(--primary-200, #c7d2fe));
+        --psy-primary-300: var(--color-primary-300, var(--primary-300, #a5b4fc));
+        --psy-primary-400: var(--color-primary-400, var(--primary-400, #818cf8));
+        --psy-primary-500: var(--color-primary-500, var(--primary-500, #6366f1));
+        --psy-primary-600: var(--color-primary-600, var(--primary-600, #4f46e5));
+        --psy-primary-700: var(--color-primary-700, var(--primary-700, #4338ca));
+    }
+
     .psychology-mascot {
         --psychology-mascot-size: 120px;
         position: relative;
@@ -17,7 +39,7 @@
         inset: 14% 10% 5%;
         z-index: 0;
         border-radius: 999px;
-        background: radial-gradient(circle, rgb(var(--primary-500) / 0.14) 0%, transparent 72%);
+        background: radial-gradient(circle, rgba(99, 102, 241, 0.14) 0%, transparent 72%);
         content: '';
         filter: blur(8px);
         pointer-events: none;
@@ -43,7 +65,7 @@
         max-width: 100%;
         max-height: 100%;
         object-fit: contain;
-        filter: drop-shadow(0 10px 16px rgb(35 25 50 / 0.14));
+        filter: drop-shadow(0 10px 16px rgba(35, 25, 50, 0.14));
         user-select: none;
         -webkit-user-drag: none;
     }
@@ -71,17 +93,18 @@
         align-items: center;
         gap: 0.9rem;
         padding: 0.8rem 1rem;
-        border: 1px solid rgb(var(--gray-200));
+        border: 1px solid var(--psy-gray-200);
         border-radius: 1rem;
-        background: rgb(var(--gray-50));
-        background: linear-gradient(135deg, rgb(var(--primary-500) / 0.09) 0%, rgb(var(--gray-50)) 62%);
-        box-shadow: 0 10px 30px rgb(35 25 50 / 0.04);
+        background: var(--psy-gray-50);
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.09) 0%, var(--psy-gray-50) 62%);
+        box-shadow: 0 10px 30px rgba(35, 25, 50, 0.04);
     }
 
     .dark .psychology-greeting {
-        border-color: rgb(var(--gray-700));
-        background: rgb(var(--gray-900));
-        background: linear-gradient(135deg, rgb(var(--primary-500) / 0.12) 0%, rgb(var(--gray-900)) 62%);
+        border-color: var(--psy-gray-700);
+        background: var(--psy-gray-900);
+        background-color: var(--psy-gray-900);
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.18) 0%, var(--psy-gray-900) 62%);
         box-shadow: none;
     }
 
@@ -105,15 +128,17 @@
         align-items: center;
         gap: 1rem;
         padding: 0.85rem 1rem;
-        border: 1px solid rgb(var(--gray-200));
+        border: 1px solid var(--psy-gray-200);
         border-radius: 1rem;
-        background: linear-gradient(135deg, rgb(var(--primary-500) / 0.09) 0%, rgb(var(--gray-50)) 65%);
+        background: #ffffff;
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.09) 0%, var(--psy-gray-50) 65%);
     }
 
     .dark .psychology-mascot-gif {
-        border-color: rgb(var(--gray-700));
-        background: rgb(var(--gray-900));
-        background: linear-gradient(135deg, rgb(var(--primary-500) / 0.12) 0%, rgb(var(--gray-900)) 65%);
+        border-color: var(--psy-gray-700);
+        background: var(--psy-gray-900);
+        background-color: var(--psy-gray-900);
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.18) 0%, var(--psy-gray-900) 65%);
     }
 
     .psychology-mascot-gif__image {
@@ -133,7 +158,7 @@
 
     .psychology-mascot-gif__title {
         margin: 0;
-        color: rgb(var(--gray-950));
+        color: var(--psy-gray-950);
         font-size: 0.9rem;
         font-weight: 700;
         line-height: 1.35;
@@ -141,28 +166,29 @@
     }
 
     .dark .psychology-mascot-gif__title {
-        color: rgb(var(--gray-50));
+        color: var(--psy-gray-50);
     }
 
     .psychology-mascot-gif__message {
         margin: 0.18rem 0 0;
-        color: rgb(var(--gray-600));
+        color: var(--psy-gray-600);
         font-size: 0.8rem;
         line-height: 1.55;
     }
 
     .dark .psychology-mascot-gif__message {
-        color: rgb(var(--gray-300));
+        color: var(--psy-gray-300);
     }
 
     .psychology-mascot-gif--note {
         gap: 0.8rem;
         padding: 0.7rem 0.85rem;
-        background: rgb(var(--gray-50));
+        background: var(--psy-gray-50);
     }
 
     .dark .psychology-mascot-gif--note {
-        background: rgb(var(--gray-900));
+        background: var(--psy-gray-900);
+        background-color: var(--psy-gray-900);
     }
 
     .psychology-mascot-gif--note .psychology-mascot-gif__image {
@@ -225,7 +251,7 @@
 
     .psychology-greeting__title {
         margin: 0;
-        color: rgb(var(--gray-950));
+        color: var(--psy-gray-950);
         font-size: 0.95rem;
         font-weight: 700;
         line-height: 1.35;
@@ -233,30 +259,30 @@
     }
 
     .dark .psychology-greeting__title {
-        color: rgb(var(--gray-50));
+        color: var(--psy-gray-50);
     }
 
     .psychology-greeting__message {
         margin: 0.15rem 0 0;
-        color: rgb(var(--gray-600));
+        color: var(--psy-gray-600);
         font-size: 0.82rem;
         line-height: 1.5;
     }
 
     .dark .psychology-greeting__message {
-        color: rgb(var(--gray-400));
+        color: var(--psy-gray-400);
     }
 
     .psychology-empty {
         display: flex;
         align-items: center;
         gap: 0.65rem;
-        color: rgb(var(--gray-500));
+        color: var(--psy-gray-500);
         font-size: 0.9rem;
     }
 
     .dark .psychology-empty {
-        color: rgb(var(--gray-400));
+        color: var(--psy-gray-400);
     }
 
     .psychology-launcher-spacer {
@@ -286,11 +312,11 @@
         height: 4.2rem;
         align-items: center;
         justify-content: center;
-        border: 1px solid rgb(var(--gray-200));
+        border: 1px solid var(--psy-gray-200);
         border-radius: 999px;
-        background: rgb(255 255 255);
-        background: linear-gradient(145deg, rgb(255 255 255) 0%, rgb(var(--gray-50)) 100%);
-        box-shadow: 0 14px 34px rgb(35 25 50 / 0.18);
+        background: #ffffff;
+        background: linear-gradient(145deg, #ffffff 0%, var(--psy-gray-50) 100%);
+        box-shadow: 0 14px 34px rgba(35, 25, 50, 0.18);
         cursor: pointer;
         font-family: inherit;
         padding: 0;
@@ -298,26 +324,27 @@
     }
 
     .dark .psychology-launcher__toggle {
-        border-color: rgb(var(--gray-700));
-        background: rgb(var(--gray-900));
-        background: linear-gradient(145deg, rgb(var(--gray-800)) 0%, rgb(var(--gray-900)) 100%);
-        box-shadow: 0 14px 34px rgb(0 0 0 / 0.4);
+        border-color: var(--psy-gray-700);
+        background: var(--psy-gray-900);
+        background-color: var(--psy-gray-900);
+        background: linear-gradient(145deg, var(--psy-gray-800) 0%, var(--psy-gray-900) 100%);
+        box-shadow: 0 14px 34px rgba(0, 0, 0, 0.5);
     }
 
     .psychology-launcher__toggle:hover {
         transform: translateY(-2px);
-        box-shadow: 0 18px 40px rgb(35 25 50 / 0.24);
+        box-shadow: 0 18px 40px rgba(35, 25, 50, 0.24);
     }
 
     .psychology-launcher--celebrate .psychology-launcher__toggle {
-        border-color: rgb(var(--primary-400));
-        box-shadow: 0 0 0 6px rgb(var(--primary-500) / 0.16), 0 18px 40px rgb(35 25 50 / 0.22);
+        border-color: var(--psy-primary-400);
+        box-shadow: 0 0 0 6px rgba(99, 102, 241, 0.16), 0 18px 40px rgba(35, 25, 50, 0.22);
     }
 
     .psychology-launcher__toggle:focus-visible,
     .psychology-launcher__close:focus-visible,
     .psychology-launcher__suggestion:focus-visible {
-        outline: 2px solid rgb(var(--primary-500));
+        outline: 2px solid var(--psy-primary-500);
         outline-offset: 3px;
     }
 
@@ -327,14 +354,14 @@
         right: 0.45rem;
         width: 0.55rem;
         height: 0.55rem;
-        border: 2px solid rgb(255 255 255);
+        border: 2px solid #ffffff;
         border-radius: 999px;
-        background: rgb(var(--primary-500));
+        background: var(--psy-primary-500);
         z-index: 2;
     }
 
     .dark .psychology-launcher__pulse {
-        border-color: rgb(var(--gray-900));
+        border-color: var(--psy-gray-900);
     }
 
     .psychology-launcher__panel {
@@ -342,16 +369,17 @@
         max-height: min(68vh, 26rem, calc(100vh - 12rem));
         margin-bottom: 0.75rem;
         overflow: auto;
-        border: 1px solid rgb(var(--gray-200));
+        border: 1px solid var(--psy-gray-200);
         border-radius: 1rem;
-        background: rgb(255 255 255);
-        box-shadow: 0 24px 60px rgb(35 25 50 / 0.2);
+        background: #ffffff;
+        box-shadow: 0 24px 60px rgba(35, 25, 50, 0.2);
     }
 
     .dark .psychology-launcher__panel {
-        border-color: rgb(var(--gray-700));
-        background: rgb(var(--gray-900));
-        box-shadow: 0 24px 60px rgb(0 0 0 / 0.5);
+        border-color: var(--psy-gray-700);
+        background: var(--psy-gray-900);
+        background-color: var(--psy-gray-900);
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7);
     }
 
     .psychology-launcher__panel[hidden] {
@@ -368,7 +396,7 @@
 
     .psychology-launcher__eyebrow {
         margin: 0;
-        color: rgb(var(--primary-600));
+        color: var(--psy-primary-600);
         font-size: 0.68rem;
         font-weight: 700;
         letter-spacing: 0.08em;
@@ -377,19 +405,19 @@
     }
 
     .dark .psychology-launcher__eyebrow {
-        color: rgb(var(--primary-400));
+        color: var(--psy-primary-400);
     }
 
     .psychology-launcher__title {
         margin: 0.1rem 0 0;
-        color: rgb(var(--gray-950));
+        color: var(--psy-gray-950);
         font-size: 0.95rem;
         font-weight: 700;
         line-height: 1.35;
     }
 
     .dark .psychology-launcher__title {
-        color: rgb(var(--gray-50));
+        color: var(--psy-gray-50);
     }
 
     .psychology-launcher__close {
@@ -401,8 +429,8 @@
         justify-content: center;
         border: 0;
         border-radius: 999px;
-        background: rgb(var(--gray-100));
-        color: rgb(var(--gray-600));
+        background: var(--psy-gray-100);
+        color: var(--psy-gray-600);
         cursor: pointer;
         font-family: inherit;
         font-size: 1.15rem;
@@ -411,8 +439,8 @@
     }
 
     .dark .psychology-launcher__close {
-        background: rgb(var(--gray-800));
-        color: rgb(var(--gray-300));
+        background: var(--psy-gray-800);
+        color: var(--psy-gray-300);
     }
 
     .psychology-launcher__body {
@@ -430,13 +458,13 @@
         flex: 1;
         min-width: 0;
         margin: 0;
-        color: rgb(var(--gray-600));
+        color: var(--psy-gray-600);
         font-size: 0.82rem;
         line-height: 1.5;
     }
 
     .dark .psychology-launcher__message {
-        color: rgb(var(--gray-300));
+        color: var(--psy-gray-300);
     }
 
     .psychology-launcher__actions {
@@ -449,10 +477,10 @@
     .psychology-launcher__suggestion {
         display: inline-flex;
         align-items: center;
-        border: 1px solid rgb(var(--primary-200));
+        border: 1px solid var(--psy-primary-200);
         border-radius: 999px;
-        background: rgb(var(--primary-50));
-        color: rgb(var(--primary-700));
+        background: var(--psy-primary-50);
+        color: var(--psy-primary-700);
         cursor: pointer;
         font-family: inherit;
         font-size: 0.72rem;
@@ -463,19 +491,19 @@
     }
 
     .psychology-launcher__suggestion:hover {
-        border-color: rgb(var(--primary-300));
-        background: rgb(var(--primary-100));
+        border-color: var(--psy-primary-300);
+        background: var(--psy-primary-100);
     }
 
     .dark .psychology-launcher__suggestion {
-        border-color: rgb(var(--primary-500) / 0.35);
-        background: rgb(var(--primary-500) / 0.14);
-        color: rgb(var(--primary-300));
+        border-color: rgba(99, 102, 241, 0.35);
+        background: rgba(99, 102, 241, 0.14);
+        color: var(--psy-primary-300);
     }
 
     .dark .psychology-launcher__suggestion:hover {
-        border-color: rgb(var(--primary-400) / 0.5);
-        background: rgb(var(--primary-500) / 0.22);
+        border-color: rgba(129, 140, 248, 0.5);
+        background: rgba(99, 102, 241, 0.22);
     }
 
     @media (max-width: 640px) {
