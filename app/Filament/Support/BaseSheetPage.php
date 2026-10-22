@@ -3,7 +3,7 @@
 namespace App\Filament\Support;
 
 use Filament\Pages\Page;
-use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\Column;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Table;
@@ -23,7 +23,7 @@ abstract class BaseSheetPage extends Page implements HasTable
 
     abstract public function table(Table $table): Table;
 
-    protected function spreadsheetColumn(TextColumn $column): TextColumn
+    protected function spreadsheetColumn(Column $column): Column
     {
         return $column
             ->extraHeaderAttributes([

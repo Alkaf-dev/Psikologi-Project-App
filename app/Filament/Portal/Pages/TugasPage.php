@@ -15,6 +15,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\ViewColumn;
 use Filament\Tables\Table;
 use Illuminate\Support\Carbon;
 
@@ -122,6 +123,11 @@ class TugasPage extends BaseSheetPage
                         ->tooltip('Klik untuk melihat rincian')
                         ->searchable()
                         ->wrap(),
+                ),
+                $this->spreadsheetColumn(
+                    ViewColumn::make('links')
+                        ->label('Tautan')
+                        ->view('filament.tables.columns.task-links'),
                 ),
                 $this->spreadsheetColumn(
                     TextColumn::make('group_name')

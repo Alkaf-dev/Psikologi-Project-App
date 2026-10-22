@@ -18,6 +18,7 @@ use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\ViewColumn;
 use Filament\Tables\Table;
 use Illuminate\Support\Carbon;
 use Illuminate\Validation\ValidationException;
@@ -87,6 +88,11 @@ class TugasPage extends BaseSheetPage
                         ->tooltip('Klik untuk melihat rincian')
                         ->searchable()
                         ->wrap(),
+                ),
+                $this->spreadsheetColumn(
+                    ViewColumn::make('links')
+                        ->label('Tautan')
+                        ->view('filament.tables.columns.task-links'),
                 ),
                 $this->spreadsheetColumn(
                     TextColumn::make('course_name')
