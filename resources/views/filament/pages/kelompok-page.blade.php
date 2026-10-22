@@ -103,26 +103,49 @@
         }
 
         .kelompok-chip-btn {
+            overflow: hidden;
             border-radius: 9999px;
+            will-change: transform;
             transition:
-                transform 180ms cubic-bezier(.2, .8, .2, 1),
+                transform 140ms cubic-bezier(.2, .9, .2, 1),
                 box-shadow 180ms ease,
-                background-color 150ms ease,
-                color 150ms ease;
+                background-color 120ms ease,
+                color 120ms ease;
         }
 
         .kelompok-chip-btn:hover {
-            transform: translateY(-1px);
+            transform: translateY(-1px) scale(1.02);
+            box-shadow: 0 4px 10px -6px rgb(0 0 0 / .3);
         }
 
         .kelompok-chip-btn:active {
-            transform: scale(.95);
-            transition-duration: 80ms;
+            transform: scale(.94);
+            transition-duration: 60ms;
         }
 
         .kelompok-chip-btn[aria-current="true"] {
-            box-shadow: 0 4px 12px -6px var(--primary-600);
-            animation: kelompok-chip-pop 320ms cubic-bezier(.34, 1.56, .64, 1);
+            box-shadow:
+                0 0 0 3px var(--primary-200),
+                0 5px 14px -7px var(--primary-600);
+            animation: kelompok-chip-pop 260ms cubic-bezier(.34, 1.56, .64, 1);
+        }
+
+        .kelompok-chip-label,
+        .kelompok-chip-count {
+            position: relative;
+            z-index: 1;
+        }
+
+        .kelompok-chip-ripple {
+            position: absolute;
+            z-index: 0;
+            width: 1rem;
+            height: 1rem;
+            border-radius: 9999px;
+            background: currentColor;
+            opacity: 0;
+            pointer-events: none;
+            transform: translate(-50%, -50%) scale(0);
         }
 
         @keyframes kelompok-chip-pop {
@@ -130,13 +153,19 @@
                 transform: scale(.92);
             }
 
-            55% {
-                transform: scale(1.04);
+            60% {
+                transform: scale(1.05);
             }
 
             100% {
                 transform: scale(1);
             }
+        }
+
+        .dark .kelompok-chip-btn[aria-current="true"] {
+            box-shadow:
+                0 0 0 3px var(--primary-800),
+                0 5px 14px -7px var(--primary-500);
         }
 
         @media (prefers-reduced-motion: reduce) {
@@ -151,6 +180,10 @@
 
             .kelompok-chip-btn[aria-current="true"] {
                 animation: none;
+            }
+
+            .kelompok-chip-ripple {
+                display: none;
             }
         }
     </style>
@@ -298,9 +331,25 @@
                             wire:key="kelompok-chip-{{ $group['id'] }}"
                             wire:click="selectGroup('{{ $group['id'] }}')"
                             class="kelompok-chip-btn"
+                            x-data="{}"
+                            x-on:pointerdown="
+                                const bounds = $el.getBoundingClientRect();
+                                const ripple = $refs.ripple;
+
+                                ripple.style.left = ($event.clientX - bounds.left) + 'px';
+                                ripple.style.top = ($event.clientY - bounds.top) + 'px';
+
+                                ripple.animate(
+                                    [
+                                        { transform: 'translate(-50%, -50%) scale(0)', opacity: .35 },
+                                        { transform: 'translate(-50%, -50%) scale(3.5)', opacity: 0 },
+                                    ],
+                                    { duration: 360, easing: 'cubic-bezier(.2, .8, .2, 1)' },
+                                );
+                            "
                         >
-                            <span>{{ $group['name'] }}</span>
-                            <span style="
+                            <span class="kelompok-chip-label">{{ $group['name'] }}</span>
+                            <span class="kelompok-chip-count" style="
                                 min-width: 1.4rem;
                                 padding: .08rem .45rem;
                                 border-radius: 9999px;
@@ -312,6 +361,7 @@
                             ">
                                 {{ $group['members_count'] }}
                             </span>
+                            <span x-ref="ripple" class="kelompok-chip-ripple" aria-hidden="true"></span>
                         </x-filament::button>
                     @endforeach
                 </div>
