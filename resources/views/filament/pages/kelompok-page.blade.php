@@ -1,10 +1,114 @@
 <x-filament-panels::page>
+    <style>
+        .kelompok-course-grid {
+            display: grid;
+            gap: 1rem;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        }
+
+        .kelompok-course-card {
+            display: flex;
+            flex-direction: column;
+            gap: .9rem;
+            width: 100%;
+            padding: 1rem 1.05rem;
+            text-align: start;
+            color: var(--gray-950);
+            cursor: pointer;
+            background: var(--color-white);
+            border: 1px solid var(--gray-200);
+            border-radius: .9rem;
+            box-shadow: 0 1px 2px rgb(0 0 0 / .05);
+            transition: border-color 150ms ease, box-shadow 150ms ease, transform 150ms ease;
+        }
+
+        .kelompok-course-card:hover {
+            border-color: var(--primary-400);
+            box-shadow: 0 10px 20px -12px rgb(0 0 0 / .3);
+            transform: translateY(-2px);
+        }
+
+        .kelompok-course-card:focus-visible {
+            outline: 2px solid var(--primary-500);
+            outline-offset: 2px;
+        }
+
+        .kelompok-course-card-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 2.5rem;
+            height: 2.5rem;
+            flex: none;
+            border-radius: .7rem;
+            color: var(--primary-700);
+            background: var(--primary-50);
+        }
+
+        .kelompok-course-card-title {
+            font-weight: 700;
+            line-height: 1.35;
+        }
+
+        .kelompok-course-card-meta {
+            margin-top: .3rem;
+            font-size: .8rem;
+            color: var(--gray-500);
+        }
+
+        .kelompok-course-card-footer {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: .45rem;
+        }
+
+        .kelompok-course-card-arrow {
+            color: var(--gray-400);
+            transition: color 150ms ease, transform 150ms ease;
+        }
+
+        .kelompok-course-card:hover .kelompok-course-card-arrow {
+            color: var(--primary-600);
+            transform: translateX(2px);
+        }
+
+        .dark .kelompok-course-card {
+            color: var(--color-white);
+            background: var(--gray-900);
+            border-color: var(--gray-700);
+            box-shadow: 0 1px 2px rgb(0 0 0 / .4);
+        }
+
+        .dark .kelompok-course-card:hover {
+            border-color: var(--primary-500);
+        }
+
+        .dark .kelompok-course-card-icon {
+            color: var(--primary-300);
+            background: var(--gray-800);
+        }
+
+        .dark .kelompok-course-card-meta {
+            color: var(--gray-400);
+        }
+
+        .dark .kelompok-course-card-arrow {
+            color: var(--gray-500);
+        }
+
+        .dark .kelompok-course-card:hover .kelompok-course-card-arrow {
+            color: var(--primary-400);
+        }
+    </style>
+
     @if ($selectedCourse === null)
         @if ($cards === [])
             <x-filament::section>
                 <div style="padding: 2rem 1rem; text-align: center;">
                     <div style="font-weight: 700; margin-bottom: .35rem;">Belum ada kelompok</div>
-                    <div style="font-size: .875rem; color: rgb(var(--gray-500));">
+                    <div style="font-size: .875rem; color: var(--gray-500);">
                         {{ $canManage
                             ? 'Tambahkan kelompok untuk mulai mengelola anggota.'
                             : 'Hubungi admin atau dosen jika kelompok Anda belum dibuat.' }}
@@ -12,38 +116,16 @@
                 </div>
             </x-filament::section>
         @else
-            <div style="display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));">
+            <div class="kelompok-course-grid">
                 @foreach ($cards as $card)
                     <button
                         type="button"
                         wire:key="kelompok-course-{{ $card['id'] }}"
                         wire:click="selectCourse('{{ $card['id'] }}')"
-                        style="
-                            display: flex;
-                            flex-direction: column;
-                            gap: .85rem;
-                            width: 100%;
-                            padding: 1rem;
-                            text-align: start;
-                            color: inherit;
-                            cursor: pointer;
-                            background: rgb(var(--gray-50));
-                            border: 1px solid rgb(var(--gray-200));
-                            border-radius: .75rem;
-                        "
+                        class="kelompok-course-card"
                     >
                         <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: .75rem;">
-                            <span style="
-                                display: inline-flex;
-                                align-items: center;
-                                justify-content: center;
-                                width: 2.4rem;
-                                height: 2.4rem;
-                                flex: none;
-                                border-radius: .65rem;
-                                color: rgb(var(--primary-600));
-                                background: rgb(var(--primary-50));
-                            ">
+                            <span class="kelompok-course-card-icon">
                                 <x-filament::icon icon="heroicon-o-book-open" style="width: 1.35rem; height: 1.35rem;" />
                             </span>
 
@@ -53,15 +135,23 @@
                         </div>
 
                         <div>
-                            <div style="font-weight: 700; line-height: 1.35;">{{ $card['name'] }}</div>
-                            <div style="margin-top: .3rem; font-size: .8rem; color: rgb(var(--gray-500));">
+                            <div class="kelompok-course-card-title">{{ $card['name'] }}</div>
+                            <div class="kelompok-course-card-meta">
                                 {{ collect([$card['class_name'], $card['prodi_name']])->filter()->implode(' · ') }}
                             </div>
                         </div>
 
-                        <div style="display: flex; flex-wrap: wrap; align-items: center; gap: .45rem;">
-                            <x-filament::badge color="info">{{ $card['groups_count'] }} kelompok</x-filament::badge>
-                            <x-filament::badge color="gray">{{ $card['members_count'] }} anggota</x-filament::badge>
+                        <div class="kelompok-course-card-footer">
+                            <div style="display: flex; flex-wrap: wrap; align-items: center; gap: .45rem;">
+                                <x-filament::badge color="info">{{ $card['groups_count'] }} kelompok</x-filament::badge>
+                                <x-filament::badge color="gray">{{ $card['members_count'] }} anggota</x-filament::badge>
+                            </div>
+
+                            <x-filament::icon
+                                icon="heroicon-m-arrow-right"
+                                class="kelompok-course-card-arrow"
+                                style="width: 1.1rem; height: 1.1rem;"
+                            />
                         </div>
                     </button>
                 @endforeach
@@ -84,7 +174,7 @@
                         <div style="font-size: 1.1rem; font-weight: 700; line-height: 1.3;">
                             {{ $selectedCourse['name'] }}
                         </div>
-                        <div style="margin-top: .2rem; font-size: .8rem; color: rgb(var(--gray-500));">
+                        <div style="margin-top: .2rem; font-size: .8rem; color: var(--gray-500);">
                             {{ collect([$selectedCourse['code'], $selectedCourse['class_name'], $selectedCourse['prodi_name']])->filter()->implode(' · ') }}
                         </div>
                     </div>
@@ -125,7 +215,7 @@
                 <x-filament::section>
                     <div style="padding: 1.5rem 1rem; text-align: center;">
                         <div style="font-weight: 700; margin-bottom: .35rem;">Belum ada kelompok pada mata kuliah ini</div>
-                        <div style="font-size: .875rem; color: rgb(var(--gray-500));">
+                        <div style="font-size: .875rem; color: var(--gray-500);">
                             {{ $canManage
                                 ? 'Tambahkan kelompok terlebih dahulu untuk mengelola anggotanya.'
                                 : 'Hubungi admin atau dosen jika kelompok Anda belum dibuat.' }}
@@ -164,8 +254,8 @@
                                 font-size: .7rem;
                                 line-height: 1.2;
                                 text-align: center;
-                                color: {{ $isActive ? 'rgb(var(--primary-700))' : 'rgb(var(--gray-600))' }};
-                                background: {{ $isActive ? 'rgb(var(--gray-50))' : 'rgb(var(--gray-100))' }};
+                                color: {{ $isActive ? 'var(--primary-700)' : 'var(--gray-600)' }};
+                                background: {{ $isActive ? 'var(--gray-50)' : 'var(--gray-100)' }};
                             ">
                                 {{ $group['members_count'] }}
                             </span>
