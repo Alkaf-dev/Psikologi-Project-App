@@ -89,6 +89,17 @@
         flex: 0 0 auto;
     }
 
+    .psychology-greeting__image {
+        display: block;
+        flex: 0 0 auto;
+        width: auto;
+        height: clamp(96px, 12vw, 112px);
+        max-width: 100%;
+        object-fit: contain;
+        user-select: none;
+        -webkit-user-drag: none;
+    }
+
     .psychology-greeting__copy {
         min-width: 0;
     }

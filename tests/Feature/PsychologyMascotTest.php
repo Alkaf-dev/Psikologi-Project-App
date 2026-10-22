@@ -64,7 +64,7 @@ class PsychologyMascotTest extends TestCase
         $this->assertStringContainsString('--psychology-mascot-size: 88px', $html);
     }
 
-    public function test_admin_dashboard_renders_the_greeting_and_mascot_assets(): void
+    public function test_admin_dashboard_renders_the_greeting_with_the_waving_gif(): void
     {
         Filament::setCurrentPanel('admin');
         $this->actingAsAdmin();
@@ -73,9 +73,27 @@ class PsychologyMascotTest extends TestCase
             ->assertOk()
             ->assertSee('data-mascot-greeting', false)
             ->assertSee('data-mascot-greeting-key="admin-dashboard"', false)
-            ->assertSee('data-psychology-mascot', false)
+            ->assertSee('images/psychology/mascot/melambai.gif', false)
+            ->assertSee('Maskot Psikologi Connect melambai', false)
             ->assertSee('psychology-mascot:celebrate', false)
             ->assertSee('.psychology-mascot', false);
+    }
+
+    public function test_admin_greeting_gif_asset_is_available_and_lightweight(): void
+    {
+        $path = public_path('images/psychology/mascot/melambai.gif');
+
+        $this->assertFileExists($path);
+
+        $image = getimagesize($path);
+        $size = filesize($path);
+
+        $this->assertIsArray($image);
+        $this->assertSame(112, $image[0]);
+        $this->assertSame(200, $image[1]);
+        $this->assertSame('image/gif', $image['mime']);
+        $this->assertIsInt($size);
+        $this->assertLessThan(2_000_000, $size);
     }
 
     public function test_portal_dashboard_renders_the_greeting(): void
@@ -87,7 +105,8 @@ class PsychologyMascotTest extends TestCase
             ->assertOk()
             ->assertSee('data-mascot-greeting', false)
             ->assertSee('data-mascot-greeting-key="portal-dashboard"', false)
-            ->assertSee('images/psychology/mascot/greeting.png', false);
+            ->assertSee('images/psychology/mascot/greeting.png', false)
+            ->assertDontSee('images/psychology/mascot/melambai.gif', false);
     }
 
     public function test_admin_task_page_renders_the_launcher(): void
