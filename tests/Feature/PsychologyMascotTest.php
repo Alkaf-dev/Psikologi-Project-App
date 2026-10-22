@@ -37,6 +37,34 @@ class PsychologyMascotTest extends TestCase
         }
     }
 
+    public function test_launcher_gif_assets_are_compact_and_available(): void
+    {
+        $toggle = public_path('images/psychology/mascot/berjalan-toggle.gif');
+        $poster = public_path('images/psychology/mascot/berjalan-poster.png');
+
+        $this->assertFileExists($toggle);
+        $this->assertFileExists($poster);
+
+        $image = getimagesize($toggle);
+        $this->assertIsArray($image);
+        $this->assertSame('image/gif', $image['mime']);
+        $this->assertSame(56, $image[0]);
+        $this->assertSame(100, $image[1]);
+        $this->assertLessThan(400_000, filesize($toggle));
+        $this->assertSame(8000, $this->gifTotalDurationMs($toggle));
+
+        $posterImage = getimagesize($poster);
+        $this->assertIsArray($posterImage);
+        $this->assertSame('image/png', $posterImage['mime']);
+        $this->assertSame(56, $posterImage[0]);
+        $this->assertSame(100, $posterImage[1]);
+        $this->assertLessThan(50_000, filesize($poster));
+
+        foreach (['melambai', 'laptop', 'memeluk-hati', 'berpikir', 'tertidur'] as $gif) {
+            $this->assertFileExists(public_path("images/psychology/mascot/{$gif}.gif"));
+        }
+    }
+
     public function test_mascot_component_renders_a_whitelisted_state_and_fallback_asset(): void
     {
         $html = Blade::render('<x-psychology-mascot animation="greeting" size="96px" label="Maskot uji" />');
@@ -303,6 +331,35 @@ class PsychologyMascotTest extends TestCase
             ->assertSee('data-mascot-launcher', false)
             ->assertSee('data-mascot-context="portal-tasks"', false)
             ->assertSee('Buka bantuan maskot', false);
+    }
+
+    public function test_launcher_defers_panel_gifs_until_interaction(): void
+    {
+        Filament::setCurrentPanel('admin');
+        $this->actingAsAdmin();
+
+        $response = $this->get('/admin/tugas-page')->assertOk();
+        $html = (string) $response->getContent();
+
+        $this->assertStringContainsString('berjalan-toggle.gif', $html);
+        $this->assertStringContainsString('berjalan-poster.png', $html);
+        $this->assertStringContainsString('melambai.gif', $html);
+        $this->assertStringContainsString('laptop.gif', $html);
+        $this->assertStringContainsString('memeluk-hati.gif', $html);
+        $this->assertStringContainsString('berpikir.gif', $html);
+        $this->assertStringContainsString('tertidur.gif', $html);
+        $this->assertStringContainsString(
+            'src="'.asset('images/psychology/mascot/berjalan-poster.png').'"',
+            $html,
+        );
+
+        foreach (['melambai', 'laptop', 'memeluk-hati', 'berpikir', 'tertidur'] as $gif) {
+            $this->assertStringNotContainsString(
+                'src="'.asset("images/psychology/mascot/{$gif}.gif").'"',
+                $html,
+                "GIF {$gif} tidak boleh dimuat sebelum interaksi.",
+            );
+        }
     }
 
     public function test_other_sheet_pages_do_not_render_the_launcher(): void

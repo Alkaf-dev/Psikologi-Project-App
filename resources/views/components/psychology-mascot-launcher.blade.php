@@ -12,6 +12,30 @@
     $helpMessage = $isAdmin
         ? 'Gunakan tombol Tambah Tugas untuk membuat tugas baru, atau klik Detail pada baris untuk melihat rincian.'
         : 'Klik Detail untuk membaca instruksi, lalu Kumpulkan untuk mengirim tautan tugas.';
+    $mascotGifAssets = [
+        'idle' => [
+            'gif' => 'images/psychology/mascot/berjalan-toggle.gif',
+            'poster' => 'images/psychology/mascot/berjalan-poster.png',
+        ],
+        'greeting' => [
+            'gif' => 'images/psychology/mascot/melambai.gif',
+        ],
+        'studying' => [
+            'gif' => 'images/psychology/mascot/laptop.gif',
+        ],
+        'supportive' => [
+            'gif' => 'images/psychology/mascot/memeluk-hati.gif',
+        ],
+        'thinking' => [
+            'gif' => 'images/psychology/mascot/berpikir.gif',
+        ],
+        'success' => [
+            'gif' => 'images/psychology/mascot/memeluk-hati.gif',
+        ],
+        'sleepy' => [
+            'gif' => 'images/psychology/mascot/tertidur.gif',
+        ],
+    ];
 @endphp
 
 <div
@@ -55,6 +79,7 @@
                 size="6.25rem"
                 class="psychology-launcher__mascot"
                 alt="Maskot Psikologi Connect"
+                :gif-assets="$mascotGifAssets"
             />
 
             <p class="psychology-launcher__message" data-mascot-message aria-live="polite">
@@ -89,6 +114,7 @@
             size="3.4rem"
             :interactive="false"
             aria-hidden="true"
+            :gif-assets="$mascotGifAssets"
         />
     </button>
 </div>

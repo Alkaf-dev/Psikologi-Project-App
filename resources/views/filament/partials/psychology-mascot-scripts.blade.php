@@ -55,17 +55,18 @@
                 window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches,
             );
 
-            const applyState = (element, requestedState) => {
+            const applyState = (element, requestedState, { allowGif = false } = {}) => {
                 const state = states.includes(requestedState) ? requestedState : 'idle';
                 const assets = parseAssets(element);
                 const asset = assets[state] && typeof assets[state] === 'object' ? assets[state] : {};
                 const lottie = element.querySelector('.psychology-mascot__lottie');
                 const image = element.querySelector('.psychology-mascot__image');
                 const reducedMotion = prefersReducedMotion();
+                const useGif = allowGif && Boolean(asset.gif) && !reducedMotion;
                 const useLottie = Boolean(asset.lottie) && playerIsReady() && !reducedMotion;
 
                 element.dataset.mascotState = state;
-                element.classList.toggle('psychology-mascot--fallback', !useLottie);
+                element.classList.toggle('psychology-mascot--fallback', !useLottie && !useGif);
 
                 if (lottie) {
                     lottie.hidden = !useLottie;
@@ -86,11 +87,13 @@
                 }
 
                 if (image) {
-                    if (asset.image && image.getAttribute('src') !== asset.image) {
-                        image.setAttribute('src', asset.image);
+                    const imageSource = useGif ? asset.gif : asset.image;
+
+                    if (imageSource && image.getAttribute('src') !== imageSource) {
+                        image.setAttribute('src', imageSource);
                     }
 
-                    image.hidden = useLottie;
+                    image.hidden = useLottie && !useGif;
                 }
             };
 
@@ -209,13 +212,25 @@
                         }, 30);
                     }
 
-                    if (!open) {
+                    if (open) {
+                        if (mascot) {
+                            window.clearTimeout(stateTimers.get(mascot));
+                            applyState(mascot, 'idle', { allowGif: false });
+                        }
+                    } else {
                         [mascot, panelMascot].forEach((element) => {
                             if (element) {
                                 window.clearTimeout(stateTimers.get(element));
-                                applyState(element, 'idle');
                             }
                         });
+
+                        if (panelMascot) {
+                            applyState(panelMascot, 'idle', { allowGif: false });
+                        }
+
+                        if (mascot) {
+                            applyState(mascot, 'idle', { allowGif: true });
+                        }
 
                         if (message) {
                             message.textContent = initialMessage;
@@ -226,17 +241,15 @@
                 const show = (state, text, focusPanel = false) => {
                     launcher.classList.remove('psychology-launcher--celebrate');
 
-                    [mascot, panelMascot].forEach((element) => {
-                        if (element) {
-                            applyState(element, state);
-                        }
-                    });
+                    setOpen(true, focusPanel);
+
+                    if (panelMascot) {
+                        applyState(panelMascot, state, { allowGif: true });
+                    }
 
                     if (message && typeof text === 'string' && text.trim() !== '') {
                         message.textContent = text;
                     }
-
-                    setOpen(true, focusPanel);
                 };
 
                 toggle.addEventListener('click', () => {
@@ -287,8 +300,6 @@
 
                         if (mascot) {
                             window.clearTimeout(stateTimers.get(mascot));
-                            applyState(mascot, state);
-                            scheduleIdle(mascot);
                         }
 
                         launcher.classList.add('psychology-launcher--celebrate');
@@ -328,6 +339,20 @@
                 document.querySelectorAll('[data-psychology-mascot]').forEach(initMascot);
                 document.querySelectorAll('[data-mascot-greeting]').forEach(initGreeting);
                 document.querySelectorAll('[data-mascot-launcher]').forEach(initLauncher);
+
+                document.querySelectorAll('[data-mascot-launcher]').forEach((launcher) => {
+                    const panel = launcher.querySelector('[data-mascot-panel]');
+
+                    if (panel && !panel.hidden) {
+                        return;
+                    }
+
+                    const toggleMascot = launcher.querySelector('[data-mascot-toggle] [data-psychology-mascot]');
+
+                    if (toggleMascot) {
+                        applyState(toggleMascot, 'idle', { allowGif: true });
+                    }
+                });
             };
 
             window.__psychologyMascotInit = initAll;
