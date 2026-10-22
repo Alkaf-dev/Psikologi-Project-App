@@ -43,6 +43,7 @@
         data-mascot-gif="{{ $mascot }}"
     >
         <img
+            wire:ignore
             class="psychology-mascot-gif__image"
             src="{{ asset($mascotDisplayFile) }}"
             @if ($mascotPosterExists)

@@ -84,38 +84,50 @@
             };
 
             const upgradeDeferredGif = (image) => {
-                if (image.dataset.mascotGifLoaded === 'true') {
+                if (image.dataset.mascotGifLoaded === 'true' && image.src === image.dataset.mascotGifSrc) {
                     return;
                 }
-
-                image.dataset.mascotGifLoaded = 'true';
 
                 if (!image.isConnected || !allowsAnimatedAssets() || !image.dataset.mascotGifSrc) {
                     return;
                 }
 
-                const loader = new Image();
-                loader.decoding = 'async';
-                loader.fetchPriority = 'low';
-                loader.onload = () => {
+                const gifSrc = image.dataset.mascotGifSrc;
+                const applyGif = () => {
                     if (image.isConnected && allowsAnimatedAssets()) {
-                        image.src = image.dataset.mascotGifSrc;
+                        image.src = gifSrc;
+                        image.dataset.mascotGifLoaded = 'true';
                     }
                 };
-                loader.src = image.dataset.mascotGifSrc;
+
+                const loader = new Image();
+                loader.decoding = 'async';
+                loader.fetchPriority = image.loading === 'eager' ? 'auto' : 'low';
+                loader.onload = applyGif;
+                loader.src = gifSrc;
+
+                if (loader.complete) {
+                    applyGif();
+                }
             };
 
             const initDeferredGifs = () => {
                 document.querySelectorAll('img[data-mascot-gif-src]').forEach((image) => {
+                    if (!allowsAnimatedAssets()) {
+                        return;
+                    }
+
+                    if (image.loading === 'eager') {
+                        upgradeDeferredGif(image);
+
+                        return;
+                    }
+
                     if (image.dataset.mascotGifReady === 'true') {
                         return;
                     }
 
                     image.dataset.mascotGifReady = 'true';
-
-                    if (!allowsAnimatedAssets()) {
-                        return;
-                    }
 
                     if (typeof window.IntersectionObserver !== 'function') {
                         whenIdle(() => upgradeDeferredGif(image));
@@ -479,6 +491,13 @@
             }
 
             document.addEventListener('livewire:navigated', initAll);
+            document.addEventListener('livewire:initialized', () => {
+                if (window.Livewire && typeof window.Livewire.hook === 'function') {
+                    window.Livewire.hook('morph.updated', () => {
+                        initDeferredGifs();
+                    });
+                }
+            });
         })();
     </script>
 @endverbatim
