@@ -55,6 +55,7 @@ class Dashboard extends BaseDashboard
                 'schedules' => collect(),
                 'settings' => [],
                 'prodi_name' => '',
+                'dashboard_mascot' => null,
             ];
         }
 
@@ -72,6 +73,10 @@ class Dashboard extends BaseDashboard
 
                 return $task;
             });
+
+        $pendingTaskCount = $tasks
+            ->filter(fn (array $task): bool => blank($task['submission_status']))
+            ->count();
 
         $schedules = app(ScheduleRepository::class)->withCourse(
             app(ScheduleRepository::class)->forStudent($student),
@@ -92,6 +97,7 @@ class Dashboard extends BaseDashboard
             'schedules' => $schedules,
             'settings' => app(SettingsRepository::class)->allKeyed(),
             'prodi_name' => $prodiName,
+            'dashboard_mascot' => $pendingTaskCount > 3 ? 'minum' : null,
         ];
     }
 }

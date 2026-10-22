@@ -3,6 +3,8 @@
 namespace Tests\Feature;
 
 use App\Auth\SheetUserProvider;
+use App\Repositories\CourseRepository;
+use App\Repositories\TaskRepository;
 use App\Repositories\UserRepository;
 use App\Support\NotificationCenter;
 use Filament\Facades\Filament;
@@ -216,18 +218,43 @@ class PsychologyMascotTest extends TestCase
         }
     }
 
-    public function test_portal_dashboard_does_not_render_a_contextual_gif(): void
+    public function test_portal_dashboard_hides_minum_note_at_three_pending_tasks(): void
     {
         Filament::setCurrentPanel('portal');
         $this->actingAsStudent();
+        $this->createPendingTask('Tugas Tambahan Batas Tiga');
+        $this->createPendingTask('Tugas Tambahan Batas Tiga Lainnya');
+
+        $this->get('/portal')
+            ->assertOk()
+            ->assertDontSee('data-mascot-gif="minum"', false)
+            ->assertDontSee('minum.gif', false)
+            ->assertDontSee('Ngopi dulu, santai sebentar.', false);
+    }
+
+    public function test_portal_dashboard_shows_minum_note_above_three_pending_tasks(): void
+    {
+        Filament::setCurrentPanel('portal');
+        $this->actingAsStudent();
+        $this->createPendingTask('Tugas Tambahan Batas Empat');
+        $this->createPendingTask('Tugas Tambahan Batas Empat Lainnya');
+        $this->createPendingTask('Tugas Tambahan Batas Empat Ketiga');
 
         $response = $this->get('/portal')->assertOk();
         $html = (string) $response->getContent();
 
-        $this->assertSame(0, substr_count($html, 'data-mascot-gif="'));
-        $this->assertStringNotContainsString('kewalahan.gif', $html);
-        $this->assertStringNotContainsString('tertidur.gif', $html);
-        $this->assertStringNotContainsString('minum.gif', $html);
+        $this->assertSame(1, substr_count($html, 'data-mascot-gif="minum"'));
+        $this->assertStringContainsString('data-mascot-gif="minum"', $html);
+        $this->assertStringContainsString('images/psychology/mascot/minum.gif', $html);
+        $this->assertStringContainsString('Ngopi dulu, santai sebentar.', $html);
+        $this->assertStringContainsString(
+            'Banyak tugas menanti, tetapi semuanya bisa dikerjakan satu per satu. Isi energi dulu, ya.',
+            $html,
+        );
+        $this->assertMatchesRegularExpression(
+            '/<img[^>]+src="[^"]*minum\.gif"[^>]+loading="lazy"/',
+            $html,
+        );
     }
 
     public function test_notification_empty_state_uses_the_heart_gif(): void
@@ -447,6 +474,30 @@ class PsychologyMascotTest extends TestCase
         }
 
         return $position;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function createPendingTask(string $title): array
+    {
+        $course = app(CourseRepository::class)->findBy('code', 'PSI101');
+
+        $this->assertNotNull($course);
+
+        return app(TaskRepository::class)->create([
+            'course_id' => (string) $course['id'],
+            'group_id' => '',
+            'group_ids' => '',
+            'meeting_number' => '1',
+            'title' => $title,
+            'description' => '',
+            'type' => 'individu',
+            'start_at' => now()->toIso8601String(),
+            'deadline' => now()->addDays(2)->toIso8601String(),
+            'status' => 'active',
+            'created_by' => '',
+        ]);
     }
 
     protected function actingAsAdmin(): void

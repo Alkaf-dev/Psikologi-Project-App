@@ -33,8 +33,8 @@ return [
     ],
     'minum' => [
         'file' => 'images/psychology/mascot/minum.gif',
-        'title' => 'Jeda sejenak, minum air.',
-        'message' => 'Jadwal padat tetap butuh istirahat. Minum air dan regangkan badan sebelum lanjut belajar.',
+        'title' => 'Ngopi dulu, santai sebentar.',
+        'message' => 'Banyak tugas menanti, tetapi semuanya bisa dikerjakan satu per satu. Isi energi dulu, ya.',
         'alt' => 'Maskot Psikologi Connect sedang minum',
     ],
     'menunjuk' => [

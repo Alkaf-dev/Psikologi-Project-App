@@ -14,6 +14,13 @@
                 context="portal-dashboard"
                 :name="$student['name']"
             />
+
+            @if (filled($dashboard_mascot))
+                <x-psychology-mascot-gif
+                    :mascot="$dashboard_mascot"
+                    variant="note"
+                />
+            @endif
         </div>
 
         <div style="display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));">
