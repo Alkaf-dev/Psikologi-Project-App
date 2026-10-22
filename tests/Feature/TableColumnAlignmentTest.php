@@ -82,7 +82,7 @@ class TableColumnAlignmentTest extends TestCase
                 'student_name' => null,
                 'group_name' => null,
                 'status' => Alignment::Center,
-                'link' => null,
+                'link' => Alignment::Center,
                 'grade' => Alignment::Center,
                 'submitted_at' => Alignment::Center,
             ],

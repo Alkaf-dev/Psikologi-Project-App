@@ -129,6 +129,7 @@ class PengumpulanPage extends BaseSheetPage
                         ->openUrlInNewTab()
                         ->color(fn (array $record): ?string => $this->submissionLink($record) !== null ? 'primary' : null)
                         ->tooltip(fn (array $record): ?string => $this->submissionLink($record) !== null ? 'Buka tautan pengumpulan di tab baru' : null)
+                        ->alignCenter()
                         ->width('14rem'),
                 ),
                 $this->spreadsheetColumn(
