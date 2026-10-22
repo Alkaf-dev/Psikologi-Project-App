@@ -51,7 +51,6 @@ class AdminActionMountTest extends TestCase
         $program = app(StudyProgramRepository::class)->all()->firstOrFail();
         $course = app(CourseRepository::class)->all()->firstOrFail();
         $schedule = app(ScheduleRepository::class)->all()->firstOrFail();
-        $group = app(GroupRepository::class)->all()->firstOrFail();
         $task = app(TaskRepository::class)->all()->firstOrFail();
         $submission = app(SubmissionRepository::class)->all()->firstOrFail();
         $announcement = app(AnnouncementRepository::class)->all()->firstOrFail();
@@ -74,9 +73,6 @@ class AdminActionMountTest extends TestCase
             [JadwalPage::class, 'create', null],
             [JadwalPage::class, 'edit', (string) $schedule['id']],
             [JadwalPage::class, 'delete', (string) $schedule['id']],
-            [KelompokPage::class, 'create', null],
-            [KelompokPage::class, 'edit', (string) $group['id']],
-            [KelompokPage::class, 'delete', (string) $group['id']],
             [TugasPage::class, 'create', null],
             [TugasPage::class, 'detail', (string) $task['id']],
             [TugasPage::class, 'edit', (string) $task['id']],
@@ -96,6 +92,31 @@ class AdminActionMountTest extends TestCase
         }
 
         $this->assertTrue(true);
+    }
+
+    public function test_admin_group_page_actions_can_be_mounted(): void
+    {
+        $group = app(GroupRepository::class)->findBy('name', 'Kelompok 1 - Observasi');
+
+        $this->assertNotNull($group);
+
+        Livewire::test(KelompokPage::class)
+            ->mountAction('create');
+
+        Livewire::test(KelompokPage::class)
+            ->call('selectCourse', (string) $group['course_id'])
+            ->call('selectGroup', (string) $group['id'])
+            ->mountAction('edit');
+
+        Livewire::test(KelompokPage::class)
+            ->call('selectCourse', (string) $group['course_id'])
+            ->call('selectGroup', (string) $group['id'])
+            ->mountAction('delete');
+
+        Livewire::test(KelompokPage::class)
+            ->call('selectCourse', (string) $group['course_id'])
+            ->call('selectGroup', (string) $group['id'])
+            ->mountAction('addMember');
     }
 
     public function test_admin_task_detail_modal_shows_full_instructions(): void

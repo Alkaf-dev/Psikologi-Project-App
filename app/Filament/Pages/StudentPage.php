@@ -4,13 +4,21 @@ namespace App\Filament\Pages;
 
 use App\Enums\UserRole;
 use App\Filament\Support\BaseSheetPage;
+use App\Repositories\CourseRepository;
+use App\Repositories\GroupMemberRepository;
+use App\Repositories\GroupRepository;
 use App\Repositories\StudyProgramRepository;
 use App\Repositories\UserRepository;
 use Filament\Actions\Action;
+use Filament\Forms\Components\Hidden;
+use Filament\Forms\Components\Placeholder;
+use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -117,13 +125,18 @@ class StudentPage extends BaseSheetPage
             ->icon(Heroicon::Plus)
             ->modalHeading('Tambah Mahasiswa')
             ->modalSubmitActionLabel('Simpan')
-            ->modalWidth('2xl')
+            ->modalWidth('3xl')
             ->schema($this->formSchema())
             ->action(function (array $data): void {
                 $this->validateStudent($data);
+                $assignments = $this->validatedAssignments($data);
                 $this->prepareStudentData($data);
 
-                app(UserRepository::class)->create($data);
+                $student = app(UserRepository::class)->create($data);
+
+                if ($assignments !== []) {
+                    app(GroupMemberRepository::class)->syncAssignmentsForUser((string) $student['id'], $assignments);
+                }
 
                 $this->resetTable();
 
@@ -141,11 +154,18 @@ class StudentPage extends BaseSheetPage
             ->icon(Heroicon::PencilSquare)
             ->modalHeading(fn (array $record): string => 'Ubah '.$record['name'])
             ->modalSubmitActionLabel('Simpan perubahan')
-            ->modalWidth('2xl')
-            ->fillForm(fn (array $record): array => $record)
+            ->modalWidth('3xl')
+            ->fillForm(fn (array $record): array => [
+                ...$record,
+                'group_assignments' => $this->assignmentRowsForStudent($record),
+            ])
             ->schema($this->formSchema())
             ->action(function (array $data, array $record): void {
                 $this->validateStudent($data, (string) $record['id']);
+
+                $hasAssignments = array_key_exists('group_assignments', $data);
+                $assignments = $hasAssignments ? $this->validatedAssignments($data) : null;
+
                 $this->prepareStudentData($data);
 
                 if (blank($data['password'] ?? null)) {
@@ -153,6 +173,11 @@ class StudentPage extends BaseSheetPage
                 }
 
                 app(UserRepository::class)->update((string) $record['id'], $data);
+
+                if ($assignments !== null) {
+                    app(GroupMemberRepository::class)
+                        ->syncAssignmentsForUser((string) $record['id'], $assignments);
+                }
 
                 $this->resetTable();
 
@@ -224,7 +249,17 @@ class StudentPage extends BaseSheetPage
                 ->options(fn (): array => app(StudyProgramRepository::class)->allOptions())
                 ->searchable()
                 ->required()
-                ->placeholder('Pilih Prodi'),
+                ->live()
+                ->placeholder('Pilih Prodi')
+                ->afterStateUpdated(function (Set $set, Get $get): void {
+                    $set(
+                        'group_assignments',
+                        $this->assignmentRowsForProdi(
+                            (string) ($get('prodi_id') ?? ''),
+                            (array) ($get('group_assignments') ?? []),
+                        ),
+                    );
+                }),
             TextInput::make('name')
                 ->label('Nama Mahasiswa')
                 ->required()
@@ -249,6 +284,29 @@ class StudentPage extends BaseSheetPage
                 ->required()
                 ->maxLength(50)
                 ->datalist(fn (): array => app(UserRepository::class)->classNames()),
+            Repeater::make('group_assignments')
+                ->label('Penempatan Kelompok')
+                ->helperText('Pilih kelompok untuk setiap mata kuliah pada prodi mahasiswa. Biarkan kosong jika belum ditempatkan.')
+                ->schema([
+                    Hidden::make('course_id'),
+                    Placeholder::make('course_label')
+                        ->hiddenLabel()
+                        ->content(fn (Get $get): string => $this->courseRowLabel((string) ($get('course_id') ?? ''))),
+                    Select::make('group_id')
+                        ->label('Kelompok')
+                        ->options(fn (Get $get): array => app(GroupRepository::class)
+                            ->optionsForCourse((string) ($get('course_id') ?? '')))
+                        ->searchable()
+                        ->placeholder('Belum ditempatkan')
+                        ->nullable(),
+                ])
+                ->columns(2)
+                ->addable(false)
+                ->deletable(false)
+                ->reorderable(false)
+                ->defaultItems(0)
+                ->visible(fn (Get $get): bool => filled($get('prodi_id')))
+                ->columnSpanFull(),
             TextInput::make('cohort')
                 ->label('Angkatan')
                 ->maxLength(10)
@@ -272,9 +330,145 @@ class StudentPage extends BaseSheetPage
             $data['password_hash'] = Hash::make((string) $data['password']);
         }
 
-        unset($data['password']);
+        unset($data['password'], $data['group_assignments']);
 
         $data['role'] = UserRole::Mahasiswa->value;
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $current
+     * @return array<int, array<string, string>>
+     */
+    protected function assignmentRowsForProdi(string $prodiId, array $current = []): array
+    {
+        if (blank($prodiId)) {
+            return [];
+        }
+
+        $currentByCourse = collect($current)
+            ->filter(fn (mixed $row): bool => is_array($row))
+            ->mapWithKeys(fn (array $row): array => [
+                (string) ($row['course_id'] ?? '') => (string) ($row['group_id'] ?? ''),
+            ])
+            ->all();
+
+        return app(CourseRepository::class)
+            ->forProdi($prodiId)
+            ->sortBy(fn (array $course): string => (string) ($course['name'] ?? ''), SORT_NATURAL | SORT_FLAG_CASE)
+            ->map(fn (array $course): array => [
+                'course_id' => (string) $course['id'],
+                'group_id' => $currentByCourse[(string) $course['id']] ?? '',
+            ])
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @param  array<string, mixed>  $student
+     * @return array<int, array<string, string>>
+     */
+    protected function assignmentRowsForStudent(array $student): array
+    {
+        $groups = app(GroupRepository::class);
+
+        $current = app(GroupMemberRepository::class)
+            ->forUser((string) ($student['id'] ?? ''))
+            ->map(function (array $member) use ($groups): ?array {
+                $group = $groups->find((string) ($member['group_id'] ?? ''));
+
+                if (! $group) {
+                    return null;
+                }
+
+                return [
+                    'course_id' => (string) ($group['course_id'] ?? ''),
+                    'group_id' => (string) $group['id'],
+                ];
+            })
+            ->filter()
+            ->values()
+            ->all();
+
+        return $this->assignmentRowsForProdi((string) ($student['prodi_id'] ?? ''), $current);
+    }
+
+    protected function courseRowLabel(string $courseId): string
+    {
+        $course = app(CourseRepository::class)->find($courseId);
+
+        if (! $course) {
+            return '-';
+        }
+
+        $label = app(CourseRepository::class)->labelById($courseId);
+        $className = trim((string) ($course['class_name'] ?? ''));
+
+        return $className !== '' ? "{$label} ({$className})" : $label;
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<int, array<string, string>>
+     */
+    protected function validatedAssignments(array $data): array
+    {
+        $courses = app(CourseRepository::class);
+        $groups = app(GroupRepository::class);
+        $prodiId = (string) ($data['prodi_id'] ?? '');
+        $rows = is_array($data['group_assignments'] ?? null) ? $data['group_assignments'] : [];
+        $errors = [];
+        $normalized = [];
+        $seenCourses = [];
+
+        foreach (array_values($rows) as $index => $row) {
+            if (! is_array($row)) {
+                continue;
+            }
+
+            $courseId = trim((string) ($row['course_id'] ?? ''));
+            $groupId = trim((string) ($row['group_id'] ?? ''));
+            $errorKey = $this->actionErrorKey("group_assignments.{$index}.group_id");
+
+            if ($courseId === '') {
+                continue;
+            }
+
+            if (isset($seenCourses[$courseId])) {
+                $errors[$errorKey] = 'Mata kuliah tidak boleh dipilih lebih dari sekali.';
+
+                continue;
+            }
+
+            $seenCourses[$courseId] = true;
+            $course = $courses->find($courseId);
+
+            if (! $course || ! $courses->isAvailableForProdi($course, $prodiId)) {
+                $errors[$errorKey] = 'Mata kuliah tidak sesuai dengan prodi mahasiswa.';
+
+                continue;
+            }
+
+            if ($groupId !== '') {
+                $group = $groups->find($groupId);
+
+                if (! $group || (string) ($group['course_id'] ?? '') !== $courseId) {
+                    $errors[$errorKey] = 'Kelompok tidak sesuai dengan mata kuliah yang dipilih.';
+
+                    continue;
+                }
+            }
+
+            $normalized[] = [
+                'course_id' => $courseId,
+                'group_id' => $groupId,
+            ];
+        }
+
+        if ($errors !== []) {
+            throw ValidationException::withMessages($errors);
+        }
+
+        return $normalized;
     }
 
     /**

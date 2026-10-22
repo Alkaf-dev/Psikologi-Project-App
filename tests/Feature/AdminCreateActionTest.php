@@ -85,14 +85,14 @@ class AdminCreateActionTest extends TestCase
         $this->assertNotNull(app(ScheduleRepository::class)->findBy('room', 'Ruang Uji'));
 
         Livewire::test(KelompokPage::class)
-            ->callTableAction('create', null, [
+            ->callAction('create', [
                 'course_id' => (string) $course['id'],
                 'name' => 'Kelompok Pengujian',
                 'leader_id' => (string) $student['id'],
                 'member_ids' => [(string) $student['id']],
                 'description' => 'Kelompok untuk pengujian.',
             ])
-            ->assertHasNoTableActionErrors();
+            ->assertHasNoActionErrors();
 
         $group = app(GroupRepository::class)->findBy('name', 'Kelompok Pengujian');
 

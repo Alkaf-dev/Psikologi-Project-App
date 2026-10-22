@@ -2,15 +2,16 @@
 
 namespace App\Filament\Portal\Pages;
 
-use App\Filament\Support\BaseSheetPage;
+use App\Filament\Support\BaseKelompokPage;
+use App\Repositories\CourseRepository;
 use App\Repositories\GroupMemberRepository;
 use App\Repositories\GroupRepository;
 use App\Repositories\UserRepository;
+use App\Support\ProdiAssignments;
 use Filament\Support\Icons\Heroicon;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Table;
+use Illuminate\Support\Collection;
 
-class KelompokPage extends BaseSheetPage
+class KelompokPage extends BaseKelompokPage
 {
     protected static ?string $navigationLabel = 'Kelompok Saya';
 
@@ -22,77 +23,59 @@ class KelompokPage extends BaseSheetPage
 
     protected static ?int $navigationSort = 3;
 
-    protected array $searchableColumns = ['name', 'course_name', 'leader_name', 'member_names'];
-
-    public function table(Table $table): Table
+    protected function canManage(): bool
     {
-        return $table
-            ->records(function (
-                ?string $search,
-                ?string $sortColumn,
-                ?string $sortDirection,
-                int|string $page,
-                int|string $recordsPerPage,
-            ) {
-                $userId = (string) auth()->id();
-                $student = app(UserRepository::class)->find($userId);
+        return false;
+    }
 
-                $roles = app(GroupMemberRepository::class)
-                    ->forUser($userId)
-                    ->mapWithKeys(fn (array $member): array => [
-                        (string) ($member['group_id'] ?? '') => (string) ($member['role'] ?? 'anggota'),
-                    ]);
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    protected function courseCards(): array
+    {
+        $student = app(UserRepository::class)->find((string) auth()->id());
 
-                $groups = app(GroupRepository::class);
+        if (! $student) {
+            return [];
+        }
 
-                $records = $student
-                    ? $groups->withDetails($groups->forStudent($student))
-                        ->map(function (array $group) use ($roles): array {
-                            $group['my_role'] = $roles->get((string) $group['id']) === 'ketua'
-                                ? 'Ketua'
-                                : 'Anggota';
+        $groups = app(GroupRepository::class);
+        $courses = app(CourseRepository::class);
+        $details = $groups->withDetails($groups->forStudent($student));
 
-                            return $group;
-                        })
-                    : collect();
+        return $details
+            ->groupBy(fn (array $group): string => (string) ($group['course_id'] ?? ''))
+            ->map(function (Collection $courseGroups, string $courseId) use ($courses): ?array {
+                $course = $courses->find($courseId);
 
-                return $this->paginateRecords(
-                    $records,
-                    $search,
-                    $sortColumn,
-                    $sortDirection,
-                    $page,
-                    $recordsPerPage,
-                );
+                if (! $course) {
+                    return null;
+                }
+
+                return [
+                    'id' => (string) $course['id'],
+                    'code' => (string) ($course['code'] ?? ''),
+                    'name' => (string) ($course['name'] ?? 'Mata kuliah'),
+                    'class_name' => (string) ($course['class_name'] ?? ''),
+                    'prodi_name' => ProdiAssignments::label($course['prodi_ids'] ?? '', 'Belum diatur'),
+                    'groups_count' => $courseGroups->count(),
+                    'members_count' => $courseGroups->sum(fn (array $group): int => (int) ($group['members_count'] ?? 0)),
+                ];
             })
-            ->columns([
-                TextColumn::make('name')
-                    ->label('Kelompok')
-                    ->weight('semibold')
-                    ->searchable(),
-                TextColumn::make('course_name')
-                    ->label('Mata kuliah')
-                    ->searchable(),
-                TextColumn::make('my_role')
-                    ->label('Peran saya')
-                    ->badge()
-                    ->color(fn (string $state): string => $state === 'Ketua' ? 'success' : 'gray')
-                    ->alignCenter(),
-                TextColumn::make('leader_name')
-                    ->label('Ketua')
-                    ->searchable(),
-                TextColumn::make('members_count')
-                    ->label('Jumlah anggota')
-                    ->badge()
-                    ->color('info')
-                    ->alignCenter(),
-                TextColumn::make('member_names')
-                    ->label('Anggota')
-                    ->wrap(),
-            ])
-            ->defaultSort('name')
-            ->defaultPaginationPageOption(10)
-            ->emptyStateHeading('Belum tergabung dalam kelompok')
-            ->emptyStateDescription('Hubungi admin atau dosen jika kelompok Anda belum dibuat.');
+            ->filter()
+            ->sortBy(fn (array $card): string => (string) $card['name'], SORT_NATURAL | SORT_FLAG_CASE)
+            ->values()
+            ->all();
+    }
+
+    protected function preferredGroupId(Collection $groups): ?string
+    {
+        $groupIds = app(GroupMemberRepository::class)->groupIdsForUser((string) auth()->id());
+
+        $ownGroup = $groups->first(
+            fn (array $group): bool => in_array((string) ($group['id'] ?? ''), $groupIds, true),
+        );
+
+        return $ownGroup ? (string) $ownGroup['id'] : parent::preferredGroupId($groups);
     }
 }

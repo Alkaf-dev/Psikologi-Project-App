@@ -65,7 +65,9 @@ class TableColumnAlignmentTest extends TestCase
                 'mode_label' => Alignment::Center,
             ],
             KelompokPage::class => [
-                'name' => null,
+                'index' => Alignment::Center,
+                'user_name' => null,
+                'course_name' => null,
                 'members_count' => Alignment::Center,
             ],
             MataKuliahPage::class => [
@@ -128,8 +130,9 @@ class TableColumnAlignmentTest extends TestCase
                 'mode_label' => Alignment::Center,
             ],
             PortalKelompokPage::class => [
-                'name' => null,
-                'my_role' => Alignment::Center,
+                'index' => Alignment::Center,
+                'user_name' => null,
+                'course_name' => null,
                 'members_count' => Alignment::Center,
             ],
             PortalPengumumanPage::class => [

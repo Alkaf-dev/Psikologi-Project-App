@@ -4,6 +4,9 @@ namespace Tests\Feature;
 
 use App\Auth\SheetUserProvider;
 use App\Filament\Pages\StudentPage;
+use App\Repositories\CourseRepository;
+use App\Repositories\GroupMemberRepository;
+use App\Repositories\GroupRepository;
 use App\Repositories\StudyProgramRepository;
 use App\Repositories\UserRepository;
 use Filament\Facades\Filament;
@@ -120,6 +123,183 @@ class StudentPageTest extends TestCase
 
         $this->assertNull($users->find((string) $student['id']));
         $this->assertNotNull($users->find((string) $student['id'], true));
+    }
+
+    public function test_admin_can_create_student_with_group_assignments(): void
+    {
+        $program = app(StudyProgramRepository::class)->findByCode('psikologi');
+        $course = app(CourseRepository::class)->findBy('code', 'PSI201');
+        $group = app(GroupRepository::class)->findBy('name', 'Kelompok 1 - Observasi');
+
+        $this->assertNotNull($program);
+        $this->assertNotNull($course);
+        $this->assertNotNull($group);
+
+        Livewire::test(StudentPage::class)
+            ->callTableAction('create', null, [
+                'prodi_id' => (string) $program['id'],
+                'name' => 'Mahasiswa Berkelompok',
+                'npm' => '9990003',
+                'email' => 'mahasiswa.berkelompok@psikologi.test',
+                'password' => 'password123',
+                'class_name' => 'Psikologi A',
+                'cohort' => '2026',
+                'phone' => '',
+                'active' => true,
+                'group_assignments' => [
+                    [
+                        'course_id' => (string) $course['id'],
+                        'group_id' => (string) $group['id'],
+                    ],
+                ],
+            ])
+            ->assertHasNoTableActionErrors();
+
+        $student = app(UserRepository::class)->findActiveByLogin('mahasiswa.berkelompok@psikologi.test');
+
+        $this->assertNotNull($student);
+
+        $membership = app(GroupMemberRepository::class)
+            ->membershipForCourse((string) $student['id'], (string) $course['id']);
+
+        $this->assertNotNull($membership);
+        $this->assertSame((string) $group['id'], (string) $membership['group_id']);
+        $this->assertSame('anggota', $membership['role']);
+    }
+
+    public function test_student_group_assignment_uses_prodi_not_class(): void
+    {
+        $program = app(StudyProgramRepository::class)->findByCode('psikologi');
+        $course = app(CourseRepository::class)->findBy('code', 'PSI102');
+        $group = app(GroupRepository::class)->findBy('name', 'Kelompok B1');
+
+        $this->assertNotNull($program);
+        $this->assertNotNull($course);
+        $this->assertNotNull($group);
+
+        Livewire::test(StudentPage::class)
+            ->callTableAction('create', null, [
+                'prodi_id' => (string) $program['id'],
+                'name' => 'Mahasiswa Lintas Kelas',
+                'npm' => '9990004',
+                'email' => 'mahasiswa.lintas-kelas@psikologi.test',
+                'password' => 'password123',
+                'class_name' => 'Psikologi A',
+                'cohort' => '2026',
+                'phone' => '',
+                'active' => true,
+                'group_assignments' => [
+                    [
+                        'course_id' => (string) $course['id'],
+                        'group_id' => (string) $group['id'],
+                    ],
+                ],
+            ])
+            ->assertHasNoTableActionErrors();
+
+        $student = app(UserRepository::class)->findActiveByLogin('mahasiswa.lintas-kelas@psikologi.test');
+
+        $this->assertNotNull($student);
+        $this->assertNotNull(
+            app(GroupMemberRepository::class)
+                ->membershipForCourse((string) $student['id'], (string) $course['id']),
+        );
+    }
+
+    public function test_student_group_assignment_rejects_a_group_from_another_course(): void
+    {
+        $program = app(StudyProgramRepository::class)->findByCode('psikologi');
+        $course = app(CourseRepository::class)->findBy('code', 'PSI201');
+        $otherGroup = app(GroupRepository::class)->findBy('name', 'Kelompok B1');
+
+        $this->assertNotNull($program);
+        $this->assertNotNull($course);
+        $this->assertNotNull($otherGroup);
+
+        Livewire::test(StudentPage::class)
+            ->callTableAction('create', null, [
+                'prodi_id' => (string) $program['id'],
+                'name' => 'Mahasiswa Salah Kelompok',
+                'npm' => '9990005',
+                'email' => 'mahasiswa.salah-kelompok@psikologi.test',
+                'password' => 'password123',
+                'class_name' => 'Psikologi A',
+                'cohort' => '2026',
+                'phone' => '',
+                'active' => true,
+                'group_assignments' => [
+                    [
+                        'course_id' => (string) $course['id'],
+                        'group_id' => (string) $otherGroup['id'],
+                    ],
+                ],
+            ])
+            ->assertHasErrors();
+
+        $this->assertNull(
+            app(UserRepository::class)->findActiveByLogin('mahasiswa.salah-kelompok@psikologi.test'),
+        );
+    }
+
+    public function test_admin_can_move_and_clear_student_group_assignment(): void
+    {
+        $student = app(UserRepository::class)->findActiveByLogin('bima@psikologi.test');
+        $course = app(CourseRepository::class)->findBy('code', 'PSI201');
+        $oldGroup = app(GroupRepository::class)->findBy('name', 'Kelompok 1 - Observasi');
+
+        $this->assertNotNull($student);
+        $this->assertNotNull($course);
+        $this->assertNotNull($oldGroup);
+
+        $newGroup = app(GroupRepository::class)->create([
+            'course_id' => (string) $course['id'],
+            'name' => 'Kelompok Uji Pindah',
+            'leader_id' => '',
+            'description' => '',
+        ]);
+
+        Livewire::test(StudentPage::class)
+            ->callTableAction('edit', (string) $student['id'], [
+                'group_assignments' => [
+                    [
+                        'course_id' => (string) $course['id'],
+                        'group_id' => (string) $newGroup['id'],
+                    ],
+                ],
+            ])
+            ->assertHasNoTableActionErrors();
+
+        $members = app(GroupMemberRepository::class);
+        $membership = $members->membershipForCourse((string) $student['id'], (string) $course['id']);
+
+        $this->assertNotNull($membership);
+        $this->assertSame((string) $newGroup['id'], (string) $membership['group_id']);
+        $this->assertNull(
+            $members->forGroup((string) $oldGroup['id'])
+                ->first(fn (array $member): bool => (string) $member['user_id'] === (string) $student['id']),
+        );
+
+        Livewire::test(StudentPage::class)
+            ->callTableAction('edit', (string) $student['id'], [
+                'group_assignments' => [
+                    [
+                        'course_id' => (string) $course['id'],
+                        'group_id' => '',
+                    ],
+                ],
+            ])
+            ->assertHasNoTableActionErrors();
+
+        $this->assertNull(
+            $members->membershipForCourse((string) $student['id'], (string) $course['id']),
+        );
+
+        $this->assertNotNull(
+            $members->membershipForCourse(
+                (string) $student['id'],
+                (string) app(CourseRepository::class)->findBy('code', 'PSI301')['id'],
+            ),
+        );
     }
 
     protected function actingAsAdmin(): void

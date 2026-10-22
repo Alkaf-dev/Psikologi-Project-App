@@ -66,13 +66,31 @@ class CourseRepository extends BaseSheetRepository
     }
 
     /**
+     * @return Collection<int, array<string, mixed>>
+     */
+    public function forProdi(string $prodiId): Collection
+    {
+        return $this->all()
+            ->filter(fn (array $course): bool => $this->isAvailableForProdi($course, $prodiId))
+            ->values();
+    }
+
+    /**
      * @param  array<string, mixed>  $course
      * @param  array<string, mixed>  $student
      */
     public function isAvailableForStudent(array $course, array $student): bool
     {
         return trim((string) ($course['class_name'] ?? '')) === trim((string) ($student['class_name'] ?? ''))
-            && ProdiAssignments::includes($course['prodi_ids'] ?? '', (string) ($student['prodi_id'] ?? ''));
+            && $this->isAvailableForProdi($course, (string) ($student['prodi_id'] ?? ''));
+    }
+
+    /**
+     * @param  array<string, mixed>  $course
+     */
+    public function isAvailableForProdi(array $course, ?string $prodiId): bool
+    {
+        return ProdiAssignments::includes($course['prodi_ids'] ?? '', $prodiId);
     }
 
     /**

@@ -18,7 +18,7 @@ class GroupRepository extends BaseSheetRepository
             ->groupIdsForUser((string) ($student['id'] ?? ''));
 
         $courseIds = app(CourseRepository::class)
-            ->forStudent($student)
+            ->forProdi((string) ($student['prodi_id'] ?? ''))
             ->pluck('id')
             ->map(fn (mixed $id): string => (string) $id)
             ->all();
@@ -101,5 +101,27 @@ class GroupRepository extends BaseSheetRepository
         return $this->all()
             ->filter(fn (array $group): bool => (string) ($group['course_id'] ?? '') === $courseId)
             ->values();
+    }
+
+    /**
+     * @return Collection<int, array<string, mixed>>
+     */
+    public function forCourseWithDetails(string $courseId): Collection
+    {
+        return $this->withDetails($this->forCourse($courseId))
+            ->sortBy(fn (array $group): string => (string) ($group['name'] ?? ''), SORT_NATURAL | SORT_FLAG_CASE)
+            ->values();
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function optionsForCourse(string $courseId): array
+    {
+        return $this->forCourseWithDetails($courseId)
+            ->mapWithKeys(fn (array $group): array => [
+                (string) $group['id'] => (string) ($group['name'] ?? 'Kelompok'),
+            ])
+            ->all();
     }
 }

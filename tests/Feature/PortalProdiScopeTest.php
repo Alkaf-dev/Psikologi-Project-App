@@ -164,11 +164,20 @@ class PortalProdiScopeTest extends TestCase
             ->assertCanNotSeeTableRecords([(string) $psikologiTask['id']])
             ->assertSee('Tugas BK');
 
+        $bimbinganMemberIds = $members->forGroup((string) $group['id'])
+            ->pluck('id')
+            ->map(fn (mixed $id): string => (string) $id)
+            ->all();
+
         Livewire::test(KelompokPage::class)
-            ->assertCountTableRecords(1)
-            ->assertCanSeeTableRecords([(string) $group['id']])
-            ->assertCanNotSeeTableRecords([(string) $psikologiGroup['id']])
-            ->assertSee('Kelompok BK');
+            ->assertSee('Pengantar BK')
+            ->assertDontSee('Kelompok 1 - Observasi')
+            ->call('selectCourse', (string) $course['id'])
+            ->assertSee('Kelompok BK')
+            ->assertDontSee('Kelompok 1 - Observasi')
+            ->call('selectGroup', (string) $group['id'])
+            ->assertCanSeeTableRecords($bimbinganMemberIds)
+            ->assertSee('Mahasiswa BK');
 
         Livewire::test(PengumumanPage::class)
             ->assertCountTableRecords(3)
