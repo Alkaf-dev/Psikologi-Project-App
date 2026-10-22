@@ -58,18 +58,51 @@ class TaskLinkColumnTest extends TestCase
             ->assertSee('padding-block: 0.4rem', false);
     }
 
-    public function test_portal_task_table_renders_clickable_material_and_collection_links(): void
+    public function test_portal_task_table_renders_clickable_material_and_submission_links(): void
     {
         Filament::setCurrentPanel('portal');
         $this->actingAsStudent('ayu@psikologi.test');
 
-        $this->createLinkedTask();
+        $task = $this->createLinkedTask();
 
         Livewire::test(PortalTugasPage::class)
-            ->assertSee('Materi')
-            ->assertSee('Pengumpulan')
+            ->searchTable('Tugas Tautan Uji')
+            ->assertSeeText('Materi')
             ->assertSeeHtml('href="https://example.test/materi-tugas"')
-            ->assertSeeHtml('href="https://example.test/folder-pengumpulan"');
+            ->assertSeeText('Belum dikumpulkan')
+            ->assertDontSeeHtml('href="https://example.test/folder-pengumpulan"')
+            ->mountTableAction('detail', (string) $task['id'])
+            ->assertMountedActionModalSee('Folder pengumpulan')
+            ->assertMountedActionModalSeeHtml('href="https://example.test/folder-pengumpulan"');
+    }
+
+    public function test_portal_task_table_shows_only_the_students_own_submission_link(): void
+    {
+        Filament::setCurrentPanel('portal');
+        $this->actingAsStudent('ayu@psikologi.test');
+
+        Livewire::test(PortalTugasPage::class)
+            ->assertSeeText('Sudah dikumpulkan')
+            ->assertSeeText('Belum dikumpulkan')
+            ->assertSeeHtml('href="https://docs.google.com/document/d/contoh-refleksi-ayu"')
+            ->assertDontSeeHtml('href="https://docs.google.com/document/d/contoh-laporan-citra"');
+    }
+
+    public function test_portal_task_links_reject_unsafe_urls(): void
+    {
+        Filament::setCurrentPanel('portal');
+        $this->actingAsStudent('ayu@psikologi.test');
+
+        $task = $this->createLinkedTask([
+            'material_url' => 'javascript:alert(1)',
+            'collection_link' => 'javascript:alert(2)',
+        ]);
+
+        Livewire::test(PortalTugasPage::class)
+            ->searchTable('Tugas Tautan Uji')
+            ->assertDontSeeHtml('javascript:alert')
+            ->mountTableAction('detail', (string) $task['id'])
+            ->assertMountedActionModalDontSeeHtml('javascript:alert');
     }
 
     public function test_pengumpulan_table_renders_submission_link_as_kirim(): void
@@ -135,15 +168,16 @@ class TaskLinkColumnTest extends TestCase
     }
 
     /**
+     * @param  array<string, mixed>  $overrides
      * @return array<string, mixed>
      */
-    protected function createLinkedTask(): array
+    protected function createLinkedTask(array $overrides = []): array
     {
         $course = app(CourseRepository::class)->findBy('code', 'PSI101');
 
         $this->assertNotNull($course);
 
-        return app(TaskRepository::class)->create([
+        return app(TaskRepository::class)->create(array_merge([
             'course_id' => (string) $course['id'],
             'group_id' => '',
             'group_ids' => '',
@@ -158,7 +192,7 @@ class TaskLinkColumnTest extends TestCase
             'deadline_note' => '',
             'status' => 'active',
             'created_by' => '',
-        ]);
+        ], $overrides));
     }
 
     protected function actingAsAdmin(): void

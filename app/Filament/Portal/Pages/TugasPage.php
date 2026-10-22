@@ -3,10 +3,13 @@
 namespace App\Filament\Portal\Pages;
 
 use App\Filament\Support\BaseSheetPage;
+use App\Repositories\CourseRepository;
 use App\Repositories\GroupMemberRepository;
+use App\Repositories\GroupRepository;
 use App\Repositories\SubmissionRepository;
 use App\Repositories\TaskRepository;
 use App\Repositories\UserRepository;
+use App\Support\ExternalUrl;
 use App\Support\TaskGroups;
 use App\Support\TaskStatus;
 use Filament\Actions\Action;
@@ -15,15 +18,17 @@ use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Columns\ViewColumn;
 use Filament\Tables\Table;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 
 class TugasPage extends BaseSheetPage
 {
-    protected static ?string $navigationLabel = 'Tugas Saya';
+    protected string $view = 'filament.portal.pages.tugas';
 
-    protected static ?string $title = 'Tugas Saya';
+    protected static ?string $navigationLabel = 'Materi dan Tugas';
+
+    protected static ?string $title = 'Materi dan Tugas';
 
     protected static string|\BackedEnum|null $navigationIcon = Heroicon::OutlinedClipboardDocumentList;
 
@@ -31,9 +36,18 @@ class TugasPage extends BaseSheetPage
 
     protected static ?int $navigationSort = 2;
 
+    public ?string $selectedCourseId = null;
+
+    protected ?Collection $cachedAccessibleTasks = null;
+
+    /**
+     * @var array<int, array<string, mixed>>|null
+     */
+    protected ?array $cachedCourseFilters = null;
+
     protected array $searchableColumns = [
-        'meeting_number', 'title', 'description', 'course_name', 'group_name',
-        'type_label', 'status_label', 'submission_label',
+        'meeting_number', 'title', 'description', 'course_name', 'course_code',
+        'portal_group_name', 'type_label', 'status_label', 'submission_label',
     ];
 
     public function showMascot(): bool
@@ -51,9 +65,117 @@ class TugasPage extends BaseSheetPage
         return 'membaca';
     }
 
+    public function selectCourse(string $courseId): void
+    {
+        $courseId = trim($courseId);
+
+        if (! in_array($courseId, $this->courseFilterIds(), true)) {
+            return;
+        }
+
+        $this->selectedCourseId = $courseId;
+
+        $this->resetTable();
+    }
+
+    public function selectAllCourses(): void
+    {
+        $this->selectedCourseId = null;
+
+        $this->resetTable();
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    protected function getViewData(): array
+    {
+        return [
+            'courseFilters' => $this->courseFilters(),
+            'selectedCourseId' => $this->selectedCourseFilterId(),
+            'totalTasks' => $this->accessibleTasks()->count(),
+        ];
+    }
+
+    /**
+     * @return Collection<int, array<string, mixed>>
+     */
+    protected function accessibleTasks(): Collection
+    {
+        if ($this->cachedAccessibleTasks !== null) {
+            return $this->cachedAccessibleTasks;
+        }
+
+        $student = app(UserRepository::class)->find((string) auth()->id());
+
+        if (! $student) {
+            return $this->cachedAccessibleTasks = collect();
+        }
+
+        $tasks = app(TaskRepository::class);
+
+        return $this->cachedAccessibleTasks = $tasks->withDetails($tasks->forStudent($student));
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    protected function courseFilters(): array
+    {
+        if ($this->cachedCourseFilters !== null) {
+            return $this->cachedCourseFilters;
+        }
+
+        $courses = app(CourseRepository::class)
+            ->all()
+            ->keyBy(fn (array $course): string => (string) ($course['id'] ?? ''));
+
+        return $this->cachedCourseFilters = $this->accessibleTasks()
+            ->groupBy(fn (array $task): string => (string) ($task['course_id'] ?? ''))
+            ->map(function (Collection $tasks, string $courseId) use ($courses): ?array {
+                $course = $courses->get($courseId);
+
+                if (! $course) {
+                    return null;
+                }
+
+                return [
+                    'id' => $courseId,
+                    'name' => (string) ($course['name'] ?? 'Mata kuliah'),
+                    'code' => (string) ($course['code'] ?? ''),
+                    'tasks_count' => $tasks->count(),
+                    'materials_count' => $tasks
+                        ->filter(fn (array $task): bool => ExternalUrl::http($task['material_url'] ?? null) !== null)
+                        ->count(),
+                ];
+            })
+            ->filter()
+            ->sortBy(fn (array $filter): string => mb_strtolower((string) $filter['name']), SORT_NATURAL)
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    protected function courseFilterIds(): array
+    {
+        return array_column($this->courseFilters(), 'id');
+    }
+
+    protected function selectedCourseFilterId(): ?string
+    {
+        $courseId = trim((string) $this->selectedCourseId);
+
+        return $courseId !== '' && in_array($courseId, $this->courseFilterIds(), true)
+            ? $courseId
+            : null;
+    }
+
     public function table(Table $table): Table
     {
         return $table
+            ->extraAttributes(['class' => 'materi-tugas-table task-table-compact'])
             ->records(function (
                 ?string $search,
                 ?string $sortColumn,
@@ -62,53 +184,91 @@ class TugasPage extends BaseSheetPage
                 int|string $recordsPerPage,
             ) {
                 $userId = (string) auth()->id();
-                $student = app(UserRepository::class)->find($userId);
                 $studentGroupIds = app(GroupMemberRepository::class)->groupIdsForUser($userId);
                 $submissions = app(SubmissionRepository::class);
                 $users = app(UserRepository::class);
+                $groups = app(GroupRepository::class);
+                $selectedCourseId = $this->selectedCourseFilterId();
 
-                $records = app(TaskRepository::class)
-                    ->withDetails(app(TaskRepository::class)->forStudent($student ?? []))
-                    ->map(function (array $task) use ($submissions, $users, $userId, $studentGroupIds): array {
-                        $isGroupTask = ($task['type'] ?? 'individu') === 'kelompok';
-                        $submission = $submissions->forTaskForStudent($task, $userId, $studentGroupIds);
-                        $submissionGroupId = $isGroupTask
-                            ? (string) (TaskGroups::matchingGroupId($task, $studentGroupIds) ?? '')
-                            : '';
-                        $status = TaskStatus::normalize($task['status'] ?? '');
-                        $deadline = filled($task['deadline'] ?? null)
-                            ? Carbon::parse((string) $task['deadline'])
-                            : null;
-                        $isRepresentative = $submission !== null
-                            && (! $isGroupTask || (string) ($submission['user_id'] ?? '') === $userId);
+                $records = $this->accessibleTasks();
 
-                        $task['submission_id'] = $submission['id'] ?? null;
-                        $task['submission_status'] = $submission['status'] ?? null;
-                        $task['submission_link'] = $submission['link'] ?? null;
-                        $task['submission_notes'] = $submission['notes'] ?? null;
-                        $task['submission_grade'] = $submission['grade'] ?? null;
-                        $task['submission_feedback'] = $submission['feedback'] ?? null;
-                        $task['submission_group_id'] = $submissionGroupId;
-                        $task['submission_by_label'] = $isGroupTask && $submission !== null
-                            ? 'oleh '.$users->nameById((string) ($submission['user_id'] ?? ''))
-                            : null;
-                        $task['submission_label'] = match ($task['submission_status']) {
-                            'graded' => 'Dinilai',
-                            'late' => 'Terlambat',
-                            'submitted' => 'Dikumpulkan',
-                            default => 'Belum dikumpulkan',
-                        };
-                        $task['is_representative'] = $isRepresentative;
-                        $task['can_submit'] = $submission === null
-                            && $status === TaskStatus::ACTIVE
-                            && (! $isGroupTask || $submissionGroupId !== '');
-                        $task['can_update'] = $submission !== null
-                            && $status === TaskStatus::ACTIVE
-                            && (! $isGroupTask || $isRepresentative)
-                            && (! $isGroupTask || $deadline === null || now()->lessThanOrEqualTo($deadline));
+                if ($selectedCourseId !== null) {
+                    $records = $records
+                        ->filter(fn (array $task): bool => (string) ($task['course_id'] ?? '') === $selectedCourseId)
+                        ->values();
+                }
 
-                        return $task;
-                    });
+                $records = $records->map(function (array $task) use (
+                    $groups,
+                    $submissions,
+                    $users,
+                    $userId,
+                    $studentGroupIds,
+                ): array {
+                    $isGroupTask = ($task['type'] ?? 'individu') === 'kelompok';
+                    $submission = $submissions->forTaskForStudent($task, $userId, $studentGroupIds);
+                    $submissionGroupId = $isGroupTask
+                        ? (string) (TaskGroups::matchingGroupId($task, $studentGroupIds) ?? '')
+                        : '';
+                    $status = TaskStatus::normalize($task['status'] ?? '');
+                    $deadline = filled($task['deadline'] ?? null)
+                        ? Carbon::parse((string) $task['deadline'])
+                        : null;
+                    $isRepresentative = $submission !== null
+                        && (! $isGroupTask || (string) ($submission['user_id'] ?? '') === $userId);
+                    $portalGroupName = null;
+
+                    if ($isGroupTask) {
+                        $matchedGroupId = TaskGroups::matchingGroupId($task, $studentGroupIds);
+
+                        if ($matchedGroupId !== null) {
+                            $portalGroupName = trim((string) ($groups->find($matchedGroupId)['name'] ?? ''));
+                        } elseif (TaskGroups::assignedIds($task) === []) {
+                            $portalGroupName = 'Semua mahasiswa';
+                        }
+
+                        $portalGroupName = $portalGroupName !== '' ? $portalGroupName : null;
+                    }
+
+                    $submittedAtLabel = filled($submission['submitted_at'] ?? null)
+                        ? Carbon::parse((string) $submission['submitted_at'])->translatedFormat('d M Y H:i')
+                        : null;
+                    $submissionStatus = $submission['status'] ?? null;
+
+                    $task['material_link'] = ExternalUrl::http($task['material_url'] ?? null);
+                    $task['portal_group_name'] = $portalGroupName;
+                    $task['submission_id'] = $submission['id'] ?? null;
+                    $task['submission_status'] = $submissionStatus;
+                    $task['submission_link'] = $submission['link'] ?? null;
+                    $task['submission_url'] = ExternalUrl::http($submission['link'] ?? null);
+                    $task['submission_notes'] = $submission['notes'] ?? null;
+                    $task['submission_grade'] = $submission['grade'] ?? null;
+                    $task['submission_feedback'] = $submission['feedback'] ?? null;
+                    $task['submission_group_id'] = $submissionGroupId;
+                    $task['submission_by_label'] = $isGroupTask && $submission !== null
+                        ? 'oleh '.$users->nameById((string) ($submission['user_id'] ?? ''))
+                        : null;
+                    $task['submission_label'] = match ($submissionStatus) {
+                        'graded', 'submitted' => 'Sudah dikumpulkan',
+                        'late' => 'Terlambat dikumpulkan',
+                        default => 'Belum dikumpulkan',
+                    };
+                    $task['submission_description'] = match ($submissionStatus) {
+                        'graded' => collect(['Dinilai', $submittedAtLabel])->filter()->implode(' • '),
+                        'submitted', 'late' => $submittedAtLabel,
+                        default => null,
+                    };
+                    $task['is_representative'] = $isRepresentative;
+                    $task['can_submit'] = $submission === null
+                        && $status === TaskStatus::ACTIVE
+                        && (! $isGroupTask || $submissionGroupId !== '');
+                    $task['can_update'] = $submission !== null
+                        && $status === TaskStatus::ACTIVE
+                        && (! $isGroupTask || $isRepresentative)
+                        && (! $isGroupTask || $deadline === null || now()->lessThanOrEqualTo($deadline));
+
+                    return $task;
+                });
 
                 return $this->paginateRecords(
                     $records,
@@ -126,7 +286,8 @@ class TugasPage extends BaseSheetPage
                         ->badge()
                         ->placeholder('-')
                         ->sortable()
-                        ->alignCenter(),
+                        ->alignCenter()
+                        ->width('5.5rem'),
                 ),
                 $this->spreadsheetColumn(
                     TextColumn::make('title')
@@ -135,26 +296,50 @@ class TugasPage extends BaseSheetPage
                         ->color('primary')
                         ->description(fn (array $record): string => (string) $record['course_name'])
                         ->action($this->detailAction())
-                        ->tooltip('Klik untuk melihat rincian')
+                        ->tooltip(fn (array $record): string => (string) $record['title'])
+                        ->limit(48)
                         ->searchable()
-                        ->wrap(),
+                        ->width('16rem'),
                 ),
                 $this->spreadsheetColumn(
-                    ViewColumn::make('links')
-                        ->label('Tautan')
-                        ->view('filament.tables.columns.task-links'),
+                    TextColumn::make('material_url')
+                        ->label('Materi')
+                        ->formatStateUsing(fn (array $record): string => filled($record['material_link'] ?? null) ? 'Materi' : '-')
+                        ->url(fn (array $record): ?string => $record['material_link'] ?? null)
+                        ->openUrlInNewTab()
+                        ->color(fn (array $record): ?string => filled($record['material_link'] ?? null) ? 'primary' : null)
+                        ->tooltip(fn (array $record): ?string => filled($record['material_link'] ?? null) ? 'Buka materi di tab baru' : null)
+                        ->alignCenter()
+                        ->width('6.5rem'),
                 ),
                 $this->spreadsheetColumn(
-                    TextColumn::make('group_name')
+                    TextColumn::make('type_label')
+                        ->label('Jenis')
+                        ->badge()
+                        ->color(fn (array $record): string => ($record['type'] ?? 'individu') === 'kelompok' ? 'info' : 'gray')
+                        ->alignCenter()
+                        ->width('6.5rem'),
+                ),
+                $this->spreadsheetColumn(
+                    TextColumn::make('portal_group_name')
                         ->label('Kelompok')
-                        ->wrap(),
+                        ->placeholder('-')
+                        ->limit(28)
+                        ->tooltip(function (array $record): ?string {
+                            $group = trim((string) ($record['portal_group_name'] ?? ''));
+
+                            return $group !== '' ? $group : null;
+                        })
+                        ->searchable()
+                        ->width('10rem'),
                 ),
                 $this->spreadsheetColumn(
                     TextColumn::make('start_at')
                         ->label('Mulai')
                         ->formatStateUsing(fn (?string $state): string => $this->formatDateTime($state))
                         ->placeholder('-')
-                        ->alignCenter(),
+                        ->alignCenter()
+                        ->width('9rem'),
                 ),
                 $this->spreadsheetColumn(
                     TextColumn::make('deadline')
@@ -162,36 +347,38 @@ class TugasPage extends BaseSheetPage
                         ->description(fn (array $record): string => (string) ($record['deadline_label'] ?? ''))
                         ->formatStateUsing(fn (?string $state): string => $this->formatDateTime($state))
                         ->sortable()
-                        ->alignCenter(),
+                        ->alignCenter()
+                        ->width('10rem'),
                 ),
                 $this->spreadsheetColumn(
                     TextColumn::make('status_label')
                         ->label('Status')
                         ->badge()
                         ->color(fn (array $record): string => TaskStatus::color($record['status'] ?? ''))
-                        ->alignCenter(),
+                        ->alignCenter()
+                        ->width('7.5rem'),
                 ),
                 $this->spreadsheetColumn(
                     TextColumn::make('submission_label')
-                        ->label('Pengumpulan')
+                        ->label('Dikumpulkan')
                         ->badge()
-                        ->description(fn (array $record): string => (string) ($record['submission_by_label'] ?? ''))
+                        ->description(fn (array $record): ?string => $record['submission_description'] ?? null)
                         ->color(fn (array $record): string => match ($record['submission_status']) {
                             'graded' => 'success',
                             'late' => 'danger',
                             'submitted' => 'info',
                             default => 'warning',
                         })
-                        ->alignCenter(),
-                ),
-                $this->spreadsheetColumn(
-                    TextColumn::make('submission_grade')
-                        ->label('Nilai')
-                        ->badge()
-                        ->placeholder('-')
-                        ->alignCenter(),
+                        ->url(fn (array $record): ?string => $record['submission_url'] ?? null)
+                        ->openUrlInNewTab()
+                        ->tooltip(fn (array $record): ?string => filled($record['submission_url'] ?? null)
+                            ? 'Buka tautan pengumpulan di tab baru'
+                            : null)
+                        ->alignCenter()
+                        ->width('10.5rem'),
                 ),
             ])
+            ->searchPlaceholder('Cari tugas atau mata kuliah...')
             ->recordActions([
                 $this->detailAction(),
                 $this->submitAction(),
@@ -200,8 +387,8 @@ class TugasPage extends BaseSheetPage
             ->recordAction('detail')
             ->defaultSort('deadline')
             ->defaultPaginationPageOption(10)
-            ->emptyStateHeading('Belum ada tugas')
-            ->emptyStateDescription('Tugas dari mata kuliah Anda akan tampil di sini.');
+            ->emptyStateHeading('Belum ada materi atau tugas')
+            ->emptyStateDescription('Materi dan tugas dari mata kuliah Anda akan tampil di sini.');
     }
 
     protected function detailAction(): Action

@@ -122,7 +122,7 @@ class PortalSubmissionActionTest extends TestCase
         Livewire::test(TugasPage::class)
             ->assertCanSeeTableRecords([(string) $task['id']])
             ->assertTableActionHidden('submit', (string) $task['id'])
-            ->assertSee('Dikumpulkan');
+            ->assertSee('Sudah dikumpulkan');
 
         $this->actingAsStudent('ayu@psikologi.test');
 

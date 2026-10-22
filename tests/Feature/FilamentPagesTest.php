@@ -97,7 +97,7 @@ class FilamentPagesTest extends TestCase
 
         foreach ([
             '/portal/jadwal-page' => 'Jadwal Kuliah',
-            '/portal/tugas-page' => 'Tugas Saya',
+            '/portal/tugas-page' => 'Materi dan Tugas',
             '/portal/kelompok-page' => 'Kelompok Saya',
             '/portal/pengumuman-page' => 'Pengumuman',
             '/portal/notifikasi-page' => 'Notifikasi',

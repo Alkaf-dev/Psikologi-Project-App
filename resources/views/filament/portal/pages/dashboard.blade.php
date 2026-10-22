@@ -71,7 +71,7 @@
                     </div>
                 @endforelse
                 <div style="margin-top: .85rem;">
-                    <x-filament::link :href="\App\Filament\Portal\Pages\TugasPage::getUrl()">Lihat semua tugas</x-filament::link>
+                    <x-filament::link :href="\App\Filament\Portal\Pages\TugasPage::getUrl()">Lihat materi dan tugas</x-filament::link>
                 </div>
             </x-filament::section>
 

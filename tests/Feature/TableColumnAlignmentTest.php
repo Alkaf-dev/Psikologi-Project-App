@@ -118,13 +118,14 @@ class TableColumnAlignmentTest extends TestCase
         $this->assertColumnAlignments([
             PortalTugasPage::class => [
                 'title' => null,
-                'links' => null,
+                'material_url' => Alignment::Center,
+                'type_label' => Alignment::Center,
+                'portal_group_name' => null,
                 'meeting_number' => Alignment::Center,
                 'start_at' => Alignment::Center,
                 'deadline' => Alignment::Center,
                 'status_label' => Alignment::Center,
                 'submission_label' => Alignment::Center,
-                'submission_grade' => Alignment::Center,
             ],
             PortalJadwalPage::class => [
                 'course_name' => null,

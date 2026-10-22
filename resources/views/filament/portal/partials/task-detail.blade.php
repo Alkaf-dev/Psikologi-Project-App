@@ -1,4 +1,5 @@
 @php
+    use App\Support\ExternalUrl;
     use Illuminate\Support\Carbon;
 
     $statusColor = match ($task['status'] ?? '') {
@@ -19,7 +20,13 @@
     $deadline = filled($task['deadline'] ?? null)
         ? Carbon::parse((string) $task['deadline'])->translatedFormat('d M Y H:i')
         : '-';
-    $hasLinks = filled($task['material_url'] ?? null) || filled($task['collection_link'] ?? null);
+    $materialLink = ExternalUrl::http($task['material_url'] ?? null);
+    $collectionLink = ExternalUrl::http($task['collection_link'] ?? null);
+    $submissionLink = ExternalUrl::http($task['submission_link'] ?? null);
+    $hasLinks = filled($materialLink) || filled($collectionLink);
+    $groupLabel = array_key_exists('portal_group_name', $task)
+        ? (filled($task['portal_group_name'] ?? null) ? $task['portal_group_name'] : '-')
+        : (filled($task['group_name'] ?? null) ? $task['group_name'] : '-');
     $showSubmission = array_key_exists('submission_label', $task);
     $border = '1px solid rgba(115, 115, 115, .22)';
     $cardStyle = "border: {$border}; border-radius: .75rem; padding: .8rem 1rem; background: rgba(127, 127, 127, .05);";
@@ -54,7 +61,7 @@
 
         <div style="{{ $cardStyle }}">
             <div style="{{ $labelStyle }}">Kelompok</div>
-            <div style="font-weight: 600; line-height: 1.4;">{{ $task['group_name'] ?: '-' }}</div>
+            <div style="font-weight: 600; line-height: 1.4;">{{ $groupLabel }}</div>
         </div>
 
         <div style="{{ $cardStyle }}">
@@ -91,13 +98,23 @@
         <div style="{{ $cardStyle }}">
             <div style="{{ $labelStyle }}">Tautan</div>
             <div style="display: flex; flex-wrap: wrap; gap: .75rem;">
-                @if (filled($task['material_url'] ?? null))
-                    <x-filament::link :href="$task['material_url']" target="_blank" icon="heroicon-o-book-open">
+                @if (filled($materialLink))
+                    <x-filament::link
+                        :href="$materialLink"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        icon="heroicon-o-book-open"
+                    >
                         Buka materi
                     </x-filament::link>
                 @endif
-                @if (filled($task['collection_link'] ?? null))
-                    <x-filament::link :href="$task['collection_link']" target="_blank" icon="heroicon-o-folder-arrow-down">
+                @if (filled($collectionLink))
+                    <x-filament::link
+                        :href="$collectionLink"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        icon="heroicon-o-folder-arrow-down"
+                    >
                         Folder pengumpulan
                     </x-filament::link>
                 @endif
@@ -121,8 +138,13 @@
                     </div>
                 @endif
 
-                @if (filled($task['submission_link'] ?? null))
-                    <x-filament::link :href="$task['submission_link']" target="_blank" icon="heroicon-o-arrow-top-right-on-square">
+                @if (filled($submissionLink))
+                    <x-filament::link
+                        :href="$submissionLink"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        icon="heroicon-o-arrow-top-right-on-square"
+                    >
                         Lihat tautan pengumpulan
                     </x-filament::link>
                 @endif
