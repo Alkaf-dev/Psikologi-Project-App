@@ -49,7 +49,7 @@ class TableColumnAlignmentTest extends TestCase
         $this->assertColumnAlignments([
             TugasPage::class => [
                 'title' => null,
-                'links' => null,
+                'collection_link' => null,
                 'meeting_number' => Alignment::Center,
                 'type_label' => Alignment::Center,
                 'start_at' => Alignment::Center,

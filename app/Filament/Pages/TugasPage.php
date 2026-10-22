@@ -16,9 +16,9 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Utilities\Get;
+use Filament\Support\Enums\IconPosition;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Columns\ViewColumn;
 use Filament\Tables\Table;
 use Illuminate\Support\Carbon;
 use Illuminate\Validation\ValidationException;
@@ -43,6 +43,9 @@ class TugasPage extends BaseSheetPage
     public function table(Table $table): Table
     {
         return $table
+            // Filament v5 mengatur kepadatan tabel melalui kelas CSS scoped,
+            // karena TableDensity bawaan sudah tidak tersedia di versi ini.
+            ->extraAttributes(['class' => 'task-table-compact'])
             ->records(function (
                 ?string $search,
                 ?string $sortColumn,
@@ -76,71 +79,94 @@ class TugasPage extends BaseSheetPage
                         ->badge()
                         ->placeholder('-')
                         ->sortable()
-                        ->alignCenter(),
+                        ->alignCenter()
+                        ->width('6rem'),
                 ),
                 $this->spreadsheetColumn(
                     TextColumn::make('title')
                         ->label('Tugas')
                         ->weight('semibold')
                         ->color('primary')
-                        ->description(fn (array $record): string => str((string) ($record['description'] ?? ''))->stripTags()->limit(80)->toString())
+                        // Batasi teks agar baris tidak melar, tanpa memotong tooltip.
+                        ->limit(50)
+                        ->tooltip(fn (array $record): string => trim((string) ($record['description'] ?? '')) ?: 'Klik untuk melihat rincian')
                         ->action($this->detailAction())
-                        ->tooltip('Klik untuk melihat rincian')
                         ->searchable()
-                        ->wrap(),
+                        ->width('18rem'),
                 ),
                 $this->spreadsheetColumn(
-                    ViewColumn::make('links')
-                        ->label('Tautan')
-                        ->view('filament.tables.columns.task-links'),
+                    // Tautan pengumpulan dibuka di tab baru dan hanya aktif jika terisi.
+                    TextColumn::make('collection_link')
+                        ->label('Link Pengumpulan')
+                        ->formatStateUsing(fn (?string $state): string => filled($state) ? 'Buka link' : '-')
+                        ->url(fn (array $record): ?string => filled($record['collection_link'] ?? null) ? (string) $record['collection_link'] : null)
+                        ->openUrlInNewTab()
+                        ->icon(fn (array $record): ?Heroicon => filled($record['collection_link'] ?? null) ? Heroicon::OutlinedArrowTopRightOnSquare : null)
+                        ->iconPosition(IconPosition::After)
+                        ->color(fn (array $record): ?string => filled($record['collection_link'] ?? null) ? 'primary' : null)
+                        ->tooltip(fn (array $record): ?string => filled($record['collection_link'] ?? null) ? 'Buka link pengumpulan di tab baru' : null)
+                        ->width('10rem'),
                 ),
                 $this->spreadsheetColumn(
                     TextColumn::make('course_name')
                         ->label('Mata kuliah')
-                        ->searchable(),
+                        ->searchable()
+                        ->width('12rem'),
                 ),
                 $this->spreadsheetColumn(
                     TextColumn::make('type_label')
                         ->label('Jenis')
                         ->badge()
                         ->color(fn (string $state): string => $state === 'Kelompok' ? 'info' : 'gray')
-                        ->alignCenter(),
+                        ->alignCenter()
+                        ->width('6rem'),
                 ),
                 $this->spreadsheetColumn(
                     TextColumn::make('group_name')
                         ->label('Kelompok')
-                        ->wrap(),
+                        ->width('10rem'),
                 ),
                 $this->spreadsheetColumn(
                     TextColumn::make('start_at')
                         ->label('Mulai')
                         ->formatStateUsing(fn (?string $state): string => $this->formatDateTime($state))
                         ->placeholder('-')
-                        ->alignCenter(),
+                        ->alignCenter()
+                        ->width('10rem'),
                 ),
                 $this->spreadsheetColumn(
                     TextColumn::make('deadline')
                         ->label('Deadline')
+                        // Sisa waktu tampil sebagai sub-teks abu-abu bawaan Filament.
                         ->description(fn (array $record): string => (string) ($record['deadline_label'] ?? ''))
                         ->formatStateUsing(fn (?string $state): string => $this->formatDateTime($state))
                         ->sortable()
-                        ->alignCenter(),
+                        ->alignCenter()
+                        ->width('11rem'),
                 ),
                 $this->spreadsheetColumn(
                     TextColumn::make('status_label')
                         ->label('Status')
                         ->badge()
                         ->color(fn (array $record): string => TaskStatus::color($record['status'] ?? ''))
-                        ->alignCenter(),
+                        ->icon(fn (array $record): Heroicon => match ($record['status'] ?? '') {
+                            TaskStatus::DRAFT => Heroicon::OutlinedPencilSquare,
+                            TaskStatus::COMPLETED => Heroicon::OutlinedCheckCircle,
+                            default => Heroicon::OutlinedPlayCircle,
+                        })
+                        ->alignCenter()
+                        ->width('7rem'),
                 ),
                 $this->spreadsheetColumn(
                     TextColumn::make('submission_count')
                         ->label('Dikumpulkan')
                         ->badge()
                         ->color('success')
-                        ->alignCenter(),
+                        ->alignCenter()
+                        ->width('7rem'),
                 ),
             ])
+            ->searchPlaceholder('Cari tugas, mata kuliah, atau kelompok...')
             ->headerActions([$this->createAction()])
             ->recordActions([$this->detailAction(), $this->editAction(), $this->deleteAction()])
             ->recordAction('detail')

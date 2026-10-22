@@ -31,7 +31,7 @@ class TaskLinkColumnTest extends TestCase
         parent::tearDown();
     }
 
-    public function test_admin_task_table_renders_clickable_material_and_collection_links(): void
+    public function test_admin_task_table_renders_clickable_collection_link(): void
     {
         Filament::setCurrentPanel('admin');
         $this->actingAsAdmin();
@@ -39,10 +39,21 @@ class TaskLinkColumnTest extends TestCase
         $this->createLinkedTask();
 
         Livewire::test(AdminTugasPage::class)
-            ->assertSee('Materi')
-            ->assertSee('Pengumpulan')
-            ->assertSeeHtml('href="https://example.test/materi-tugas"')
-            ->assertSeeHtml('href="https://example.test/folder-pengumpulan"');
+            ->assertSee('Link Pengumpulan')
+            ->assertSee('Buka link')
+            ->assertSeeHtml('href="https://example.test/folder-pengumpulan"')
+            ->assertSeeHtml('task-table-compact');
+    }
+
+    public function test_admin_task_table_loads_compact_density_styles(): void
+    {
+        Filament::setCurrentPanel('admin');
+        $this->actingAsAdmin();
+
+        $this->get('/admin/tugas-page')
+            ->assertOk()
+            ->assertSee('task-table-compact', false)
+            ->assertSee('padding-block: 0.4rem', false);
     }
 
     public function test_portal_task_table_renders_clickable_material_and_collection_links(): void
