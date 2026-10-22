@@ -80,7 +80,7 @@ class MateriTugasPageTest extends TestCase
         $this->assertStringContainsString('task-table-compact', $tableClass);
 
         $widths = [
-            'meeting_number' => '5.5rem',
+            'meeting_number' => '8rem',
             'title' => '16rem',
             'material_url' => '6.5rem',
             'type_label' => '6.5rem',

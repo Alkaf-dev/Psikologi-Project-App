@@ -287,7 +287,7 @@ class TugasPage extends BaseSheetPage
                         ->placeholder('-')
                         ->sortable()
                         ->alignCenter()
-                        ->width('5.5rem'),
+                        ->width('8rem'),
                 ),
                 $this->spreadsheetColumn(
                     TextColumn::make('title')

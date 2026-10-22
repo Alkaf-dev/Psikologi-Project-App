@@ -7,6 +7,7 @@ use App\Repositories\CourseRepository;
 use App\Repositories\GroupRepository;
 use App\Repositories\SubmissionRepository;
 use App\Repositories\TaskRepository;
+use App\Support\ExternalUrl;
 use App\Support\TaskGroups;
 use App\Support\TaskStatus;
 use Filament\Actions\Action;
@@ -21,10 +22,13 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
 
 class TugasPage extends BaseSheetPage
 {
+    protected string $view = 'filament.pages.tugas';
+
     protected static ?string $navigationLabel = 'Tugas';
 
     protected static ?string $title = 'Manajemen Tugas';
@@ -35,8 +39,17 @@ class TugasPage extends BaseSheetPage
 
     protected static ?int $navigationSort = 3;
 
+    public ?string $selectedCourseId = null;
+
+    protected ?Collection $cachedAllTasks = null;
+
+    /**
+     * @var array<int, array<string, mixed>>|null
+     */
+    protected ?array $cachedCourseFilters = null;
+
     protected array $searchableColumns = [
-        'title', 'description', 'course_name', 'group_name', 'type_label',
+        'title', 'description', 'course_name', 'course_code', 'group_name', 'type_label',
         'meeting_number', 'status_label',
     ];
 
@@ -55,6 +68,121 @@ class TugasPage extends BaseSheetPage
         return 'membaca';
     }
 
+    public function selectCourse(string $courseId): void
+    {
+        $courseId = trim($courseId);
+
+        if (! in_array($courseId, $this->courseFilterIds(), true)) {
+            return;
+        }
+
+        $this->selectedCourseId = $courseId;
+
+        $this->resetTable();
+    }
+
+    public function selectAllCourses(): void
+    {
+        $this->selectedCourseId = null;
+
+        $this->resetTable();
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    protected function getViewData(): array
+    {
+        return [
+            'courseFilters' => $this->courseFilters(),
+            'selectedCourseId' => $this->selectedCourseFilterId(),
+            'totalTasks' => $this->allTasks()->count(),
+        ];
+    }
+
+    /**
+     * @return Collection<int, array<string, mixed>>
+     */
+    protected function allTasks(): Collection
+    {
+        if ($this->cachedAllTasks !== null) {
+            return $this->cachedAllTasks;
+        }
+
+        $counts = app(SubmissionRepository::class)->countsByTask();
+
+        return $this->cachedAllTasks = app(TaskRepository::class)
+            ->withDetails()
+            ->map(function (array $task) use ($counts): array {
+                $task['submission_count'] = $counts[(string) $task['id']] ?? 0;
+
+                return $task;
+            });
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    protected function courseFilters(): array
+    {
+        if ($this->cachedCourseFilters !== null) {
+            return $this->cachedCourseFilters;
+        }
+
+        $courses = app(CourseRepository::class)
+            ->all()
+            ->keyBy(fn (array $course): string => (string) ($course['id'] ?? ''));
+
+        return $this->cachedCourseFilters = $this->allTasks()
+            ->groupBy(fn (array $task): string => (string) ($task['course_id'] ?? ''))
+            ->map(function (Collection $tasks, string $courseId) use ($courses): ?array {
+                $course = $courses->get($courseId);
+
+                if (! $course) {
+                    return null;
+                }
+
+                return [
+                    'id' => $courseId,
+                    'name' => (string) ($course['name'] ?? 'Mata kuliah'),
+                    'code' => (string) ($course['code'] ?? ''),
+                    'tasks_count' => $tasks->count(),
+                    'materials_count' => $tasks
+                        ->filter(fn (array $task): bool => ExternalUrl::http($task['material_url'] ?? null) !== null)
+                        ->count(),
+                ];
+            })
+            ->filter()
+            ->sortBy(fn (array $filter): string => mb_strtolower((string) $filter['name']), SORT_NATURAL)
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    protected function courseFilterIds(): array
+    {
+        return array_column($this->courseFilters(), 'id');
+    }
+
+    protected function selectedCourseFilterId(): ?string
+    {
+        $courseId = trim((string) $this->selectedCourseId);
+
+        return $courseId !== '' && in_array($courseId, $this->courseFilterIds(), true)
+            ? $courseId
+            : null;
+    }
+
+    public function resetTable(): void
+    {
+        $this->cachedAllTasks = null;
+        $this->cachedCourseFilters = null;
+
+        parent::resetTable();
+    }
+
     public function table(Table $table): Table
     {
         return $table
@@ -68,15 +196,14 @@ class TugasPage extends BaseSheetPage
                 int|string $page,
                 int|string $recordsPerPage,
             ) {
-                $counts = app(SubmissionRepository::class)->countsByTask();
+                $selectedCourseId = $this->selectedCourseFilterId();
+                $records = $this->allTasks();
 
-                $records = app(TaskRepository::class)
-                    ->withDetails()
-                    ->map(function (array $task) use ($counts): array {
-                        $task['submission_count'] = $counts[(string) $task['id']] ?? 0;
-
-                        return $task;
-                    });
+                if ($selectedCourseId !== null) {
+                    $records = $records->filter(
+                        fn (array $task): bool => (string) ($task['course_id'] ?? '') === $selectedCourseId,
+                    );
+                }
 
                 return $this->paginateRecords(
                     $records,
@@ -95,7 +222,7 @@ class TugasPage extends BaseSheetPage
                         ->placeholder('-')
                         ->sortable()
                         ->alignCenter()
-                        ->width('6rem'),
+                        ->width('8rem'),
                 ),
                 $this->spreadsheetColumn(
                     TextColumn::make('title')

@@ -13,7 +13,7 @@ trait InteractsWithSheets
 
     protected function setUpSheets(bool $withDemoData = true): void
     {
-        $this->sheetPath = tempnam(sys_get_temp_dir(), 'psikologi-sheets-');
+        $this->sheetPath = (string) @tempnam(sys_get_temp_dir(), 'psikologi-sheets-');
 
         config([
             'sheets.driver' => 'local',

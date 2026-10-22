@@ -44,8 +44,12 @@
         }
 
         .materi-tugas-table .fi-ta-table {
-            min-width: 99rem;
+            min-width: 102rem;
             table-layout: fixed;
+        }
+
+        .materi-tugas-table .fi-ta-header-cell-label {
+            overflow: visible;
         }
 
         .materi-tugas-table .fi-ta-table > tbody > tr {
@@ -113,53 +117,11 @@
         <x-psychology-mascot-gif :mascot="$this->pageMascot()" class="psychology-page-mascot" />
     @endif
 
-    <div class="materi-tugas-filter" role="group" aria-label="Filter mata kuliah">
-        @php
-            $allDescription = $totalTasks.' tugas';
-            $isAllActive = $selectedCourseId === null;
-        @endphp
-
-        <x-filament::button
-            size="sm"
-            :color="$isAllActive ? 'primary' : 'gray'"
-            :outlined="! $isAllActive"
-            :loading-indicator="false"
-            :aria-current="$isAllActive ? 'true' : null"
-            wire:key="materi-tugas-chip-all"
-            wire:click="selectAllCourses"
-            class="materi-tugas-chip"
-            title="Semua mata kuliah - {{ $allDescription }}"
-        >
-            <span>Semua</span>
-            <span class="materi-tugas-chip-count" aria-hidden="true">{{ $totalTasks }}</span>
-        </x-filament::button>
-
-        @foreach ($courseFilters as $filter)
-            @php
-                $isActive = $selectedCourseId === (string) $filter['id'];
-                $description = $filter['tasks_count'].' tugas';
-
-                if ($filter['materials_count'] > 0) {
-                    $description .= ', '.$filter['materials_count'].' materi';
-                }
-            @endphp
-
-            <x-filament::button
-                size="sm"
-                :color="$isActive ? 'primary' : 'gray'"
-                :outlined="! $isActive"
-                :loading-indicator="false"
-                :aria-current="$isActive ? 'true' : null"
-                wire:key="materi-tugas-chip-{{ $filter['id'] }}"
-                wire:click="selectCourse('{{ $filter['id'] }}')"
-                class="materi-tugas-chip"
-                title="{{ $filter['name'] }} - {{ $description }}"
-            >
-                <span>{{ $filter['name'] }}</span>
-                <span class="materi-tugas-chip-count" aria-hidden="true">{{ $filter['tasks_count'] }}</span>
-            </x-filament::button>
-        @endforeach
-    </div>
+    @include('filament.partials.course-filter', [
+        'selectedCourseId' => $selectedCourseId,
+        'totalTasks' => $totalTasks,
+        'courseFilters' => $courseFilters,
+    ])
 
     {{ $this->table }}
 
