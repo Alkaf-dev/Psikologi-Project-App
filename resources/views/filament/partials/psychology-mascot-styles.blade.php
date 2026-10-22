@@ -653,22 +653,51 @@
         }
     }
 
-    /* Table column collisions guard across all pages */
+    /* Table column collisions and row expansion guard across all pages */
     .fi-ta-table td,
     .fi-ta-table th {
         overflow: hidden;
     }
 
-    .fi-ta-text-description {
+    .fi-ta-text,
+    .fi-ta-text > div {
+        min-width: 0;
         max-width: 100%;
-        white-space: normal;
-        word-break: break-word;
-        line-height: 1.25;
+        overflow: hidden;
     }
 
     .fi-ta-text-item:not(.fi-ta-text-has-badges) {
+        min-width: 0;
         max-width: 100%;
         overflow: hidden;
         text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .fi-ta-text-item-label {
+        display: inline-block;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        vertical-align: middle;
+    }
+
+    .fi-ta-text-item-button {
+        min-width: 0;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        text-align: left;
+    }
+
+    .fi-ta-text-description {
+        margin-top: 0.15rem;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        line-height: 1.25;
     }
 </style>

@@ -155,19 +155,6 @@
                         <div style="white-space: pre-line; line-height: 1.7;">{{ $task['submission_notes'] }}</div>
                     </div>
                 @endif
-
-                @if (filled($task['submission_grade'] ?? null))
-                    <div style="font-size: .9rem;">
-                        Nilai: <span style="font-weight: 600;">{{ $task['submission_grade'] }}</span>
-                    </div>
-                @endif
-
-                @if (filled($task['submission_feedback'] ?? null))
-                    <div style="margin-top: .2rem; padding: .75rem; border-left: 3px solid rgb(var(--primary-500)); background: rgba(127, 127, 127, .06);">
-                        <div style="{{ $labelStyle }}">Feedback dosen</div>
-                        <div style="white-space: pre-line; line-height: 1.7;">{{ $task['submission_feedback'] }}</div>
-                    </div>
-                @endif
             </div>
         </div>
     @endif

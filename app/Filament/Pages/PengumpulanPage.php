@@ -26,7 +26,7 @@ class PengumpulanPage extends BaseSheetPage
 {
     protected static ?string $navigationLabel = 'Pengumpulan';
 
-    protected static ?string $title = 'Pengumpulan & Penilaian';
+    protected static ?string $title = 'Pengumpulan';
 
     protected static string|\BackedEnum|null $navigationIcon = Heroicon::OutlinedDocumentCheck;
 
@@ -68,12 +68,10 @@ class PengumpulanPage extends BaseSheetPage
                     TextColumn::make('task_title')
                         ->label('Tugas')
                         ->weight('semibold')
-                        ->limit(48)
-                        ->tooltip(function (array $record): ?string {
-                            $title = trim((string) ($record['task_title'] ?? ''));
-
-                            return $title !== '' ? $title : null;
-                        })
+                        ->color('primary')
+                        ->limit(38)
+                        ->tooltip(fn (array $record): string => trim((string) ($record['task_title'] ?? '')) ?: 'Klik untuk melihat rincian')
+                        ->action($this->detailAction())
                         ->searchable()
                         ->width('17rem'),
                 ),
@@ -109,13 +107,13 @@ class PengumpulanPage extends BaseSheetPage
                         ->label('Status')
                         ->badge()
                         ->formatStateUsing(fn (string $state): string => match ($state) {
-                            'graded' => 'Dinilai',
                             'late' => 'Terlambat',
+                            'graded' => 'Dinilai',
                             default => 'Dikumpulkan',
                         })
                         ->color(fn (string $state): string => match ($state) {
-                            'graded' => 'success',
                             'late' => 'danger',
+                            'graded' => 'success',
                             default => 'warning',
                         })
                         ->alignCenter()
@@ -133,14 +131,6 @@ class PengumpulanPage extends BaseSheetPage
                         ->width('14rem'),
                 ),
                 $this->spreadsheetColumn(
-                    TextColumn::make('grade')
-                        ->label('Nilai')
-                        ->badge()
-                        ->placeholder('-')
-                        ->alignCenter()
-                        ->width('5rem'),
-                ),
-                $this->spreadsheetColumn(
                     TextColumn::make('submitted_at')
                         ->label('Dikumpulkan')
                         ->formatStateUsing(fn (?string $state): string => $state
@@ -154,13 +144,29 @@ class PengumpulanPage extends BaseSheetPage
             ->searchPlaceholder('Cari tugas, mahasiswa, atau kelompok...')
             ->headerActions([$this->createAction()])
             ->recordActions([
-                $this->gradeAction(),
+                $this->detailAction(),
                 $this->editAction(),
                 $this->deleteAction(),
             ])
+            ->recordAction('detail')
             ->defaultSort('submitted_at', 'desc')
             ->defaultPaginationPageOption(10)
             ->emptyStateHeading('Belum ada pengumpulan');
+    }
+
+    protected function detailAction(): Action
+    {
+        return Action::make('detail')
+            ->label('Detail')
+            ->icon(Heroicon::OutlinedEye)
+            ->color('gray')
+            ->modalHeading(fn (array $record): string => 'Detail Pengumpulan: '.($record['task_title'] ?? ''))
+            ->modalSubmitAction(false)
+            ->modalCancelActionLabel('Tutup')
+            ->modalWidth('3xl')
+            ->modalContent(fn (array $record) => view('filament.pages.partials.submission-detail', [
+                'submission' => $record,
+            ]));
     }
 
     protected function createAction(): Action
@@ -211,42 +217,6 @@ class PengumpulanPage extends BaseSheetPage
                 $this->resetTable();
 
                 Notification::make()->title('Pengumpulan diperbarui')->success()->send();
-            });
-    }
-
-    protected function gradeAction(): Action
-    {
-        return Action::make('grade')
-            ->label('Nilai')
-            ->icon(Heroicon::OutlinedCheckCircle)
-            ->color('success')
-            ->modalHeading('Beri Nilai')
-            ->modalSubmitActionLabel('Simpan nilai')
-            ->schema([
-                TextInput::make('grade')
-                    ->label('Nilai (0-100)')
-                    ->numeric()
-                    ->required()
-                    ->minValue(0)
-                    ->maxValue(100),
-                Textarea::make('feedback')
-                    ->label('Catatan untuk mahasiswa')
-                    ->rows(3),
-            ])
-            ->fillForm(fn (array $record): array => [
-                'grade' => $record['grade'] ?? '',
-                'feedback' => $record['feedback'] ?? '',
-            ])
-            ->action(function (array $data, array $record): void {
-                app(SubmissionRepository::class)->update((string) $record['id'], [
-                    'grade' => (string) $data['grade'],
-                    'feedback' => (string) ($data['feedback'] ?? ''),
-                    'status' => 'graded',
-                ]);
-
-                $this->resetTable();
-
-                Notification::make()->title('Nilai berhasil disimpan')->success()->send();
             });
     }
 
@@ -340,7 +310,6 @@ class PengumpulanPage extends BaseSheetPage
                 ->options([
                     'submitted' => 'Dikumpulkan',
                     'late' => 'Terlambat',
-                    'graded' => 'Dinilai',
                 ])
                 ->default('submitted')
                 ->required(),
@@ -349,11 +318,6 @@ class PengumpulanPage extends BaseSheetPage
                 ->url()
                 ->maxLength(500)
                 ->required(),
-            TextInput::make('grade')
-                ->label('Nilai')
-                ->numeric()
-                ->minValue(0)
-                ->maxValue(100),
             DateTimePicker::make('submitted_at')
                 ->label('Waktu dikumpulkan')
                 ->seconds(false),

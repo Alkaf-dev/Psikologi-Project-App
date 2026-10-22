@@ -78,18 +78,37 @@
             overflow: hidden;
         }
 
+        .submission-table .fi-ta-text,
+        .submission-table .fi-ta-text > div {
+            min-width: 0;
+            max-width: 100%;
+            overflow: hidden;
+        }
+
         .submission-table .fi-ta-text-item:not(.fi-ta-text-has-badges) {
+            min-width: 0;
             max-width: 100%;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
         }
 
+        .submission-table .fi-ta-text-item-label,
+        .submission-table .fi-ta-text-item-button {
+            display: inline-block;
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            vertical-align: middle;
+        }
+
         .submission-table .fi-ta-text-description {
             line-height: 1.25;
             max-width: 100%;
-            white-space: normal;
-            word-break: break-word;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
     </style>
 @endpush

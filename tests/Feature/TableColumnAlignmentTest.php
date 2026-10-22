@@ -83,7 +83,6 @@ class TableColumnAlignmentTest extends TestCase
                 'group_name' => null,
                 'status' => Alignment::Center,
                 'link' => Alignment::Center,
-                'grade' => Alignment::Center,
                 'submitted_at' => Alignment::Center,
             ],
             PengumumanPage::class => [
@@ -165,7 +164,6 @@ class TableColumnAlignmentTest extends TestCase
             'group_name' => '8.5rem',
             'status' => '8rem',
             'link' => '14rem',
-            'grade' => '5rem',
             'submitted_at' => '9.5rem',
         ];
 

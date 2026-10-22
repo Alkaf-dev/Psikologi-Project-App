@@ -29,9 +29,9 @@ class TugasPage extends BaseSheetPage
 {
     protected string $view = 'filament.pages.tugas';
 
-    protected static ?string $navigationLabel = 'Tugas';
+    protected static ?string $navigationLabel = 'Materi dan Tugas';
 
-    protected static ?string $title = 'Manajemen Tugas';
+    protected static ?string $title = 'Materi dan Tugas';
 
     protected static string|\BackedEnum|null $navigationIcon = Heroicon::OutlinedClipboardDocumentList;
 
