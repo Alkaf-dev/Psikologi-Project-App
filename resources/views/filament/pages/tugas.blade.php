@@ -65,8 +65,32 @@
         }
 
         .task-table-compact .fi-ta-table {
-            min-width: 104rem;
+            min-width: 118rem;
             table-layout: fixed;
+        }
+
+        .task-table-compact .fi-ta-table > thead > tr > th:last-child,
+        .task-table-compact .fi-ta-table > tbody > tr > td:last-child,
+        .task-table-compact .fi-ta-actions-header-cell,
+        .task-table-compact .fi-ta-cell:has(.fi-ta-actions) {
+            width: 17rem;
+            min-width: 17rem;
+        }
+
+        .task-table-compact .fi-ta-table > thead > tr > *,
+        .task-table-compact .fi-ta-table > tbody > tr > * {
+            vertical-align: middle;
+        }
+
+        .task-table-compact .fi-ta-cell:has(.fi-ta-actions) {
+            padding-inline: 0.75rem;
+        }
+
+        .task-table-compact .fi-ta-cell:has(.fi-ta-actions) .fi-ta-actions {
+            flex-wrap: nowrap;
+            justify-content: flex-end;
+            gap: 0.75rem;
+            width: 100%;
         }
 
         .dark .materi-tugas-chip[aria-current="true"] {

@@ -45,6 +45,19 @@ class AdminTugasCourseFilterTest extends TestCase
         $this->assertSame('8rem', $table->getColumn('meeting_number')?->getWidth());
     }
 
+    public function test_admin_task_table_loads_non_overlapping_action_styles(): void
+    {
+        $this->actingAsAdmin();
+
+        $this->get('/admin/tugas-page')
+            ->assertOk()
+            ->assertSee('min-width: 118rem', false)
+            ->assertSee('width: 17rem', false)
+            ->assertSee('Detail')
+            ->assertSee('Ubah')
+            ->assertSee('Hapus');
+    }
+
     public function test_admin_course_chips_filter_task_table_records(): void
     {
         $this->actingAsAdmin();
