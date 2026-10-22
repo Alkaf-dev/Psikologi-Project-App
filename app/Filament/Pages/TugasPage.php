@@ -115,6 +115,7 @@ class TugasPage extends BaseSheetPage
             ->withDetails()
             ->map(function (array $task) use ($counts): array {
                 $task['submission_count'] = $counts[(string) $task['id']] ?? 0;
+                $task['material_link'] = ExternalUrl::http($task['material_url'] ?? null);
 
                 return $task;
             });
@@ -235,6 +236,19 @@ class TugasPage extends BaseSheetPage
                         ->action($this->detailAction())
                         ->searchable()
                         ->width('18rem'),
+                ),
+                $this->spreadsheetColumn(
+                    TextColumn::make('material_url')
+                        ->label('Materi')
+                        ->formatStateUsing(fn (array $record): string => filled($record['material_link'] ?? null) ? 'Buka materi' : '-')
+                        ->url(fn (array $record): ?string => $record['material_link'] ?? null)
+                        ->openUrlInNewTab()
+                        ->icon(fn (array $record): ?Heroicon => filled($record['material_link'] ?? null) ? Heroicon::OutlinedArrowTopRightOnSquare : null)
+                        ->iconPosition(IconPosition::After)
+                        ->color(fn (array $record): ?string => filled($record['material_link'] ?? null) ? 'primary' : null)
+                        ->tooltip(fn (array $record): ?string => filled($record['material_link'] ?? null) ? 'Buka materi di tab baru' : null)
+                        ->alignCenter()
+                        ->width('8rem'),
                 ),
                 $this->spreadsheetColumn(
                     // Tautan pengumpulan dibuka di tab baru dan hanya aktif jika terisi.

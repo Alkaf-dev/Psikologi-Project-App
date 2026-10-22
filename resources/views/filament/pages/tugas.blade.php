@@ -69,7 +69,7 @@
         }
 
         .task-table-compact .fi-ta-table {
-            min-width: 128rem;
+            min-width: 136rem;
             table-layout: fixed;
         }
 
