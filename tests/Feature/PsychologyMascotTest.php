@@ -42,7 +42,7 @@ class PsychologyMascotTest extends TestCase
     public function test_launcher_gif_assets_are_compact_and_available(): void
     {
         $toggle = public_path('images/psychology/mascot/berjalan-toggle.gif');
-        $poster = public_path('images/psychology/mascot/berjalan-poster.png');
+        $poster = public_path('images/psychology/mascot/berjalan-toggle-poster.png');
 
         $this->assertFileExists($toggle);
         $this->assertFileExists($poster);
@@ -74,6 +74,7 @@ class PsychologyMascotTest extends TestCase
         $this->assertStringContainsString('data-psychology-mascot', $html);
         $this->assertStringContainsString('data-mascot-state="greeting"', $html);
         $this->assertStringContainsString('images/psychology/mascot/greeting.png', $html);
+        $this->assertStringContainsString('loading="lazy"', $html);
         $this->assertStringContainsString('--psychology-mascot-size: 96px', $html);
         $this->assertStringContainsString('aria-label="Maskot uji"', $html);
     }
@@ -134,18 +135,46 @@ class PsychologyMascotTest extends TestCase
 
     public function test_contextual_gif_static_posters_are_available(): void
     {
-        foreach (['melambai', 'minum'] as $name) {
-            $path = public_path("images/psychology/mascot/{$name}-poster.png");
+        $config = config('psychology-mascots');
 
-            $this->assertFileExists($path);
+        $this->assertIsArray($config);
 
-            $image = getimagesize($path);
+        foreach ($config as $name => $mascot) {
+            $posterFile = (string) ($mascot['poster'] ?? '');
+            $gifPath = public_path((string) ($mascot['file'] ?? ''));
+            $posterPath = public_path($posterFile);
 
-            $this->assertIsArray($image);
-            $this->assertSame('image/png', $image['mime']);
-            $this->assertSame(112, $image[0]);
-            $this->assertSame(200, $image[1]);
-            $this->assertLessThan(100_000, filesize($path));
+            $this->assertNotSame('', $posterFile, "Poster {$name} belum didaftarkan.");
+            $this->assertFileExists($posterPath, "Poster {$name} tidak ditemukan.");
+
+            $gifImage = getimagesize($gifPath);
+            $posterImage = getimagesize($posterPath);
+
+            $this->assertIsArray($gifImage);
+            $this->assertIsArray($posterImage);
+            $this->assertSame('image/png', $posterImage['mime']);
+            $this->assertSame($gifImage[0], $posterImage[0], "Lebar poster {$name} tidak sesuai.");
+            $this->assertSame($gifImage[1], $posterImage[1], "Tinggi poster {$name} tidak sesuai.");
+            $this->assertLessThan(100_000, filesize($posterPath), "Poster {$name} terlalu besar.");
+        }
+    }
+
+    public function test_contextual_gif_component_uses_the_static_poster_before_the_gif(): void
+    {
+        foreach (array_keys(config('psychology-mascots')) as $mascot) {
+            $config = config("psychology-mascots.{$mascot}");
+            $html = Blade::render('<x-psychology-mascot-gif mascot="'.$mascot.'" />');
+
+            $this->assertStringContainsString(
+                'src="'.asset($config['poster']).'"',
+                $html,
+                "Poster {$mascot} tidak menjadi sumber awal.",
+            );
+            $this->assertStringContainsString(
+                'data-mascot-gif-src="'.asset($config['file']).'"',
+                $html,
+                "GIF {$mascot} tidak disimpan untuk dimuat setelahnya.",
+            );
         }
     }
 
@@ -155,7 +184,9 @@ class PsychologyMascotTest extends TestCase
 
         $this->assertStringContainsString('data-mascot-gif="membaca"', $html);
         $this->assertStringContainsString('psychology-mascot-gif--banner', $html);
+        $this->assertStringContainsString('images/psychology/mascot/membaca-poster.png', $html);
         $this->assertStringContainsString('images/psychology/mascot/membaca.gif', $html);
+        $this->assertStringContainsString('data-mascot-gif-src="'.asset('images/psychology/mascot/membaca.gif').'"', $html);
         $this->assertStringContainsString('Baca tugas dengan saksama.', $html);
         $this->assertStringContainsString('loading="eager"', $html);
         $this->assertStringContainsString('width="112"', $html);
@@ -167,7 +198,9 @@ class PsychologyMascotTest extends TestCase
         $html = Blade::render('<x-psychology-mascot-gif mascot="laptop" variant="empty" title="Judul uji" message="Pesan uji" />');
 
         $this->assertStringContainsString('psychology-mascot-gif--empty', $html);
+        $this->assertStringContainsString('images/psychology/mascot/laptop-poster.png', $html);
         $this->assertStringContainsString('images/psychology/mascot/laptop.gif', $html);
+        $this->assertStringContainsString('data-mascot-gif-src="'.asset('images/psychology/mascot/laptop.gif').'"', $html);
         $this->assertStringContainsString('width="180"', $html);
         $this->assertStringContainsString('height="101"', $html);
         $this->assertStringContainsString('Judul uji', $html);
@@ -264,14 +297,18 @@ class PsychologyMascotTest extends TestCase
         $this->assertStringContainsString('data-mascot-gif="minum"', $html);
         $this->assertStringContainsString('images/psychology/mascot/minum.gif', $html);
         $this->assertStringContainsString('images/psychology/mascot/minum-poster.png', $html);
-        $this->assertStringContainsString('media="(prefers-reduced-motion: reduce)"', $html);
+        $this->assertStringContainsString(
+            'src="'.asset('images/psychology/mascot/minum-poster.png').'"',
+            $html,
+        );
+        $this->assertStringContainsString(
+            'data-mascot-gif-src="'.asset('images/psychology/mascot/minum.gif').'"',
+            $html,
+        );
+        $this->assertStringContainsString('loading="lazy"', $html);
         $this->assertStringContainsString('Ngopi dulu, santai sebentar.', $html);
         $this->assertStringContainsString(
             'Banyak tugas menanti, tetapi semuanya bisa dikerjakan satu per satu. Isi energi dulu, ya.',
-            $html,
-        );
-        $this->assertMatchesRegularExpression(
-            '/<img[^>]+src="[^"]*minum\.gif"[^>]+loading="lazy"/',
             $html,
         );
     }
@@ -352,7 +389,7 @@ class PsychologyMascotTest extends TestCase
             ->assertSee('data-mascot-greeting-key="portal-dashboard"', false)
             ->assertSee('images/psychology/mascot/melambai.gif', false)
             ->assertSee('images/psychology/mascot/melambai-poster.png', false)
-            ->assertSee('media="(prefers-reduced-motion: reduce)"', false)
+            ->assertSee('data-mascot-gif-src="'.asset('images/psychology/mascot/melambai.gif').'"', false)
             ->assertSee('Maskot Psikologi Connect melambai', false)
             ->assertDontSee('images/psychology/mascot/greeting.png', false);
     }
@@ -390,14 +427,14 @@ class PsychologyMascotTest extends TestCase
         $html = (string) $response->getContent();
 
         $this->assertStringContainsString('berjalan-toggle.gif', $html);
-        $this->assertStringContainsString('berjalan-poster.png', $html);
+        $this->assertStringContainsString('berjalan-toggle-poster.png', $html);
         $this->assertStringContainsString('melambai.gif', $html);
         $this->assertStringContainsString('laptop.gif', $html);
         $this->assertStringContainsString('memeluk-hati.gif', $html);
         $this->assertStringContainsString('berpikir.gif', $html);
         $this->assertStringContainsString('tertidur.gif', $html);
         $this->assertStringContainsString(
-            'src="'.asset('images/psychology/mascot/berjalan-poster.png').'"',
+            'src="'.asset('images/psychology/mascot/berjalan-toggle-poster.png').'"',
             $html,
         );
 
@@ -408,6 +445,30 @@ class PsychologyMascotTest extends TestCase
                 "GIF {$gif} tidak boleh dimuat sebelum interaksi.",
             );
         }
+    }
+
+    public function test_mascot_scripts_defer_gifs_and_respect_connection_preferences(): void
+    {
+        Filament::setCurrentPanel('admin');
+        $this->actingAsAdmin();
+
+        $this->get('/admin/tugas-page')
+            ->assertOk()
+            ->assertSee('IntersectionObserver', false)
+            ->assertSee('requestIdleCallback', false)
+            ->assertSee('prefers-reduced-motion: reduce', false)
+            ->assertSee('saveData', false);
+    }
+
+    public function test_public_pages_do_not_load_unused_javascript(): void
+    {
+        if (is_file(public_path('hot'))) {
+            $this->markTestSkipped('Vite dev server aktif.');
+        }
+
+        $this->get('/')
+            ->assertOk()
+            ->assertDontSee('type="module"', false);
     }
 
     public function test_other_sheet_pages_do_not_render_the_launcher(): void

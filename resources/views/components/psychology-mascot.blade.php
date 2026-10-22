@@ -78,6 +78,7 @@
                 class="psychology-mascot__image"
                 src="{{ $mascotImage }}"
                 alt=""
+                loading="lazy"
                 decoding="async"
                 draggable="false"
             >

@@ -116,11 +116,6 @@
         background: linear-gradient(135deg, rgb(var(--primary-500) / 0.12) 0%, rgb(var(--gray-900)) 65%);
     }
 
-    .psychology-greeting__picture,
-    .psychology-mascot-gif__picture {
-        display: contents;
-    }
-
     .psychology-mascot-gif__image {
         display: block;
         flex: 0 0 auto;

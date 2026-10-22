@@ -6,7 +6,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', config('app.name'))</title>
     <meta name="description" content="@yield('description', 'Portal akademik Prodi Psikologi STIT Muhammadiyah Kediri untuk jadwal, tugas, kelompok, dan pengumuman.')">
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @vite('resources/css/app.css')
 </head>
 <body class="min-h-screen bg-slate-50 text-slate-800 antialiased">
     <header class="sticky top-0 z-40 border-b border-slate-200/80 bg-white/90 backdrop-blur">

@@ -15,25 +15,31 @@
     $mascotGifAssets = [
         'idle' => [
             'gif' => 'images/psychology/mascot/berjalan-toggle.gif',
-            'poster' => 'images/psychology/mascot/berjalan-poster.png',
+            'poster' => 'images/psychology/mascot/berjalan-toggle-poster.png',
         ],
         'greeting' => [
             'gif' => 'images/psychology/mascot/melambai.gif',
+            'poster' => 'images/psychology/mascot/melambai-poster.png',
         ],
         'studying' => [
             'gif' => 'images/psychology/mascot/laptop.gif',
+            'poster' => 'images/psychology/mascot/laptop-poster.png',
         ],
         'supportive' => [
             'gif' => 'images/psychology/mascot/memeluk-hati.gif',
+            'poster' => 'images/psychology/mascot/memeluk-hati-poster.png',
         ],
         'thinking' => [
             'gif' => 'images/psychology/mascot/berpikir.gif',
+            'poster' => 'images/psychology/mascot/berpikir-poster.png',
         ],
         'success' => [
             'gif' => 'images/psychology/mascot/memeluk-hati.gif',
+            'poster' => 'images/psychology/mascot/memeluk-hati-poster.png',
         ],
         'sleepy' => [
             'gif' => 'images/psychology/mascot/tertidur.gif',
+            'poster' => 'images/psychology/mascot/tertidur-poster.png',
         ],
     ];
 @endphp

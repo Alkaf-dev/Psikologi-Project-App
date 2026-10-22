@@ -13,6 +13,7 @@
     $mascotPosterPath = 'images/psychology/mascot/melambai-poster.png';
     $showMascotGif = is_file(public_path($mascotGifPath));
     $showMascotPoster = is_file(public_path($mascotPosterPath));
+    $mascotDisplayPath = $showMascotPoster ? $mascotPosterPath : $mascotGifPath;
 @endphp
 
 <div
@@ -21,24 +22,18 @@
     data-mascot-greeting-key="{{ $context }}"
 >
     @if ($showMascotGif)
-        <picture class="psychology-greeting__picture">
+        <img
+            class="psychology-greeting__image"
+            src="{{ asset($mascotDisplayPath) }}"
             @if ($showMascotPoster)
-                <source
-                    srcset="{{ asset($mascotPosterPath) }}"
-                    media="(prefers-reduced-motion: reduce)"
-                >
+                data-mascot-gif-src="{{ asset($mascotGifPath) }}"
             @endif
-
-            <img
-                class="psychology-greeting__image"
-                src="{{ asset($mascotGifPath) }}"
-                alt="Maskot Psikologi Connect melambai"
-                width="112"
-                height="200"
-                decoding="async"
-                draggable="false"
-            >
-        </picture>
+            alt="Maskot Psikologi Connect melambai"
+            width="112"
+            height="200"
+            decoding="async"
+            draggable="false"
+        >
     @else
         <x-psychology-mascot
             animation="greeting"
