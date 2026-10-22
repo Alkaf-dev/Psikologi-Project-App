@@ -147,36 +147,28 @@
                             $isActive = $selectedGroup && (string) $selectedGroup['id'] === (string) $group['id'];
                         @endphp
 
-                        <button
-                            type="button"
+                        <x-filament::button
+                            size="sm"
+                            :color="$isActive ? 'primary' : 'gray'"
+                            :outlined="! $isActive"
+                            :aria-pressed="$isActive ? 'true' : 'false'"
                             wire:key="kelompok-chip-{{ $group['id'] }}"
                             wire:click="selectGroup('{{ $group['id'] }}')"
-                            style="
-                                display: inline-flex;
-                                align-items: center;
-                                gap: .45rem;
-                                padding: .4rem .7rem;
-                                font-size: .8rem;
-                                font-weight: 600;
-                                line-height: 1.2;
-                                cursor: pointer;
-                                color: {{ $isActive ? 'rgb(var(--gray-50))' : 'rgb(var(--gray-700))' }};
-                                background: {{ $isActive ? 'rgb(var(--primary-600))' : 'transparent' }};
-                                border: 1px solid {{ $isActive ? 'rgb(var(--primary-600))' : 'rgb(var(--gray-300))' }};
-                                border-radius: 9999px;
-                            "
                         >
                             <span>{{ $group['name'] }}</span>
                             <span style="
-                                padding: .05rem .4rem;
+                                min-width: 1.4rem;
+                                padding: .08rem .45rem;
                                 border-radius: 9999px;
                                 font-size: .7rem;
-                                color: {{ $isActive ? 'rgb(var(--primary-600))' : 'rgb(var(--gray-600))' }};
+                                line-height: 1.2;
+                                text-align: center;
+                                color: {{ $isActive ? 'rgb(var(--primary-700))' : 'rgb(var(--gray-600))' }};
                                 background: {{ $isActive ? 'rgb(var(--gray-50))' : 'rgb(var(--gray-100))' }};
                             ">
                                 {{ $group['members_count'] }}
                             </span>
-                        </button>
+                        </x-filament::button>
                     @endforeach
                 </div>
 
