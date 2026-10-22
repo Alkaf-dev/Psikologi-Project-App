@@ -216,7 +216,7 @@ class PsychologyMascotTest extends TestCase
         }
     }
 
-    public function test_portal_dashboard_renders_one_contextual_gif(): void
+    public function test_portal_dashboard_does_not_render_a_contextual_gif(): void
     {
         Filament::setCurrentPanel('portal');
         $this->actingAsStudent();
@@ -224,11 +224,10 @@ class PsychologyMascotTest extends TestCase
         $response = $this->get('/portal')->assertOk();
         $html = (string) $response->getContent();
 
-        $this->assertSame(1, substr_count($html, 'data-mascot-gif="'));
-        $this->assertMatchesRegularExpression(
-            '/images\/psychology\/mascot\/(kewalahan|tertidur|minum)\.gif/',
-            $html,
-        );
+        $this->assertSame(0, substr_count($html, 'data-mascot-gif="'));
+        $this->assertStringNotContainsString('kewalahan.gif', $html);
+        $this->assertStringNotContainsString('tertidur.gif', $html);
+        $this->assertStringNotContainsString('minum.gif', $html);
     }
 
     public function test_notification_empty_state_uses_the_heart_gif(): void
@@ -305,8 +304,9 @@ class PsychologyMascotTest extends TestCase
             ->assertOk()
             ->assertSee('data-mascot-greeting', false)
             ->assertSee('data-mascot-greeting-key="portal-dashboard"', false)
-            ->assertSee('images/psychology/mascot/greeting.png', false)
-            ->assertDontSee('images/psychology/mascot/melambai.gif', false);
+            ->assertSee('images/psychology/mascot/melambai.gif', false)
+            ->assertSee('Maskot Psikologi Connect melambai', false)
+            ->assertDontSee('images/psychology/mascot/greeting.png', false);
     }
 
     public function test_admin_task_page_renders_the_launcher(): void

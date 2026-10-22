@@ -9,8 +9,8 @@
     $greetingMessage = $isAdmin
         ? 'Siap bantu memantau tugas dan pengumpulan hari ini.'
         : 'Jangan lupa cek tenggat terdekat, ya. Saya temani belajarmu.';
-    $adminMascotGifPath = 'images/psychology/mascot/melambai.gif';
-    $showAdminMascotGif = $isAdmin && is_file(public_path($adminMascotGifPath));
+    $mascotGifPath = 'images/psychology/mascot/melambai.gif';
+    $showMascotGif = is_file(public_path($mascotGifPath));
 @endphp
 
 <div
@@ -18,10 +18,10 @@
     data-mascot-greeting
     data-mascot-greeting-key="{{ $context }}"
 >
-    @if ($showAdminMascotGif)
+    @if ($showMascotGif)
         <img
             class="psychology-greeting__image"
-            src="{{ asset($adminMascotGifPath) }}"
+            src="{{ asset($mascotGifPath) }}"
             alt="Maskot Psikologi Connect melambai"
             width="112"
             height="200"
