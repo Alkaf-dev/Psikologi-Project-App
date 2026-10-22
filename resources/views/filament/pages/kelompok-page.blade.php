@@ -151,6 +151,7 @@
                             size="sm"
                             :color="$isActive ? 'primary' : 'gray'"
                             :outlined="! $isActive"
+                            :loading-indicator="false"
                             :aria-pressed="$isActive ? 'true' : 'false'"
                             wire:key="kelompok-chip-{{ $group['id'] }}"
                             wire:click="selectGroup('{{ $group['id'] }}')"
