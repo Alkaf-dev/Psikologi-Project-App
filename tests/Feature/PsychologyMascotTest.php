@@ -132,6 +132,23 @@ class PsychologyMascotTest extends TestCase
         }
     }
 
+    public function test_contextual_gif_static_posters_are_available(): void
+    {
+        foreach (['melambai', 'minum'] as $name) {
+            $path = public_path("images/psychology/mascot/{$name}-poster.png");
+
+            $this->assertFileExists($path);
+
+            $image = getimagesize($path);
+
+            $this->assertIsArray($image);
+            $this->assertSame('image/png', $image['mime']);
+            $this->assertSame(112, $image[0]);
+            $this->assertSame(200, $image[1]);
+            $this->assertLessThan(100_000, filesize($path));
+        }
+    }
+
     public function test_contextual_gif_component_renders_the_configured_copy(): void
     {
         $html = Blade::render('<x-psychology-mascot-gif mascot="membaca" />');
@@ -246,6 +263,8 @@ class PsychologyMascotTest extends TestCase
         $this->assertSame(1, substr_count($html, 'data-mascot-gif="minum"'));
         $this->assertStringContainsString('data-mascot-gif="minum"', $html);
         $this->assertStringContainsString('images/psychology/mascot/minum.gif', $html);
+        $this->assertStringContainsString('images/psychology/mascot/minum-poster.png', $html);
+        $this->assertStringContainsString('media="(prefers-reduced-motion: reduce)"', $html);
         $this->assertStringContainsString('Ngopi dulu, santai sebentar.', $html);
         $this->assertStringContainsString(
             'Banyak tugas menanti, tetapi semuanya bisa dikerjakan satu per satu. Isi energi dulu, ya.',
@@ -332,6 +351,8 @@ class PsychologyMascotTest extends TestCase
             ->assertSee('data-mascot-greeting', false)
             ->assertSee('data-mascot-greeting-key="portal-dashboard"', false)
             ->assertSee('images/psychology/mascot/melambai.gif', false)
+            ->assertSee('images/psychology/mascot/melambai-poster.png', false)
+            ->assertSee('media="(prefers-reduced-motion: reduce)"', false)
             ->assertSee('Maskot Psikologi Connect melambai', false)
             ->assertDontSee('images/psychology/mascot/greeting.png', false);
     }

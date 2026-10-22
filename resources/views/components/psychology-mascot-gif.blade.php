@@ -5,6 +5,7 @@
     'message' => null,
     'alt' => null,
     'loading' => null,
+    'poster' => null,
 ])
 
 @php
@@ -15,6 +16,9 @@
     $mascotFile = (string) ($mascotConfig['file'] ?? '');
     $mascotPath = $mascotFile !== '' ? public_path($mascotFile) : null;
     $mascotExists = $mascotPath !== null && is_file($mascotPath);
+    $mascotPosterFile = (string) ($poster ?? ($mascotConfig['poster'] ?? ''));
+    $mascotPosterPath = $mascotPosterFile !== '' ? public_path($mascotPosterFile) : null;
+    $mascotPosterExists = $mascotPosterPath !== null && is_file($mascotPosterPath);
     $mascotSize = $mascotExists ? @getimagesize($mascotPath) : false;
     $mascotWidth = is_array($mascotSize) ? (int) $mascotSize[0] : 112;
     $mascotHeight = is_array($mascotSize) ? (int) $mascotSize[1] : 200;
@@ -37,16 +41,25 @@
         ]) }}
         data-mascot-gif="{{ $mascot }}"
     >
-        <img
-            class="psychology-mascot-gif__image"
-            src="{{ asset($mascotFile) }}"
-            alt="{{ $resolvedAlt }}"
-            width="{{ $mascotWidth }}"
-            height="{{ $mascotHeight }}"
-            loading="{{ $mascotLoading }}"
-            decoding="async"
-            draggable="false"
-        >
+        <picture class="psychology-mascot-gif__picture">
+            @if ($mascotPosterExists)
+                <source
+                    srcset="{{ asset($mascotPosterFile) }}"
+                    media="(prefers-reduced-motion: reduce)"
+                >
+            @endif
+
+            <img
+                class="psychology-mascot-gif__image"
+                src="{{ asset($mascotFile) }}"
+                alt="{{ $resolvedAlt }}"
+                width="{{ $mascotWidth }}"
+                height="{{ $mascotHeight }}"
+                loading="{{ $mascotLoading }}"
+                decoding="async"
+                draggable="false"
+            >
+        </picture>
 
         @if (filled($resolvedTitle) || filled($resolvedMessage))
             <div class="psychology-mascot-gif__copy">

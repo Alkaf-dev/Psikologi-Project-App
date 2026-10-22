@@ -33,6 +33,7 @@ return [
     ],
     'minum' => [
         'file' => 'images/psychology/mascot/minum.gif',
+        'poster' => 'images/psychology/mascot/minum-poster.png',
         'title' => 'Ngopi dulu, santai sebentar.',
         'message' => 'Banyak tugas menanti, tetapi semuanya bisa dikerjakan satu per satu. Isi energi dulu, ya.',
         'alt' => 'Maskot Psikologi Connect sedang minum',
