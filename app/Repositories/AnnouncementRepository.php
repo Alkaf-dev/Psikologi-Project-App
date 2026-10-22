@@ -53,11 +53,17 @@ class AnnouncementRepository extends BaseSheetRepository
     public function withAuthor(?Collection $announcements = null): Collection
     {
         $users = app(UserRepository::class);
+        $courses = app(CourseRepository::class)->all()->keyBy(fn (array $c): string => (string) ($c['id'] ?? ''));
 
         return ($announcements ?? $this->all())
-            ->map(function (array $announcement) use ($users): array {
+            ->map(function (array $announcement) use ($users, $courses): array {
                 $announcement['author_name'] = $users->nameById((string) ($announcement['created_by'] ?? '')) ?: 'Admin';
                 $audience = (string) ($announcement['audience'] ?? 'all');
+                $courseId = trim((string) ($announcement['course_id'] ?? ''));
+                $course = $courseId !== '' ? $courses->get($courseId) : null;
+                $announcement['course_id'] = $courseId;
+                $announcement['course_name'] = $course ? (string) ($course['name'] ?? '') : null;
+                $announcement['course_code'] = $course ? (string) ($course['code'] ?? '') : null;
 
                 $announcement['audience_label'] = match ($audience) {
                     'mahasiswa' => 'Mahasiswa',

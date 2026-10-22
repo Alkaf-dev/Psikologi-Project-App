@@ -102,7 +102,7 @@ return [
 
         'announcements' => [
             'id', 'title', 'body', 'audience', 'published_at', 'created_by',
-            'created_at', 'updated_at', 'deleted_at', 'prodi_ids',
+            'created_at', 'updated_at', 'deleted_at', 'prodi_ids', 'course_id',
         ],
 
         'settings' => [

@@ -88,6 +88,7 @@ class TableColumnAlignmentTest extends TestCase
             ],
             PengumumanPage::class => [
                 'title' => null,
+                'course_name' => Alignment::Center,
                 'audience_label' => Alignment::Center,
                 'prodi_names' => Alignment::Center,
                 'published_at' => Alignment::Center,
@@ -143,6 +144,7 @@ class TableColumnAlignmentTest extends TestCase
             ],
             PortalPengumumanPage::class => [
                 'title' => null,
+                'course_name' => Alignment::Center,
                 'published_at' => Alignment::Center,
             ],
         ]);

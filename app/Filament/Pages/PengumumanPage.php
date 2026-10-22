@@ -4,6 +4,7 @@ namespace App\Filament\Pages;
 
 use App\Filament\Support\BaseSheetPage;
 use App\Repositories\AnnouncementRepository;
+use App\Repositories\CourseRepository;
 use App\Repositories\StudyProgramRepository;
 use App\Support\ProdiAssignments;
 use Filament\Actions\Action;
@@ -17,10 +18,13 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
 
 class PengumumanPage extends BaseSheetPage
 {
+    protected string $view = 'filament.pages.pengumuman';
+
     protected static ?string $navigationLabel = 'Pengumuman';
 
     protected static ?string $title = 'Pengumuman';
@@ -31,11 +35,68 @@ class PengumumanPage extends BaseSheetPage
 
     protected static ?int $navigationSort = 1;
 
-    protected array $searchableColumns = ['title', 'body', 'audience_label', 'prodi_names', 'author_name'];
+    public string $selectedFilter = 'all';
+
+    protected ?Collection $cachedAllAnnouncements = null;
+
+    protected array $searchableColumns = ['title', 'course_name', 'body', 'audience_label', 'prodi_names', 'author_name'];
 
     public function pageMascot(): ?string
     {
         return 'menunjuk';
+    }
+
+    public function selectFilter(string $filter): void
+    {
+        $this->selectedFilter = $filter;
+        $this->resetTable();
+    }
+
+    public function resetTable(): void
+    {
+        $this->cachedAllAnnouncements = null;
+        $this->resetPage();
+        parent::resetTable();
+    }
+
+    protected function allAnnouncements(): Collection
+    {
+        if ($this->cachedAllAnnouncements !== null) {
+            return $this->cachedAllAnnouncements;
+        }
+
+        return $this->cachedAllAnnouncements = app(AnnouncementRepository::class)
+            ->withAuthor()
+            ->sortByDesc('published_at')
+            ->values();
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    protected function getViewData(): array
+    {
+        $all = $this->allAnnouncements();
+        $courses = app(CourseRepository::class)->all()->sortBy('name');
+
+        $courseFilters = $courses->map(function (array $course) use ($all): array {
+            $id = (string) ($course['id'] ?? '');
+            $count = $all->filter(fn (array $a): bool => (string) ($a['course_id'] ?? '') === $id)->count();
+
+            return [
+                'id' => $id,
+                'name' => (string) ($course['name'] ?? 'Mata Kuliah'),
+                'code' => (string) ($course['code'] ?? ''),
+                'count' => $count,
+            ];
+        })->values()->all();
+
+        return [
+            'selectedFilter' => $this->selectedFilter,
+            'totalCount' => $all->count(),
+            'publicCount' => $all->filter(fn (array $a): bool => empty($a['course_id']))->count(),
+            'courseFilters' => $courseFilters,
+        ];
     }
 
     public function table(Table $table): Table
@@ -48,10 +109,13 @@ class PengumumanPage extends BaseSheetPage
                 int|string $page,
                 int|string $recordsPerPage,
             ) {
-                $records = app(AnnouncementRepository::class)
-                    ->withAuthor()
-                    ->sortByDesc('published_at')
-                    ->values();
+                $records = $this->allAnnouncements();
+
+                if ($this->selectedFilter === 'public') {
+                    $records = $records->filter(fn (array $a): bool => empty($a['course_id']))->values();
+                } elseif ($this->selectedFilter !== 'all') {
+                    $records = $records->filter(fn (array $a): bool => (string) ($a['course_id'] ?? '') === $this->selectedFilter)->values();
+                }
 
                 return $this->paginateRecords(
                     $records,
@@ -68,6 +132,13 @@ class PengumumanPage extends BaseSheetPage
                     ->weight('semibold')
                     ->searchable()
                     ->wrap(),
+                TextColumn::make('course_name')
+                    ->label('Mata Kuliah')
+                    ->placeholder('Publik')
+                    ->badge()
+                    ->color(fn (?string $state): string => filled($state) && $state !== '-' ? 'primary' : 'gray')
+                    ->alignCenter()
+                    ->searchable(),
                 TextColumn::make('body')
                     ->label('Isi')
                     ->limit(70)
@@ -200,6 +271,13 @@ class PengumumanPage extends BaseSheetPage
                 ->default('all')
                 ->live()
                 ->required(),
+            Select::make('course_id')
+                ->label('Mata Kuliah')
+                ->placeholder('Publik / Semua (opsional)')
+                ->options(fn (): array => app(CourseRepository::class)->options())
+                ->searchable()
+                ->nullable()
+                ->helperText('Pilih mata kuliah jika pengumuman ini khusus mata kuliah tertentu, atau kosongkan untuk pengumuman umum/publik.'),
             Select::make('prodi_ids')
                 ->label('Target Prodi')
                 ->options(fn (): array => app(StudyProgramRepository::class)->allOptions())
@@ -231,6 +309,7 @@ class PengumumanPage extends BaseSheetPage
         $record['published_at'] = filled($record['published_at'] ?? null)
             ? Carbon::parse($record['published_at'])->format('Y-m-d H:i:s')
             : null;
+        $record['course_id'] = (string) ($record['course_id'] ?? '');
         $record['prodi_ids'] = ProdiAssignments::ids($record['prodi_ids'] ?? '');
 
         return $record;
@@ -241,6 +320,7 @@ class PengumumanPage extends BaseSheetPage
      */
     protected function prepareAnnouncementData(array &$data): void
     {
+        $data['course_id'] = trim((string) ($data['course_id'] ?? ''));
         $data['prodi_ids'] = ($data['audience'] ?? 'all') === 'mahasiswa'
             ? ProdiAssignments::csv($data['prodi_ids'] ?? [])
             : '';
