@@ -36,6 +36,16 @@ class TugasPage extends BaseSheetPage
         'type_label', 'status_label', 'submission_label',
     ];
 
+    public function showMascot(): bool
+    {
+        return true;
+    }
+
+    public function mascotContext(): string
+    {
+        return 'portal-tasks';
+    }
+
     public function table(Table $table): Table
     {
         return $table
@@ -307,6 +317,14 @@ class TugasPage extends BaseSheetPage
                     ->title($isLate ? 'Tugas dikumpulkan (terlambat)' : 'Tugas berhasil dikumpulkan')
                     ->{$isLate ? 'warning' : 'success'}()
                     ->send();
+
+                $this->dispatch(
+                    'psychology-mascot:celebrate',
+                    state: $isLate ? 'supportive' : 'success',
+                    message: $isLate
+                        ? 'Tugas tetap terkirim. Terima kasih sudah berusaha!'
+                        : 'Tugas berhasil dikumpulkan. Kerja bagus!',
+                );
             });
     }
 

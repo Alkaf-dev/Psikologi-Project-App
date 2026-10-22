@@ -1,4 +1,11 @@
 <x-filament-panels::page>
+    <div style="margin-bottom: 1rem;">
+        <x-psychology-mascot-greeting
+            context="admin-dashboard"
+            :name="auth()->user()?->name"
+        />
+    </div>
+
     <div style="display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));">
         <x-filament::section>
             <div style="font-size: .8rem; color: rgb(var(--gray-500));">Mahasiswa</div>

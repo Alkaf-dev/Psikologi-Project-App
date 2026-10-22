@@ -44,7 +44,12 @@ class PortalSubmissionActionTest extends TestCase
 
         Livewire::test(TugasPage::class)
             ->callTableAction('submit', (string) $task['id'], ['link' => 'https://example.com/tugas-individu'])
-            ->assertHasNoTableActionErrors();
+            ->assertHasNoTableActionErrors()
+            ->assertDispatched(
+                'psychology-mascot:celebrate',
+                state: 'success',
+                message: 'Tugas berhasil dikumpulkan. Kerja bagus!',
+            );
 
         $submission = app(SubmissionRepository::class)
             ->forTaskAndUser((string) $task['id'], (string) $student['id']);

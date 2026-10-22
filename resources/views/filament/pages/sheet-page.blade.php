@@ -21,4 +21,9 @@
 
 <x-filament-panels::page>
     {{ $this->table }}
+
+    @if ($this->showMascot())
+        <div class="psychology-launcher-spacer" aria-hidden="true"></div>
+        <x-psychology-mascot-launcher :context="$this->mascotContext()" />
+    @endif
 </x-filament-panels::page>

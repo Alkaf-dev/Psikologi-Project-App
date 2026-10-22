@@ -23,6 +23,16 @@ abstract class BaseSheetPage extends Page implements HasTable
 
     abstract public function table(Table $table): Table;
 
+    public function showMascot(): bool
+    {
+        return false;
+    }
+
+    public function mascotContext(): string
+    {
+        return 'tasks';
+    }
+
     protected function spreadsheetColumn(Column $column): Column
     {
         return $column

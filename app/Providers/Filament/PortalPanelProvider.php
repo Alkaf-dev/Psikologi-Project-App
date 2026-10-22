@@ -41,6 +41,14 @@ class PortalPanelProvider extends PanelProvider
                 PanelsRenderHook::USER_MENU_BEFORE,
                 fn (): View => view('filament.partials.notification-bell'),
             )
+            ->renderHook(
+                PanelsRenderHook::HEAD_END,
+                fn (): View => view('filament.partials.psychology-mascot-styles'),
+            )
+            ->renderHook(
+                PanelsRenderHook::BODY_END,
+                fn (): View => view('filament.partials.psychology-mascot-scripts'),
+            )
             ->navigationGroups([
                 NavigationGroup::make('Akademik'),
                 NavigationGroup::make('Informasi'),

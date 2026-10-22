@@ -40,6 +40,16 @@ class TugasPage extends BaseSheetPage
         'meeting_number', 'status_label',
     ];
 
+    public function showMascot(): bool
+    {
+        return true;
+    }
+
+    public function mascotContext(): string
+    {
+        return 'admin-tasks';
+    }
+
     public function table(Table $table): Table
     {
         return $table

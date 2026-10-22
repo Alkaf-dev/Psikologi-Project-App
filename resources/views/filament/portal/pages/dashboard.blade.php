@@ -9,6 +9,13 @@
             $nextSchedules = $schedules->take(3);
         @endphp
 
+        <div style="margin-bottom: 1rem;">
+            <x-psychology-mascot-greeting
+                context="portal-dashboard"
+                :name="$student['name']"
+            />
+        </div>
+
         <div style="display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));">
             <x-filament::section>
                 <div style="font-size: .8rem; color: rgb(var(--gray-500));">Tugas belum dikumpulkan</div>
@@ -46,7 +53,15 @@
                         </div>
                     </div>
                 @empty
-                    <p style="color: rgb(var(--gray-500));">Tidak ada tugas yang menunggu. Kerja bagus!</p>
+                    <div class="psychology-empty">
+                        <x-psychology-mascot
+                            animation="success"
+                            size="2.5rem"
+                            alt=""
+                            aria-hidden="true"
+                        />
+                        <span>Tidak ada tugas yang menunggu. Kerja bagus!</span>
+                    </div>
                 @endforelse
                 <div style="margin-top: .85rem;">
                     <x-filament::link :href="\App\Filament\Portal\Pages\TugasPage::getUrl()">Lihat semua tugas</x-filament::link>
