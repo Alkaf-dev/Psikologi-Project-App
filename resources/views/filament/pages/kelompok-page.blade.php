@@ -101,6 +101,58 @@
         .dark .kelompok-course-card:hover .kelompok-course-card-arrow {
             color: var(--primary-400);
         }
+
+        .kelompok-chip-btn {
+            border-radius: 9999px;
+            transition:
+                transform 180ms cubic-bezier(.2, .8, .2, 1),
+                box-shadow 180ms ease,
+                background-color 150ms ease,
+                color 150ms ease;
+        }
+
+        .kelompok-chip-btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .kelompok-chip-btn:active {
+            transform: scale(.95);
+            transition-duration: 80ms;
+        }
+
+        .kelompok-chip-btn[aria-current="true"] {
+            box-shadow: 0 4px 12px -6px var(--primary-600);
+            animation: kelompok-chip-pop 320ms cubic-bezier(.34, 1.56, .64, 1);
+        }
+
+        @keyframes kelompok-chip-pop {
+            0% {
+                transform: scale(.92);
+            }
+
+            55% {
+                transform: scale(1.04);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .kelompok-chip-btn {
+                transition: none;
+            }
+
+            .kelompok-chip-btn:hover,
+            .kelompok-chip-btn:active {
+                transform: none;
+            }
+
+            .kelompok-chip-btn[aria-current="true"] {
+                animation: none;
+            }
+        }
     </style>
 
     @if ($selectedCourse === null)
@@ -242,9 +294,10 @@
                             :color="$isActive ? 'primary' : 'gray'"
                             :outlined="! $isActive"
                             :loading-indicator="false"
-                            :aria-pressed="$isActive ? 'true' : 'false'"
+                            :aria-current="$isActive ? 'true' : null"
                             wire:key="kelompok-chip-{{ $group['id'] }}"
                             wire:click="selectGroup('{{ $group['id'] }}')"
+                            class="kelompok-chip-btn"
                         >
                             <span>{{ $group['name'] }}</span>
                             <span style="
