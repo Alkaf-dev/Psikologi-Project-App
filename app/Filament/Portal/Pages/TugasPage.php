@@ -175,7 +175,7 @@ class TugasPage extends BaseSheetPage
     public function table(Table $table): Table
     {
         return $table
-            ->extraAttributes(['class' => 'materi-tugas-table task-table-compact'])
+            ->extraAttributes(['class' => 'materi-tugas-table sheet-responsive-table task-table-compact'])
             ->records(function (
                 ?string $search,
                 ?string $sortColumn,
@@ -286,8 +286,9 @@ class TugasPage extends BaseSheetPage
                         ->badge()
                         ->placeholder('-')
                         ->sortable()
+                        ->wrapHeader()
                         ->alignCenter()
-                        ->width('8rem'),
+                        ->width('8.5%'),
                 ),
                 $this->spreadsheetColumn(
                     TextColumn::make('title')
@@ -297,9 +298,8 @@ class TugasPage extends BaseSheetPage
                         ->description(fn (array $record): string => (string) $record['course_name'])
                         ->action($this->detailAction())
                         ->tooltip(fn (array $record): string => (string) $record['title'])
-                        ->limit(48)
                         ->searchable()
-                        ->width('16rem'),
+                        ->width('16%'),
                 ),
                 $this->spreadsheetColumn(
                     TextColumn::make('material_url')
@@ -309,54 +309,74 @@ class TugasPage extends BaseSheetPage
                         ->openUrlInNewTab()
                         ->color(fn (array $record): ?string => filled($record['material_link'] ?? null) ? 'primary' : null)
                         ->tooltip(fn (array $record): ?string => filled($record['material_link'] ?? null) ? 'Buka materi di tab baru' : null)
+                        ->wrapHeader()
                         ->alignCenter()
-                        ->width('6.5rem'),
+                        ->width('6.5%'),
                 ),
                 $this->spreadsheetColumn(
                     TextColumn::make('type_label')
                         ->label('Jenis')
                         ->badge()
                         ->color(fn (array $record): string => ($record['type'] ?? 'individu') === 'kelompok' ? 'info' : 'gray')
+                        ->tooltip(fn (array $record): string => (string) ($record['type_label'] ?? ''))
+                        ->wrapHeader()
                         ->alignCenter()
-                        ->width('6.5rem'),
+                        ->width('6.5%'),
                 ),
                 $this->spreadsheetColumn(
                     TextColumn::make('portal_group_name')
                         ->label('Kelompok')
                         ->placeholder('-')
-                        ->limit(28)
                         ->tooltip(function (array $record): ?string {
                             $group = trim((string) ($record['portal_group_name'] ?? ''));
 
                             return $group !== '' ? $group : null;
                         })
+                        ->wrapHeader()
                         ->searchable()
-                        ->width('10rem'),
+                        ->width('9%'),
                 ),
                 $this->spreadsheetColumn(
                     TextColumn::make('start_at')
                         ->label('Mulai')
                         ->formatStateUsing(fn (?string $state): string => $this->formatDateTime($state))
+                        ->tooltip(fn (array $record): ?string => filled($record['start_at'] ?? null)
+                            ? $this->formatDateTime((string) $record['start_at'])
+                            : null)
                         ->placeholder('-')
+                        ->wrapHeader()
                         ->alignCenter()
-                        ->width('10rem'),
+                        ->width('8%'),
                 ),
                 $this->spreadsheetColumn(
                     TextColumn::make('deadline')
                         ->label('Deadline')
                         ->description(fn (array $record): string => (string) ($record['deadline_label'] ?? ''))
                         ->formatStateUsing(fn (?string $state): string => $this->formatDateTime($state))
+                        ->tooltip(function (array $record): ?string {
+                            if (blank($record['deadline'] ?? null)) {
+                                return null;
+                            }
+
+                            return collect([
+                                $this->formatDateTime((string) $record['deadline']),
+                                $record['deadline_label'] ?? null,
+                            ])->filter()->implode(' • ');
+                        })
                         ->sortable()
+                        ->wrapHeader()
                         ->alignCenter()
-                        ->width('14.5rem'),
+                        ->width('9%'),
                 ),
                 $this->spreadsheetColumn(
                     TextColumn::make('status_label')
                         ->label('Status')
                         ->badge()
                         ->color(fn (array $record): string => TaskStatus::color($record['status'] ?? ''))
+                        ->tooltip(fn (array $record): string => (string) ($record['status_label'] ?? ''))
+                        ->wrapHeader()
                         ->alignCenter()
-                        ->width('7.5rem'),
+                        ->width('7.5%'),
                 ),
                 $this->spreadsheetColumn(
                     TextColumn::make('submission_label')
@@ -371,11 +391,21 @@ class TugasPage extends BaseSheetPage
                         })
                         ->url(fn (array $record): ?string => $record['submission_url'] ?? null)
                         ->openUrlInNewTab()
-                        ->tooltip(fn (array $record): ?string => filled($record['submission_url'] ?? null)
-                            ? 'Buka tautan pengumpulan di tab baru'
-                            : null)
+                        ->tooltip(function (array $record): ?string {
+                            $parts = collect([
+                                $record['submission_label'] ?? null,
+                                $record['submission_description'] ?? null,
+                            ])->filter();
+
+                            if (filled($record['submission_url'] ?? null)) {
+                                $parts->push('Buka tautan pengumpulan di tab baru');
+                            }
+
+                            return $parts->isNotEmpty() ? $parts->implode(' • ') : null;
+                        })
+                        ->wrapHeader()
                         ->alignCenter()
-                        ->width('12rem'),
+                        ->width('9%'),
                 ),
             ])
             ->searchPlaceholder('Cari tugas atau mata kuliah...')

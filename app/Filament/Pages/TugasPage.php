@@ -189,7 +189,7 @@ class TugasPage extends BaseSheetPage
         return $table
             // Filament v5 mengatur kepadatan tabel melalui kelas CSS scoped,
             // karena TableDensity bawaan sudah tidak tersedia di versi ini.
-            ->extraAttributes(['class' => 'task-table-compact'])
+            ->extraAttributes(['class' => 'materi-tugas-admin-table sheet-responsive-table task-table-compact'])
             ->records(function (
                 ?string $search,
                 ?string $sortColumn,
@@ -222,20 +222,19 @@ class TugasPage extends BaseSheetPage
                         ->badge()
                         ->placeholder('-')
                         ->sortable()
+                        ->wrapHeader()
                         ->alignCenter()
-                        ->width('8rem'),
+                        ->width('8%'),
                 ),
                 $this->spreadsheetColumn(
                     TextColumn::make('title')
                         ->label('Tugas')
                         ->weight('semibold')
                         ->color('primary')
-                        // Batasi teks agar baris tidak melar, tanpa memotong tooltip.
-                        ->limit(50)
-                        ->tooltip(fn (array $record): string => trim((string) ($record['description'] ?? '')) ?: 'Klik untuk melihat rincian')
+                        ->tooltip(fn (array $record): string => trim((string) ($record['title'] ?? '')) ?: 'Klik untuk melihat rincian')
                         ->action($this->detailAction())
                         ->searchable()
-                        ->width('18rem'),
+                        ->width('11%'),
                 ),
                 $this->spreadsheetColumn(
                     TextColumn::make('material_url')
@@ -247,8 +246,9 @@ class TugasPage extends BaseSheetPage
                         ->iconPosition(IconPosition::After)
                         ->color(fn (array $record): ?string => filled($record['material_link'] ?? null) ? 'primary' : null)
                         ->tooltip(fn (array $record): ?string => filled($record['material_link'] ?? null) ? 'Buka materi di tab baru' : null)
+                        ->wrapHeader()
                         ->alignCenter()
-                        ->width('8rem'),
+                        ->width('6%'),
                 ),
                 $this->spreadsheetColumn(
                     // Tautan pengumpulan dibuka di tab baru dan hanya aktif jika terisi.
@@ -261,34 +261,45 @@ class TugasPage extends BaseSheetPage
                         ->iconPosition(IconPosition::After)
                         ->color(fn (array $record): ?string => filled($record['collection_link'] ?? null) ? 'primary' : null)
                         ->tooltip(fn (array $record): ?string => filled($record['collection_link'] ?? null) ? 'Buka link pengumpulan di tab baru' : null)
-                        ->width('11rem'),
+                        ->wrapHeader()
+                        ->width('6.5%'),
                 ),
                 $this->spreadsheetColumn(
                     TextColumn::make('course_name')
                         ->label('Mata kuliah')
+                        ->tooltip(fn (array $record): ?string => trim((string) ($record['course_name'] ?? '')) ?: null)
+                        ->wrapHeader()
                         ->searchable()
-                        ->width('13rem'),
+                        ->width('6.5%'),
                 ),
                 $this->spreadsheetColumn(
                     TextColumn::make('type_label')
                         ->label('Jenis')
                         ->badge()
                         ->color(fn (string $state): string => $state === 'Kelompok' ? 'info' : 'gray')
+                        ->tooltip(fn (array $record): string => (string) ($record['type_label'] ?? ''))
+                        ->wrapHeader()
                         ->alignCenter()
-                        ->width('7rem'),
+                        ->width('6.5%'),
                 ),
                 $this->spreadsheetColumn(
                     TextColumn::make('group_name')
                         ->label('Kelompok')
-                        ->width('12rem'),
+                        ->tooltip(fn (array $record): ?string => trim((string) ($record['group_name'] ?? '')) ?: null)
+                        ->wrapHeader()
+                        ->width('6.5%'),
                 ),
                 $this->spreadsheetColumn(
                     TextColumn::make('start_at')
                         ->label('Mulai')
                         ->formatStateUsing(fn (?string $state): string => $this->formatDateTime($state))
+                        ->tooltip(fn (array $record): ?string => filled($record['start_at'] ?? null)
+                            ? $this->formatDateTime((string) $record['start_at'])
+                            : null)
                         ->placeholder('-')
+                        ->wrapHeader()
                         ->alignCenter()
-                        ->width('11rem'),
+                        ->width('7%'),
                 ),
                 $this->spreadsheetColumn(
                     TextColumn::make('deadline')
@@ -296,9 +307,20 @@ class TugasPage extends BaseSheetPage
                         // Sisa waktu tampil sebagai sub-teks abu-abu bawaan Filament.
                         ->description(fn (array $record): string => (string) ($record['deadline_label'] ?? ''))
                         ->formatStateUsing(fn (?string $state): string => $this->formatDateTime($state))
+                        ->tooltip(function (array $record): ?string {
+                            if (blank($record['deadline'] ?? null)) {
+                                return null;
+                            }
+
+                            return collect([
+                                $this->formatDateTime((string) $record['deadline']),
+                                $record['deadline_label'] ?? null,
+                            ])->filter()->implode(' • ');
+                        })
                         ->sortable()
+                        ->wrapHeader()
                         ->alignCenter()
-                        ->width('14.5rem'),
+                        ->width('7.5%'),
                 ),
                 $this->spreadsheetColumn(
                     TextColumn::make('status_label')
@@ -310,16 +332,20 @@ class TugasPage extends BaseSheetPage
                             TaskStatus::COMPLETED => Heroicon::OutlinedCheckCircle,
                             default => Heroicon::OutlinedPlayCircle,
                         })
+                        ->tooltip(fn (array $record): string => (string) ($record['status_label'] ?? ''))
+                        ->wrapHeader()
                         ->alignCenter()
-                        ->width('8.5rem'),
+                        ->width('8.5%'),
                 ),
                 $this->spreadsheetColumn(
                     TextColumn::make('submission_count')
                         ->label('Dikumpulkan')
                         ->badge()
                         ->color('success')
+                        ->tooltip(fn (array $record): string => (string) ($record['submission_count'] ?? 0).' pengumpulan')
+                        ->wrapHeader()
                         ->alignCenter()
-                        ->width('8rem'),
+                        ->width('7%'),
                 ),
             ])
             ->searchPlaceholder('Cari tugas, mata kuliah, atau kelompok...')

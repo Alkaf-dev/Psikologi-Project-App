@@ -44,20 +44,31 @@ class AdminTugasCourseFilterTest extends TestCase
             ->instance()
             ->getTable();
 
-        $this->assertSame('8rem', $table->getColumn('meeting_number')?->getWidth());
-        $this->assertSame('8rem', $table->getColumn('material_url')?->getWidth());
-        $this->assertSame('11rem', $table->getColumn('collection_link')?->getWidth());
-        $this->assertSame('14.5rem', $table->getColumn('deadline')?->getWidth());
+        $this->assertSame('8%', $table->getColumn('meeting_number')?->getWidth());
+        $this->assertSame('11%', $table->getColumn('title')?->getWidth());
+        $this->assertSame('6%', $table->getColumn('material_url')?->getWidth());
+        $this->assertSame('6.5%', $table->getColumn('collection_link')?->getWidth());
+        $this->assertSame('7.5%', $table->getColumn('deadline')?->getWidth());
+        $this->assertNull($table->getColumn('title')?->getCharacterLimit());
     }
 
     public function test_admin_task_table_loads_non_overlapping_action_styles(): void
     {
         $this->actingAsAdmin();
 
+        $table = Livewire::test(AdminTugasPage::class)->instance()->getTable();
+        $tableClass = (string) ($table->getExtraAttributes()['class'] ?? '');
+
+        $this->assertStringContainsString('materi-tugas-admin-table', $tableClass);
+        $this->assertStringContainsString('sheet-responsive-table', $tableClass);
+        $this->assertTrue($table->getColumn('meeting_number')?->canHeaderWrap());
+
         $this->get('/admin/tugas-page')
             ->assertOk()
-            ->assertSee('min-width: 136rem', false)
-            ->assertSee('width: 17rem', false)
+            ->assertSee('min-width: 88rem', false)
+            ->assertSee('--sheet-action-column-width: 16.5rem', false)
+            ->assertSee('width: var(--sheet-action-column-width)', false)
+            ->assertDontSee('min-width: 136rem', false)
             ->assertSee('Detail')
             ->assertSee('Ubah')
             ->assertSee('Hapus');

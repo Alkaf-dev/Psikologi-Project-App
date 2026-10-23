@@ -162,15 +162,16 @@ class TableColumnAlignmentTest extends TestCase
         $tableClass = (string) ($table->getExtraAttributes()['class'] ?? '');
 
         $this->assertStringContainsString('submission-table', $tableClass);
+        $this->assertStringContainsString('sheet-responsive-table', $tableClass);
         $this->assertStringContainsString('task-table-compact', $tableClass);
 
         $widths = [
-            'task_title' => '12rem',
-            'student_name' => '9.5rem',
-            'group_name' => '6.5rem',
-            'status' => '6.5rem',
-            'link' => '5.5rem',
-            'submitted_at' => '8rem',
+            'task_title' => '19%',
+            'student_name' => '17%',
+            'group_name' => '13%',
+            'status' => '12%',
+            'link' => '5.5%',
+            'submitted_at' => '9.5%',
         ];
 
         foreach ($widths as $columnName => $width) {
@@ -191,17 +192,10 @@ class TableColumnAlignmentTest extends TestCase
             );
         }
 
-        $limits = [
-            'task_title' => 28,
-            'student_name' => 20,
-            'group_name' => 14,
-        ];
-
-        foreach ($limits as $columnName => $limit) {
-            $this->assertSame(
-                $limit,
+        foreach (['task_title', 'student_name', 'group_name'] as $columnName) {
+            $this->assertNull(
                 $table->getColumn($columnName)?->getCharacterLimit(),
-                "Pengumpulan column [{$columnName}] has unexpected character limit.",
+                "Pengumpulan column [{$columnName}] must rely on CSS truncation so the full text stays available.",
             );
         }
 
@@ -222,7 +216,8 @@ class TableColumnAlignmentTest extends TestCase
             ->assertOk()
             ->assertSee('.fi-ta-actions', false)
             ->assertSee('justify-content: center', false)
-            ->assertSee('.submission-table .fi-ta-table', false);
+            ->assertSee('min-width: 68rem', false)
+            ->assertSee('width: var(--sheet-action-column-width)', false);
 
         $this->get('/admin/tugas-page')
             ->assertOk()

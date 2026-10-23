@@ -43,65 +43,6 @@
             background: rgb(255 255 255 / 0.22);
         }
 
-        .task-table-compact .fi-ta-text:not(.fi-inline) {
-            padding-block: 0.4rem;
-        }
-
-        .task-table-compact .fi-ta-header-cell {
-            padding-block: 0.5rem;
-            padding-inline: 0.75rem;
-        }
-
-        .task-table-compact .fi-ta-cell:has(.fi-ta-actions) {
-            padding-block: 0.4rem;
-        }
-
-        .task-table-compact .fi-ta-text-description {
-            margin-top: 0.15rem;
-            max-width: 100%;
-            white-space: normal;
-            word-break: break-word;
-            line-height: 1.25;
-        }
-
-        .task-table-compact .fi-ta-header-cell-label {
-            overflow: visible;
-        }
-
-        .task-table-compact .fi-ta-table {
-            min-width: 136rem;
-            table-layout: fixed;
-        }
-
-        .task-table-compact .fi-ta-table td,
-        .task-table-compact .fi-ta-table th {
-            overflow: hidden;
-        }
-
-        .task-table-compact .fi-ta-table > thead > tr > th:last-child,
-        .task-table-compact .fi-ta-table > tbody > tr > td:last-child,
-        .task-table-compact .fi-ta-actions-header-cell,
-        .task-table-compact .fi-ta-cell:has(.fi-ta-actions) {
-            width: 17rem;
-            min-width: 17rem;
-        }
-
-        .task-table-compact .fi-ta-table > thead > tr > *,
-        .task-table-compact .fi-ta-table > tbody > tr > * {
-            vertical-align: middle;
-        }
-
-        .task-table-compact .fi-ta-cell:has(.fi-ta-actions) {
-            padding-inline: 0.75rem;
-        }
-
-        .task-table-compact .fi-ta-cell:has(.fi-ta-actions) .fi-ta-actions {
-            flex-wrap: nowrap;
-            justify-content: center;
-            gap: 0.75rem;
-            width: 100%;
-        }
-
         .dark .materi-tugas-chip[aria-current="true"] {
             box-shadow:
                 0 0 0 3px var(--primary-800),

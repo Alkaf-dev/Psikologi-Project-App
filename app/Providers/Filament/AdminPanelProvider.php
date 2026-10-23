@@ -51,6 +51,10 @@ class AdminPanelProvider extends PanelProvider
                 fn (): View => view('filament.partials.psychology-mascot-styles'),
             )
             ->renderHook(
+                PanelsRenderHook::HEAD_END,
+                fn (): View => view('filament.partials.responsive-table-styles'),
+            )
+            ->renderHook(
                 PanelsRenderHook::BODY_END,
                 fn (): View => view('filament.partials.psychology-mascot-scripts'),
             )

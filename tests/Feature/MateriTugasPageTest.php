@@ -77,18 +77,19 @@ class MateriTugasPageTest extends TestCase
         $tableClass = (string) ($table->getExtraAttributes()['class'] ?? '');
 
         $this->assertStringContainsString('materi-tugas-table', $tableClass);
+        $this->assertStringContainsString('sheet-responsive-table', $tableClass);
         $this->assertStringContainsString('task-table-compact', $tableClass);
 
         $widths = [
-            'meeting_number' => '8rem',
-            'title' => '16rem',
-            'material_url' => '6.5rem',
-            'type_label' => '6.5rem',
-            'portal_group_name' => '10rem',
-            'start_at' => '10rem',
-            'deadline' => '14.5rem',
-            'status_label' => '7.5rem',
-            'submission_label' => '12rem',
+            'meeting_number' => '8.5%',
+            'title' => '16%',
+            'material_url' => '6.5%',
+            'type_label' => '6.5%',
+            'portal_group_name' => '9%',
+            'start_at' => '8%',
+            'deadline' => '9%',
+            'status_label' => '7.5%',
+            'submission_label' => '9%',
         ];
 
         foreach ($widths as $columnName => $width) {
@@ -98,6 +99,17 @@ class MateriTugasPageTest extends TestCase
                 "Portal task column [{$columnName}] has unexpected width.",
             );
         }
+
+        $this->assertTrue($table->getColumn('meeting_number')?->canHeaderWrap());
+        $this->assertTrue($table->getColumn('portal_group_name')?->canHeaderWrap());
+        $this->assertNull($table->getColumn('title')?->getCharacterLimit());
+        $this->assertNull($table->getColumn('portal_group_name')?->getCharacterLimit());
+
+        $this->get('/portal/tugas-page')
+            ->assertOk()
+            ->assertSee('min-width: 80rem', false)
+            ->assertSee('--sheet-action-column-width: 16rem', false)
+            ->assertDontSee('min-width: 109rem', false);
     }
 
     public function test_course_chips_follow_accessible_tasks_and_filter_search_results(): void
