@@ -81,15 +81,15 @@ class MateriTugasPageTest extends TestCase
         $this->assertStringContainsString('task-table-compact', $tableClass);
 
         $widths = [
-            'meeting_number' => '8.5%',
-            'title' => '16%',
-            'material_url' => '6.5%',
-            'type_label' => '6.5%',
-            'portal_group_name' => '9%',
-            'start_at' => '8%',
-            'deadline' => '9%',
-            'status_label' => '7.5%',
-            'submission_label' => '9%',
+            'meeting_number' => '4.75rem',
+            'title' => '18.5rem',
+            'material_url' => '7rem',
+            'type_label' => '5.75rem',
+            'portal_group_name' => '7.5rem',
+            'start_at' => '9rem',
+            'deadline' => '9.75rem',
+            'status_label' => '7.25rem',
+            'submission_label' => '10.5rem',
         ];
 
         foreach ($widths as $columnName => $width) {
@@ -107,9 +107,8 @@ class MateriTugasPageTest extends TestCase
 
         $this->get('/portal/tugas-page')
             ->assertOk()
-            ->assertSee('min-width: 80rem', false)
-            ->assertSee('--sheet-action-column-width: 16rem', false)
-            ->assertDontSee('min-width: 109rem', false);
+            ->assertSee('min-width: 94.5rem', false)
+            ->assertSee('--sheet-action-column-width: 14.5rem', false);
     }
 
     public function test_course_chips_follow_accessible_tasks_and_filter_search_results(): void

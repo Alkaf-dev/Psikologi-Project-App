@@ -16,6 +16,7 @@ use Filament\Actions\Action;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
+use Filament\Support\Enums\Width;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -35,6 +36,8 @@ class TugasPage extends BaseSheetPage
     protected static string|\UnitEnum|null $navigationGroup = 'Akademik';
 
     protected static ?int $navigationSort = 2;
+
+    protected Width|string|null $maxContentWidth = Width::Full;
 
     public ?string $selectedCourseId = null;
 
@@ -288,7 +291,7 @@ class TugasPage extends BaseSheetPage
                         ->sortable()
                         ->wrapHeader()
                         ->alignCenter()
-                        ->width('8.5%'),
+                        ->width('4.75rem'),
                 ),
                 $this->spreadsheetColumn(
                     TextColumn::make('title')
@@ -299,7 +302,7 @@ class TugasPage extends BaseSheetPage
                         ->action($this->detailAction())
                         ->tooltip(fn (array $record): string => (string) $record['title'])
                         ->searchable()
-                        ->width('16%'),
+                        ->width('18.5rem'),
                 ),
                 $this->spreadsheetColumn(
                     TextColumn::make('material_url')
@@ -311,7 +314,7 @@ class TugasPage extends BaseSheetPage
                         ->tooltip(fn (array $record): ?string => filled($record['material_link'] ?? null) ? 'Buka materi di tab baru' : null)
                         ->wrapHeader()
                         ->alignCenter()
-                        ->width('6.5%'),
+                        ->width('7rem'),
                 ),
                 $this->spreadsheetColumn(
                     TextColumn::make('type_label')
@@ -321,7 +324,7 @@ class TugasPage extends BaseSheetPage
                         ->tooltip(fn (array $record): string => (string) ($record['type_label'] ?? ''))
                         ->wrapHeader()
                         ->alignCenter()
-                        ->width('6.5%'),
+                        ->width('5.75rem'),
                 ),
                 $this->spreadsheetColumn(
                     TextColumn::make('portal_group_name')
@@ -334,7 +337,7 @@ class TugasPage extends BaseSheetPage
                         })
                         ->wrapHeader()
                         ->searchable()
-                        ->width('9%'),
+                        ->width('7.5rem'),
                 ),
                 $this->spreadsheetColumn(
                     TextColumn::make('start_at')
@@ -346,7 +349,7 @@ class TugasPage extends BaseSheetPage
                         ->placeholder('-')
                         ->wrapHeader()
                         ->alignCenter()
-                        ->width('8%'),
+                        ->width('9rem'),
                 ),
                 $this->spreadsheetColumn(
                     TextColumn::make('deadline')
@@ -366,7 +369,7 @@ class TugasPage extends BaseSheetPage
                         ->sortable()
                         ->wrapHeader()
                         ->alignCenter()
-                        ->width('9%'),
+                        ->width('9.75rem'),
                 ),
                 $this->spreadsheetColumn(
                     TextColumn::make('status_label')
@@ -376,7 +379,7 @@ class TugasPage extends BaseSheetPage
                         ->tooltip(fn (array $record): string => (string) ($record['status_label'] ?? ''))
                         ->wrapHeader()
                         ->alignCenter()
-                        ->width('7.5%'),
+                        ->width('7.25rem'),
                 ),
                 $this->spreadsheetColumn(
                     TextColumn::make('submission_label')
@@ -405,7 +408,7 @@ class TugasPage extends BaseSheetPage
                         })
                         ->wrapHeader()
                         ->alignCenter()
-                        ->width('9%'),
+                        ->width('10.5rem'),
                 ),
             ])
             ->searchPlaceholder('Cari tugas atau mata kuliah...')

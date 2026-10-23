@@ -18,6 +18,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Support\Enums\IconPosition;
+use Filament\Support\Enums\Width;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -38,6 +39,8 @@ class TugasPage extends BaseSheetPage
     protected static string|\UnitEnum|null $navigationGroup = 'Akademik';
 
     protected static ?int $navigationSort = 3;
+
+    protected Width|string|null $maxContentWidth = Width::Full;
 
     public ?string $selectedCourseId = null;
 
@@ -224,7 +227,7 @@ class TugasPage extends BaseSheetPage
                         ->sortable()
                         ->wrapHeader()
                         ->alignCenter()
-                        ->width('8%'),
+                        ->width('4.75rem'),
                 ),
                 $this->spreadsheetColumn(
                     TextColumn::make('title')
@@ -234,7 +237,7 @@ class TugasPage extends BaseSheetPage
                         ->tooltip(fn (array $record): string => trim((string) ($record['title'] ?? '')) ?: 'Klik untuk melihat rincian')
                         ->action($this->detailAction())
                         ->searchable()
-                        ->width('11%'),
+                        ->width('17.5rem'),
                 ),
                 $this->spreadsheetColumn(
                     TextColumn::make('material_url')
@@ -248,7 +251,7 @@ class TugasPage extends BaseSheetPage
                         ->tooltip(fn (array $record): ?string => filled($record['material_link'] ?? null) ? 'Buka materi di tab baru' : null)
                         ->wrapHeader()
                         ->alignCenter()
-                        ->width('6%'),
+                        ->width('7.25rem'),
                 ),
                 $this->spreadsheetColumn(
                     // Tautan pengumpulan dibuka di tab baru dan hanya aktif jika terisi.
@@ -262,7 +265,7 @@ class TugasPage extends BaseSheetPage
                         ->color(fn (array $record): ?string => filled($record['collection_link'] ?? null) ? 'primary' : null)
                         ->tooltip(fn (array $record): ?string => filled($record['collection_link'] ?? null) ? 'Buka link pengumpulan di tab baru' : null)
                         ->wrapHeader()
-                        ->width('6.5%'),
+                        ->width('7.75rem'),
                 ),
                 $this->spreadsheetColumn(
                     TextColumn::make('course_name')
@@ -270,7 +273,7 @@ class TugasPage extends BaseSheetPage
                         ->tooltip(fn (array $record): ?string => trim((string) ($record['course_name'] ?? '')) ?: null)
                         ->wrapHeader()
                         ->searchable()
-                        ->width('6.5%'),
+                        ->width('11rem'),
                 ),
                 $this->spreadsheetColumn(
                     TextColumn::make('type_label')
@@ -280,14 +283,14 @@ class TugasPage extends BaseSheetPage
                         ->tooltip(fn (array $record): string => (string) ($record['type_label'] ?? ''))
                         ->wrapHeader()
                         ->alignCenter()
-                        ->width('6.5%'),
+                        ->width('5.75rem'),
                 ),
                 $this->spreadsheetColumn(
                     TextColumn::make('group_name')
                         ->label('Kelompok')
                         ->tooltip(fn (array $record): ?string => trim((string) ($record['group_name'] ?? '')) ?: null)
                         ->wrapHeader()
-                        ->width('6.5%'),
+                        ->width('7.25rem'),
                 ),
                 $this->spreadsheetColumn(
                     TextColumn::make('start_at')
@@ -299,7 +302,7 @@ class TugasPage extends BaseSheetPage
                         ->placeholder('-')
                         ->wrapHeader()
                         ->alignCenter()
-                        ->width('7%'),
+                        ->width('9rem'),
                 ),
                 $this->spreadsheetColumn(
                     TextColumn::make('deadline')
@@ -320,7 +323,7 @@ class TugasPage extends BaseSheetPage
                         ->sortable()
                         ->wrapHeader()
                         ->alignCenter()
-                        ->width('7.5%'),
+                        ->width('9.75rem'),
                 ),
                 $this->spreadsheetColumn(
                     TextColumn::make('status_label')
@@ -335,7 +338,7 @@ class TugasPage extends BaseSheetPage
                         ->tooltip(fn (array $record): string => (string) ($record['status_label'] ?? ''))
                         ->wrapHeader()
                         ->alignCenter()
-                        ->width('8.5%'),
+                        ->width('7.25rem'),
                 ),
                 $this->spreadsheetColumn(
                     TextColumn::make('submission_count')
@@ -345,7 +348,7 @@ class TugasPage extends BaseSheetPage
                         ->tooltip(fn (array $record): string => (string) ($record['submission_count'] ?? 0).' pengumpulan')
                         ->wrapHeader()
                         ->alignCenter()
-                        ->width('7%'),
+                        ->width('6.25rem'),
                 ),
             ])
             ->searchPlaceholder('Cari tugas, mata kuliah, atau kelompok...')

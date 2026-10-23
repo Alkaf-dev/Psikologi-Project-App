@@ -44,11 +44,11 @@ class AdminTugasCourseFilterTest extends TestCase
             ->instance()
             ->getTable();
 
-        $this->assertSame('8%', $table->getColumn('meeting_number')?->getWidth());
-        $this->assertSame('11%', $table->getColumn('title')?->getWidth());
-        $this->assertSame('6%', $table->getColumn('material_url')?->getWidth());
-        $this->assertSame('6.5%', $table->getColumn('collection_link')?->getWidth());
-        $this->assertSame('7.5%', $table->getColumn('deadline')?->getWidth());
+        $this->assertSame('4.75rem', $table->getColumn('meeting_number')?->getWidth());
+        $this->assertSame('17.5rem', $table->getColumn('title')?->getWidth());
+        $this->assertSame('7.25rem', $table->getColumn('material_url')?->getWidth());
+        $this->assertSame('7.75rem', $table->getColumn('collection_link')?->getWidth());
+        $this->assertSame('9.75rem', $table->getColumn('deadline')?->getWidth());
         $this->assertNull($table->getColumn('title')?->getCharacterLimit());
     }
 
@@ -65,8 +65,8 @@ class AdminTugasCourseFilterTest extends TestCase
 
         $this->get('/admin/tugas-page')
             ->assertOk()
-            ->assertSee('min-width: 88rem', false)
-            ->assertSee('--sheet-action-column-width: 16.5rem', false)
+            ->assertSee('min-width: 107.5rem', false)
+            ->assertSee('--sheet-action-column-width: 14rem', false)
             ->assertSee('width: var(--sheet-action-column-width)', false)
             ->assertDontSee('min-width: 136rem', false)
             ->assertSee('Detail')
