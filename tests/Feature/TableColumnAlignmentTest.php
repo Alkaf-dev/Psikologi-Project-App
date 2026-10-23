@@ -165,12 +165,12 @@ class TableColumnAlignmentTest extends TestCase
         $this->assertStringContainsString('task-table-compact', $tableClass);
 
         $widths = [
-            'task_title' => '17rem',
-            'student_name' => '12.5rem',
-            'group_name' => '8.5rem',
-            'status' => '8rem',
-            'link' => '14rem',
-            'submitted_at' => '9.5rem',
+            'task_title' => '12rem',
+            'student_name' => '9.5rem',
+            'group_name' => '6.5rem',
+            'status' => '6.5rem',
+            'link' => '5.5rem',
+            'submitted_at' => '8rem',
         ];
 
         foreach ($widths as $columnName => $width) {
@@ -188,6 +188,27 @@ class TableColumnAlignmentTest extends TestCase
                 '--sheet-table-border',
                 $style,
                 "Pengumpulan column [{$columnName}] does not use the shared border color.",
+            );
+        }
+
+        $limits = [
+            'task_title' => 28,
+            'student_name' => 20,
+            'group_name' => 14,
+        ];
+
+        foreach ($limits as $columnName => $limit) {
+            $this->assertSame(
+                $limit,
+                $table->getColumn($columnName)?->getCharacterLimit(),
+                "Pengumpulan column [{$columnName}] has unexpected character limit.",
+            );
+        }
+
+        foreach (['task_title', 'student_name', 'group_name', 'status', 'submitted_at'] as $clickableColumn) {
+            $this->assertNotNull(
+                $table->getColumn($clickableColumn)?->getAction(),
+                "Pengumpulan column [{$clickableColumn}] should be clickable to view details.",
             );
         }
     }

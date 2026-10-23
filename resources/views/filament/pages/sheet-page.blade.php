@@ -38,7 +38,7 @@
         }
 
         .submission-table .fi-ta-table {
-            min-width: 89rem;
+            min-width: 58rem;
             table-layout: fixed;
         }
 
@@ -59,7 +59,7 @@
 
         .submission-table .fi-ta-table > thead > tr > th:last-child,
         .submission-table .fi-ta-table > tbody > tr > td:last-child {
-            width: 13.5rem;
+            width: 10rem;
         }
 
         .submission-table .fi-ta-header-cell,
@@ -101,6 +101,14 @@
             text-overflow: ellipsis;
             white-space: nowrap;
             vertical-align: middle;
+        }
+
+        .submission-table .fi-ta-text-item-button {
+            cursor: pointer;
+        }
+
+        .submission-table .fi-ta-text-item-button:hover {
+            text-decoration: underline;
         }
 
         .submission-table .fi-ta-text-description {

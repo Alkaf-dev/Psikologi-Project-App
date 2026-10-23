@@ -69,38 +69,40 @@ class PengumpulanPage extends BaseSheetPage
                         ->label('Tugas')
                         ->weight('semibold')
                         ->color('primary')
-                        ->limit(38)
+                        ->limit(28)
                         ->tooltip(fn (array $record): string => trim((string) ($record['task_title'] ?? '')) ?: 'Klik untuk melihat rincian')
                         ->action($this->detailAction())
                         ->searchable()
-                        ->width('17rem'),
+                        ->width('12rem'),
                 ),
                 $this->spreadsheetColumn(
                     TextColumn::make('student_name')
                         ->label('Mahasiswa / Perwakilan')
                         ->description(fn (array $record): string => (string) ($record['student_npm'] ?? ''))
-                        ->limit(32)
+                        ->limit(20)
                         ->tooltip(function (array $record): ?string {
-                            $label = trim(
-                                (string) ($record['student_name'] ?? '').' '.(string) ($record['student_npm'] ?? ''),
-                            );
+                            $name = trim((string) ($record['student_name'] ?? ''));
+                            $npm = trim((string) ($record['student_npm'] ?? ''));
+                            $label = trim("{$name} {$npm}");
 
-                            return $label !== '' ? $label : null;
+                            return $label !== '' ? "{$label} (Klik untuk melihat rincian)" : 'Klik untuk melihat rincian';
                         })
+                        ->action($this->detailAction())
                         ->searchable()
-                        ->width('12.5rem'),
+                        ->width('9.5rem'),
                 ),
                 $this->spreadsheetColumn(
                     TextColumn::make('group_name')
                         ->label('Kelompok')
-                        ->limit(22)
+                        ->limit(14)
                         ->tooltip(function (array $record): ?string {
                             $group = trim((string) ($record['group_name'] ?? ''));
 
-                            return $group !== '' ? $group : null;
+                            return $group !== '' ? "{$group} (Klik untuk melihat rincian)" : 'Klik untuk melihat rincian';
                         })
+                        ->action($this->detailAction())
                         ->searchable()
-                        ->width('8.5rem'),
+                        ->width('6.5rem'),
                 ),
                 $this->spreadsheetColumn(
                     TextColumn::make('status')
@@ -116,8 +118,9 @@ class PengumpulanPage extends BaseSheetPage
                             'graded' => 'success',
                             default => 'warning',
                         })
+                        ->action($this->detailAction())
                         ->alignCenter()
-                        ->width('8rem'),
+                        ->width('6.5rem'),
                 ),
                 $this->spreadsheetColumn(
                     TextColumn::make('link')
@@ -128,7 +131,7 @@ class PengumpulanPage extends BaseSheetPage
                         ->color(fn (array $record): ?string => $this->submissionLink($record) !== null ? 'primary' : null)
                         ->tooltip(fn (array $record): ?string => $this->submissionLink($record) !== null ? 'Buka tautan pengumpulan di tab baru' : null)
                         ->alignCenter()
-                        ->width('14rem'),
+                        ->width('5.5rem'),
                 ),
                 $this->spreadsheetColumn(
                     TextColumn::make('submitted_at')
@@ -136,9 +139,11 @@ class PengumpulanPage extends BaseSheetPage
                         ->formatStateUsing(fn (?string $state): string => $state
                             ? Carbon::parse($state)->translatedFormat('d M Y H:i')
                             : '-')
+                        ->tooltip(fn (?string $state): string => $state ? Carbon::parse($state)->translatedFormat('d F Y H:i:s') : 'Klik untuk melihat rincian')
+                        ->action($this->detailAction())
                         ->sortable()
                         ->alignCenter()
-                        ->width('9.5rem'),
+                        ->width('8rem'),
                 ),
             ])
             ->searchPlaceholder('Cari tugas, mahasiswa, atau kelompok...')
