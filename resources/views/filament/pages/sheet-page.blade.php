@@ -38,7 +38,7 @@
         }
 
         .submission-table .fi-ta-table {
-            min-width: 58rem;
+            min-width: 65rem;
             table-layout: fixed;
         }
 
@@ -58,8 +58,20 @@
         }
 
         .submission-table .fi-ta-table > thead > tr > th:last-child,
-        .submission-table .fi-ta-table > tbody > tr > td:last-child {
-            width: 10rem;
+        .submission-table .fi-ta-table > tbody > tr > td:last-child,
+        .submission-table .fi-ta-actions-header-cell,
+        .submission-table .fi-ta-cell:has(.fi-ta-actions) {
+            width: 16.5rem;
+            min-width: 16.5rem;
+        }
+
+        .submission-table .fi-ta-cell:has(.fi-ta-actions) .fi-ta-actions {
+            display: flex;
+            flex-wrap: nowrap;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 0.65rem;
+            width: 100%;
         }
 
         .submission-table .fi-ta-header-cell,
@@ -78,41 +90,27 @@
             overflow: hidden;
         }
 
-        .submission-table .fi-ta-text,
-        .submission-table .fi-ta-text > div {
+        .submission-table button.fi-ta-col {
+            display: block;
             min-width: 0;
             max-width: 100%;
+            width: 100%;
             overflow: hidden;
-        }
-
-        .submission-table .fi-ta-text-item:not(.fi-ta-text-has-badges) {
-            min-width: 0;
-            max-width: 100%;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        .submission-table .fi-ta-text-item-label,
-        .submission-table .fi-ta-text-item-button {
-            display: inline-block;
-            max-width: 100%;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            vertical-align: middle;
-        }
-
-        .submission-table .fi-ta-text-item-button {
+            text-align: inherit;
             cursor: pointer;
         }
 
-        .submission-table .fi-ta-text-item-button:hover {
+        .submission-table button.fi-ta-col:hover .fi-ta-text-item {
             text-decoration: underline;
         }
 
+        .submission-table .fi-ta-col > div,
+        .submission-table .fi-ta-text,
+        .submission-table .fi-ta-text > div,
+        .submission-table .fi-ta-text-item,
+        .submission-table .fi-ta-text-item > span,
         .submission-table .fi-ta-text-description {
-            line-height: 1.25;
+            min-width: 0;
             max-width: 100%;
             overflow: hidden;
             text-overflow: ellipsis;
