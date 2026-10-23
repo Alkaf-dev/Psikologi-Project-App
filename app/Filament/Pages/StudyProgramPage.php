@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Filament\Concerns\RequiresStaffRole;
 use App\Filament\Support\BaseSheetPage;
 use App\Repositories\AnnouncementRepository;
 use App\Repositories\CourseRepository;
@@ -19,6 +20,8 @@ use Illuminate\Validation\ValidationException;
 
 class StudyProgramPage extends BaseSheetPage
 {
+    use RequiresStaffRole;
+
     protected static ?string $navigationLabel = 'Program Studi';
 
     protected static ?string $title = 'Program Studi';

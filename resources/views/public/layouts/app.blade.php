@@ -30,17 +30,10 @@
                 </a>
 
                 @auth
-                    @if (auth()->user()->isAdmin())
-                        <a href="{{ route('filament.admin.pages.dashboard') }}"
-                           class="ml-1 rounded-lg bg-slate-900 px-4 py-2 font-semibold text-white transition hover:bg-slate-700">
-                            Panel Admin
-                        </a>
-                    @else
-                        <a href="{{ route('filament.portal.pages.dashboard') }}"
-                           class="ml-1 rounded-lg bg-teal-600 px-4 py-2 font-semibold text-white transition hover:bg-teal-700">
-                            Portal Saya
-                        </a>
-                    @endif
+                    <a href="{{ route('filament.app.pages.dashboard') }}"
+                       class="ml-1 rounded-lg bg-teal-600 px-4 py-2 font-semibold text-white transition hover:bg-teal-700">
+                        {{ auth()->user()->isAdmin() ? 'Dashboard Admin' : 'Portal Saya' }}
+                    </a>
                 @else
                     <a href="{{ route('login') }}"
                        class="ml-1 rounded-lg bg-teal-600 px-4 py-2 font-semibold text-white transition hover:bg-teal-700">

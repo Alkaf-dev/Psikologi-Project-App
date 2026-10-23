@@ -67,7 +67,7 @@ class AnnouncementRepository extends BaseSheetRepository
 
                 $announcement['audience_label'] = match ($audience) {
                     'mahasiswa' => 'Mahasiswa',
-                    'admin' => 'Super Admin & PJMK',
+                    'admin' => 'Super Admin & Admin',
                     default => 'Semua',
                 };
                 $announcement['prodi_names'] = $audience === 'mahasiswa'

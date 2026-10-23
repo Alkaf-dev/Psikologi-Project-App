@@ -31,12 +31,12 @@ class UserRepository extends BaseSheetRepository
 
     public function isAdmin(array $user): bool
     {
-        return UserRole::tryFromLegacy($user['role'] ?? null)?->isAdminPanel() ?? false;
+        return UserRole::tryFromLegacy($user['role'] ?? null)?->isStaff() ?? false;
     }
 
     public function isStudent(array $user): bool
     {
-        return UserRole::tryFromLegacy($user['role'] ?? null)?->isStudentPortal() ?? false;
+        return UserRole::tryFromLegacy($user['role'] ?? null)?->isStudent() ?? false;
     }
 
     public function hasOtherActiveAdmin(string $exceptId): bool

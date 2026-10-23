@@ -50,6 +50,14 @@ abstract class BaseKelompokPage extends BaseSheetPage
         return $this->findCard($courseId) !== null;
     }
 
+    /**
+     * @param  array<string, mixed>  $group
+     */
+    protected function canAccessGroup(array $group): bool
+    {
+        return true;
+    }
+
     protected function preferredGroupId(Collection $groups): ?string
     {
         $group = $groups->first();
@@ -240,7 +248,8 @@ abstract class BaseKelompokPage extends BaseSheetPage
         }
 
         return $this->groupDetails()
-            ->filter(fn (array $group): bool => (string) ($group['course_id'] ?? '') === $courseId)
+            ->filter(fn (array $group): bool => (string) ($group['course_id'] ?? '') === $courseId
+                && $this->canAccessGroup($group))
             ->sortBy(fn (array $group): string => (string) ($group['name'] ?? ''), SORT_NATURAL | SORT_FLAG_CASE)
             ->values();
     }

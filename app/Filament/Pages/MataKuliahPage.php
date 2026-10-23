@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Filament\Concerns\RequiresStaffRole;
 use App\Filament\Support\BaseSheetPage;
 use App\Repositories\CourseRepository;
 use App\Repositories\StudyProgramRepository;
@@ -20,6 +21,8 @@ use Illuminate\Validation\ValidationException;
 
 class MataKuliahPage extends BaseSheetPage
 {
+    use RequiresStaffRole;
+
     protected static ?string $navigationLabel = 'Mata Kuliah';
 
     protected static ?string $title = 'Mata Kuliah';

@@ -34,7 +34,7 @@ class AdminCreateActionTest extends TestCase
         parent::setUp();
 
         $this->setUpSheets();
-        Filament::setCurrentPanel('admin');
+        Filament::setCurrentPanel('app');
         $this->actingAsAdmin();
     }
 

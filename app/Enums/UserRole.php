@@ -6,14 +6,14 @@ enum UserRole: string
 {
     case Mahasiswa = 'mahasiswa';
     case SuperAdmin = 'super_admin';
-    case Pjmk = 'pjmk';
+    case Admin = 'pjmk';
 
     public function label(): string
     {
         return match ($this) {
             self::Mahasiswa => 'Mahasiswa',
             self::SuperAdmin => 'Super Admin',
-            self::Pjmk => 'PJMK',
+            self::Admin => 'Admin',
         };
     }
 
@@ -22,16 +22,16 @@ enum UserRole: string
         return match ($this) {
             self::Mahasiswa => 'info',
             self::SuperAdmin => 'danger',
-            self::Pjmk => 'warning',
+            self::Admin => 'warning',
         };
     }
 
-    public function isAdminPanel(): bool
+    public function isStaff(): bool
     {
-        return in_array($this, [self::SuperAdmin, self::Pjmk], true);
+        return in_array($this, [self::SuperAdmin, self::Admin], true);
     }
 
-    public function isStudentPortal(): bool
+    public function isStudent(): bool
     {
         return $this === self::Mahasiswa;
     }
@@ -76,7 +76,7 @@ enum UserRole: string
     {
         return array_values(array_map(
             fn (self $role): string => $role->value,
-            array_filter(self::cases(), fn (self $role): bool => $role->isAdminPanel()),
+            array_filter(self::cases(), fn (self $role): bool => $role->isStaff()),
         ));
     }
 }

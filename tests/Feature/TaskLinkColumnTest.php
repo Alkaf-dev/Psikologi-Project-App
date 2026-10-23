@@ -35,7 +35,7 @@ class TaskLinkColumnTest extends TestCase
 
     public function test_admin_task_table_renders_clickable_collection_link(): void
     {
-        Filament::setCurrentPanel('admin');
+        Filament::setCurrentPanel('app');
         $this->actingAsAdmin();
 
         $this->createLinkedTask();
@@ -49,10 +49,10 @@ class TaskLinkColumnTest extends TestCase
 
     public function test_admin_task_table_loads_compact_density_styles(): void
     {
-        Filament::setCurrentPanel('admin');
+        Filament::setCurrentPanel('app');
         $this->actingAsAdmin();
 
-        $this->get('/admin/tugas-page')
+        $this->get('/app/tugas-page')
             ->assertOk()
             ->assertSee('task-table-compact', false)
             ->assertSee('padding-block: 0.4rem', false);
@@ -60,7 +60,7 @@ class TaskLinkColumnTest extends TestCase
 
     public function test_portal_task_table_renders_clickable_material_and_submission_links(): void
     {
-        Filament::setCurrentPanel('portal');
+        Filament::setCurrentPanel('app');
         $this->actingAsStudent('ayu@psikologi.test');
 
         $task = $this->createLinkedTask();
@@ -78,7 +78,7 @@ class TaskLinkColumnTest extends TestCase
 
     public function test_portal_task_table_shows_only_the_students_own_submission_link(): void
     {
-        Filament::setCurrentPanel('portal');
+        Filament::setCurrentPanel('app');
         $this->actingAsStudent('ayu@psikologi.test');
 
         Livewire::test(PortalTugasPage::class)
@@ -90,7 +90,7 @@ class TaskLinkColumnTest extends TestCase
 
     public function test_portal_task_links_reject_unsafe_urls(): void
     {
-        Filament::setCurrentPanel('portal');
+        Filament::setCurrentPanel('app');
         $this->actingAsStudent('ayu@psikologi.test');
 
         $task = $this->createLinkedTask([
@@ -107,7 +107,7 @@ class TaskLinkColumnTest extends TestCase
 
     public function test_pengumpulan_table_renders_submission_link_as_kirim(): void
     {
-        Filament::setCurrentPanel('admin');
+        Filament::setCurrentPanel('app');
         $this->actingAsAdmin();
 
         $url = 'https://docs.google.com/document/d/contoh-refleksi-ayu';
@@ -122,7 +122,7 @@ class TaskLinkColumnTest extends TestCase
 
     public function test_pengumpulan_table_shows_placeholder_when_submission_link_is_missing(): void
     {
-        Filament::setCurrentPanel('admin');
+        Filament::setCurrentPanel('app');
         $this->actingAsAdmin();
 
         $this->createSubmissionForTask('Studi Kasus Psikologi Sosial', '');
@@ -135,7 +135,7 @@ class TaskLinkColumnTest extends TestCase
 
     public function test_pengumpulan_table_rejects_unsafe_submission_links(): void
     {
-        Filament::setCurrentPanel('admin');
+        Filament::setCurrentPanel('app');
         $this->actingAsAdmin();
 
         $this->createSubmissionForTask('Studi Kasus Psikologi Sosial', 'javascript:alert(1)');

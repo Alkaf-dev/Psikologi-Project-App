@@ -1,6 +1,6 @@
 # Psikologi Connect
 
-Portal akademik **Prodi Psikologi STIT Muhammadiyah Kediri** berbasis **Laravel 12 + Filament 5**. Data utama disimpan di **Google Sheets**, dengan situs publik, portal mahasiswa, dan panel admin dalam satu aplikasi. Login mendukung beberapa Prodi melalui pilihan dropdown yang wajib diisi.
+Portal akademik **Prodi Psikologi STIT Muhammadiyah Kediri** berbasis **Laravel 12 + Filament 5**. Data utama disimpan di **Google Sheets**, dengan situs publik dan satu panel terpadu `/app` untuk admin serta mahasiswa. Login mendukung beberapa Prodi melalui pilihan dropdown yang wajib diisi.
 
 ## Fitur
 
@@ -8,17 +8,17 @@ Portal akademik **Prodi Psikologi STIT Muhammadiyah Kediri** berbasis **Laravel 
 - Beranda dengan informasi program studi dan pengumuman terbaru.
 - Daftar pengumuman dan halaman detail.
 - Hanya menampilkan pengumuman dengan audiens `all`.
-- Tautan masuk ke portal mahasiswa.
+- Tautan masuk ke panel aplikasi.
 
-### Portal mahasiswa
-- Login dengan Prodi, email/NIM, dan password.
+### Akses mahasiswa
+- Login dengan Prodi, email/NIM, dan password di `/app/login`.
 - Dashboard berisi ringkasan tugas, jadwal, kelompok, dan pengumuman sesuai Prodi.
 - Jadwal kuliah sesuai Prodi dan kelas mahasiswa, termasuk ruangan atau tautan Zoom/Google Meet untuk sesi online.
 - Daftar tugas individu dan kelompok hanya dari mata kuliah Prodi mahasiswa.
 - Tugas dapat memuat pertemuan, materi, banyak kelompok, tanggal mulai, deadline, keterangan deadline, link pengumpulan, dan status.
 - Pengumpulan tugas berupa tautan, dengan status `submitted`, `late`, atau `graded`.
 - Tugas kelompok dikumpulkan satu kali per kelompok oleh salah satu anggota sebagai perwakilan; anggota lain melihat status, tautan, nilai, dan feedback yang sama.
-- Perwakilan dapat memperbarui pengumpulan sampai deadline; setelah deadline perubahan hanya dapat dilakukan admin/PJMK.
+- Perwakilan dapat memperbarui pengumpulan sampai deadline; setelah deadline perubahan hanya dapat dilakukan Admin.
 - Melihat nilai dan feedback dosen.
 - Daftar kelompok beserta peran, ketua, dan anggota, hanya dari mata kuliah Prodi mahasiswa.
 - Pengumuman untuk mahasiswa, termasuk target Prodi tertentu atau semua Prodi.
@@ -26,18 +26,20 @@ Portal akademik **Prodi Psikologi STIT Muhammadiyah Kediri** berbasis **Laravel 
 - Status baca notifikasi tersimpan per akun di tab `notification_reads`.
 - Profil dan perubahan password.
 
-### Panel admin
+### Panel staff
+- Satu panel di `/app`; navigasi dan halaman menyesuaikan role pengguna.
 - Dashboard ringkasan data.
-- Menu diurutkan dari yang paling operasional: **Akademik**, **Administrasi**, **Konten**, lalu **Akun** dan **Sistem**.
+- Menu diurutkan dari yang paling operasional: **Akademik**, **Administrasi**, **Konten**, **Informasi**, **Akun**, dan **Sistem**.
 - Menu **Administrasi** berisi pendataan mahasiswa dan CRUD Program Studi.
 - Pendataan mahasiswa melalui **Administrasi > Mahasiswa**: Prodi, Nama Mahasiswa, NIM, email, kelas, angkatan, WhatsApp, dan akun login.
 - CRUD user, mata kuliah, jadwal offline/online (Zoom atau Google Meet), kelompok, tugas, pengumpulan/nilai, dan pengumuman.
 - Form tugas mendukung pertemuan, instruksi, materi, banyak kelompok, tanggal mulai, deadline, keterangan deadline, link pengumpulan, dan status `Draf`/`Aktif`/`Selesai`.
 - Mata kuliah dapat ditetapkan ke beberapa Prodi; satu baris mata kuliah tetap memiliki satu kelas.
 - Pengumuman mahasiswa dapat ditargetkan ke Prodi tertentu atau semua Prodi.
-- Login admin juga memilih Prodi; admin tetap dapat melihat data seluruh Prodi.
-- Role user: **Mahasiswa**, **Super Admin**, dan **PJMK**.
-- PJMK memiliki akses panel yang sama dengan Super Admin, tetapi role tetap ditampilkan sebagai PJMK.
+- Staff juga memilih Prodi saat login; staff tetap dapat melihat data seluruh Prodi.
+- Role user: **Mahasiswa**, **Super Admin**, dan **Admin**.
+- Admin memiliki akses yang sama dengan Super Admin. Nilai role lama `pjmk` dipertahankan agar data tetap kompatibel, tetapi UI menampilkan **Admin**.
+- Mahasiswa hanya melihat halaman personalnya; staff tidak dapat membuka halaman personal mahasiswa dan sebaliknya.
 - Reset password user.
 - Lonceng dengan panel notifikasi geser dari kanan dan halaman Notifikasi global untuk tugas aktif serta jadwal hari ini dan besok.
 - Pengaturan identitas program, kontak, dan konten halaman publik.
@@ -82,13 +84,13 @@ Akun demo:
 | Peran | Login | Password |
 | --- | --- | --- |
 | Super Admin | `admin@psikologi.test` | `password` |
-| PJMK | `pjmk@psikologi.test` | `password` |
+| Admin | `pjmk@psikologi.test` | `password` |
 | Mahasiswa | `ayu@psikologi.test` | `password` |
 | Mahasiswa | `bima@psikologi.test` | `password` |
 | Mahasiswa | `citra@psikologi.test` | `password` |
 | Mahasiswa | `dimas@psikologi.test` | `password` |
 
-Login dapat menggunakan email atau NIM, misalnya `ayu@psikologi.test` atau `2024001`, dengan pilihan Prodi **S1 Psikologi**. Data demo selalu diarahkan ke Prodi tersebut.
+Masuk melalui `http://localhost:8000/app/login` menggunakan email atau NIM, misalnya `ayu@psikologi.test` atau `2024001`, dengan pilihan Prodi **S1 Psikologi**. Data demo selalu diarahkan ke Prodi tersebut.
 
 Gunakan `php artisan sheets:setup --demo` lagi untuk menyegarkan data demo. Data yang sudah ada tidak diduplikasi; header baru seperti `prodi_id`, `courses.prodi_ids`, dan `announcements.prodi_ids` akan ditambahkan otomatis. Mata kuliah lama tanpa `prodi_ids` diarahkan ke Prodi default **Psikologi**.
 
@@ -172,7 +174,7 @@ Header setiap tab didefinisikan di `config/sheets.php`:
 | Tab | Isi |
 | --- | --- |
 | `study_programs` | Daftar Prodi, kode, jenjang, dan status aktif |
-| `users` | Akun Mahasiswa, Super Admin, dan PJMK, termasuk `prodi_id` dan `role` |
+| `users` | Akun Mahasiswa, Super Admin, dan Admin, termasuk `prodi_id` dan `role` |
 | `courses` | Mata kuliah, termasuk `prodi_ids` berisi daftar ID Prodi |
 | `schedules` | Jadwal kuliah, mode offline/online, platform, dan tautan rapat |
 | `groups` | Kelompok mahasiswa |
@@ -209,13 +211,14 @@ npm run dev                       # Vite development server
 | Beranda | `/` |
 | Daftar pengumuman | `/pengumuman` |
 | Detail pengumuman | `/pengumuman/{id}` |
-| Redirect login | `/login` |
-| Login admin | `/admin/login` |
-| Panel admin | `/admin` |
-| Login mahasiswa | `/portal/login` |
-| Portal mahasiswa | `/portal` |
+| Login semua role | `/app/login` |
+| Panel semua role | `/app` |
+| Halaman staff | `/app/{slug}`, misalnya `/app/student-page` dan `/app/user-page` |
+| Halaman mahasiswa | `/app/jadwal-saya`, `/app/tugas-saya`, `/app/kelompok-saya`, `/app/pengumuman-saya`, `/app/profil-saya`, `/app/notifikasi-page` |
+| Redirect login lama | `/login` → `/app/login` |
+| Redirect panel lama | `/admin`, `/portal` → `/app` |
 
-Halaman admin dan portal memakai slug default Filament, misalnya `/admin/student-page`, `/admin/user-page`, dan `/portal/tugas-page`.
+URL lama di bawah `/admin/*` dan `/portal/*` tetap diarahkan ke halaman yang sesuai di `/app` agar bookmark lama tidak rusak.
 
 ## Arsitektur Singkat
 
@@ -229,13 +232,14 @@ Halaman admin dan portal memakai slug default Filament, misalnya `/admin/student
 - `app/Support/TaskStatus.php`: normalisasi dan label status tugas `Draf`/`Aktif`/`Selesai`.
 - `app/Support/NotificationCenter.php`: perhitungan notifikasi tugas dan jadwal per user.
 - `app/Repositories/NotificationReadRepository.php`: status baca notifikasi di sheet.
-- `app/Livewire/NotificationBell.php`: lonceng dan panel notifikasi geser kanan pada topbar kedua panel.
+- `app/Livewire/NotificationBell.php`: lonceng dan panel notifikasi geser kanan pada topbar panel.
 - `app/Auth/SheetUser.php` dan `SheetUserProvider.php`: autentikasi tanpa Eloquent, termasuk validasi Prodi dan role.
-- `app/Enums/UserRole.php`: definisi role Mahasiswa, Super Admin, dan PJMK.
+- `app/Enums/UserRole.php`: definisi role Mahasiswa, Super Admin, dan Admin.
+- `app/Providers/Filament/AppPanelProvider.php`: konfigurasi panel terpadu `/app`, navigasi, warna, dan login.
 - `app/Filament/Support/BaseSheetPage.php`: halaman tabel Filament berbasis array record.
-- `app/Filament/Pages/`: halaman admin, User, Program Studi, pendataan Mahasiswa, dan login.
+- `app/Filament/Pages/`: dashboard bersama, halaman staff, User, Program Studi, pendataan Mahasiswa, dan login.
 - `app/Console/Commands/AssignProdi.php`: pengisian Prodi akun lama melalui CLI.
-- `app/Filament/Portal/Pages/`: halaman portal mahasiswa.
+- `app/Filament/Portal/Pages/`: halaman personal mahasiswa di panel yang sama.
 - `app/Http/Controllers/`: controller halaman publik.
 - `app/Support/DemoData.php`: data demo.
 - `config/sheets.php`: konfigurasi driver dan seluruh header tab.
@@ -250,8 +254,8 @@ Setiap pembacaan sheet di-cache selama `SHEETS_CACHE_TTL` detik (default 60). Se
 - Tidak ada registrasi publik, OAuth, atau remember-me. Notifikasi hanya tersedia di dalam aplikasi; tidak ada email, WhatsApp, atau browser push.
 - Kuota Google Sheets API berlaku; cache membantu mengurangi pembacaan. Notifikasi dihitung ulang setiap kali halaman dimuat.
 - Pengumuman publik hanya menampilkan audiens `all`.
-- Panel admin dan portal memakai halaman custom, bukan Filament Resource Eloquent.
-- Admin dapat melihat data semua Prodi; pembatasan Prodi hanya berlaku di portal mahasiswa.
+- Panel memakai halaman custom, bukan Filament Resource Eloquent.
+- Admin dapat melihat data semua Prodi; pembatasan Prodi hanya berlaku untuk mahasiswa.
 - Satu baris mata kuliah hanya memiliki satu kelas. Mata kuliah gabungan yang dipakai beberapa kelas/Prodi perlu dibuat sebagai baris terpisah.
 - Akun lama tanpa Prodi harus diisi manual dan tidak bisa login sebelum diisi.
 
@@ -265,7 +269,8 @@ Test menggunakan `LocalSheetGateway` dengan file JSON sementara. Test tidak meng
 
 - Render halaman publik.
 - Visibilitas pengumuman publik.
-- Login Prodi + email/NIM dan pembatasan peran Mahasiswa, Super Admin, serta PJMK.
+- Login Prodi + email/NIM dan pembatasan peran Mahasiswa, Super Admin, serta Admin.
+- Pemisahan akses halaman staff dan mahasiswa dalam panel `/app`, termasuk redirect URL lama.
 - Penolakan login dengan Prodi salah/kosong dan akun tanpa Prodi.
 - CRUD Program Studi dan pencegahan hapus Prodi yang dipakai akun, mata kuliah, atau pengumuman.
 - CRUD user untuk seluruh role, pendataan mahasiswa, dan proteksi admin aktif terakhir.

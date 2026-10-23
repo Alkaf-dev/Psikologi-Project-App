@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Filament\Concerns\RequiresStaffRole;
 use App\Filament\Support\BaseSheetPage;
 use App\Repositories\CourseRepository;
 use App\Repositories\ScheduleRepository;
@@ -19,6 +20,8 @@ use Filament\Tables\Table;
 
 class JadwalPage extends BaseSheetPage
 {
+    use RequiresStaffRole;
+
     protected static ?string $navigationLabel = 'Jadwal';
 
     protected static ?string $title = 'Jadwal Mata Kuliah';

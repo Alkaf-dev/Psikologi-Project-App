@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Filament\Concerns\RequiresStaffRole;
 use App\Filament\Support\BaseSheetPage;
 use App\Repositories\AnnouncementRepository;
 use App\Repositories\CourseRepository;
@@ -23,6 +24,8 @@ use Illuminate\Validation\ValidationException;
 
 class PengumumanPage extends BaseSheetPage
 {
+    use RequiresStaffRole;
+
     protected string $view = 'filament.pages.pengumuman';
 
     protected static ?string $navigationLabel = 'Pengumuman';
@@ -266,7 +269,7 @@ class PengumumanPage extends BaseSheetPage
                 ->options([
                     'all' => 'Semua pengunjung',
                     'mahasiswa' => 'Mahasiswa',
-                    'admin' => 'Super Admin & PJMK',
+                    'admin' => 'Super Admin & Admin',
                 ])
                 ->default('all')
                 ->live()

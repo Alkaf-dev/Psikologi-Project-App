@@ -25,7 +25,7 @@ class KelompokPageTest extends TestCase
         parent::setUp();
 
         $this->setUpSheets();
-        Filament::setCurrentPanel('admin');
+        Filament::setCurrentPanel('app');
         $this->actingAsAdmin();
     }
 
@@ -188,7 +188,7 @@ class KelompokPageTest extends TestCase
 
     public function test_portal_group_page_is_read_only_and_scoped_to_the_student(): void
     {
-        Filament::setCurrentPanel('portal');
+        Filament::setCurrentPanel('app');
         $this->actingAsStudent();
 
         $course = app(CourseRepository::class)->findBy('code', 'PSI201');
@@ -213,6 +213,42 @@ class KelompokPageTest extends TestCase
             ->assertCanSeeTableRecords(
                 app(GroupMemberRepository::class)->forGroup((string) $group['id'])->pluck('id')->all(),
             );
+    }
+
+    public function test_portal_group_page_cannot_open_a_group_the_student_does_not_belong_to(): void
+    {
+        Filament::setCurrentPanel('app');
+        $this->actingAsStudent();
+
+        $course = app(CourseRepository::class)->findBy('code', 'PSI201');
+        $ownGroup = app(GroupRepository::class)->findBy('name', 'Kelompok 1 - Observasi');
+        $otherStudent = app(UserRepository::class)->findActiveByLogin('dimas@psikologi.test');
+
+        $this->assertNotNull($course);
+        $this->assertNotNull($ownGroup);
+        $this->assertNotNull($otherStudent);
+
+        $otherGroup = app(GroupRepository::class)->create([
+            'course_id' => (string) $course['id'],
+            'name' => 'Kelompok Rahasia',
+            'leader_id' => (string) $otherStudent['id'],
+            'description' => '',
+        ]);
+
+        app(GroupMemberRepository::class)->syncForGroup(
+            (string) $otherGroup['id'],
+            [(string) $otherStudent['id']],
+            (string) $otherStudent['id'],
+        );
+
+        Livewire::test(PortalKelompokPage::class)
+            ->call('selectCourse', (string) $course['id'])
+            ->assertSet('selectedGroupId', (string) $ownGroup['id'])
+            ->assertDontSee('Kelompok Rahasia')
+            ->call('selectGroup', (string) $otherGroup['id'])
+            ->assertSet('selectedGroupId', (string) $ownGroup['id'])
+            ->assertDontSee('Kelompok Rahasia')
+            ->assertDontSee('Dimas');
     }
 
     protected function actingAsAdmin(): void

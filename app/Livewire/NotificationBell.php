@@ -57,7 +57,7 @@ class NotificationBell extends Component
             $center = app(NotificationCenter::class);
             $notifications = $center->forUser($user);
             $unreadCount = $notifications->where('read', false)->count();
-            $pageUrl = $center->notificationPageUrl($user);
+            $pageUrl = $center->notificationPageUrl();
         }
 
         return view('livewire.notification-bell', [

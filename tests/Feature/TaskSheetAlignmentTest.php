@@ -25,7 +25,7 @@ class TaskSheetAlignmentTest extends TestCase
         parent::setUp();
 
         $this->setUpSheets();
-        Filament::setCurrentPanel('portal');
+        Filament::setCurrentPanel('app');
     }
 
     protected function tearDown(): void

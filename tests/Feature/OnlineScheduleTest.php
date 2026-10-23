@@ -33,7 +33,7 @@ class OnlineScheduleTest extends TestCase
 
     public function test_admin_can_create_and_update_online_schedule(): void
     {
-        Filament::setCurrentPanel('admin');
+        Filament::setCurrentPanel('app');
         $this->actingAsAdmin();
 
         $course = app(CourseRepository::class)->findBy('code', 'PSI101');
@@ -102,7 +102,7 @@ class OnlineScheduleTest extends TestCase
 
     public function test_portal_displays_online_schedule_link(): void
     {
-        Filament::setCurrentPanel('portal');
+        Filament::setCurrentPanel('app');
         $this->actingAsStudent();
 
         $course = app(CourseRepository::class)->findBy('code', 'PSI101');
@@ -127,7 +127,7 @@ class OnlineScheduleTest extends TestCase
             ->assertSee('Masuk')
             ->assertSee('https://meet.google.com/portal-online-test', false);
 
-        Filament::setCurrentPanel('admin');
+        Filament::setCurrentPanel('app');
         $this->actingAsAdmin();
 
         Livewire::test(JadwalPage::class)

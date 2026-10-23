@@ -3,7 +3,7 @@
 namespace Tests\Feature;
 
 use App\Auth\SheetUserProvider;
-use App\Filament\Portal\Pages\NotifikasiPage;
+use App\Filament\Pages\NotifikasiPage;
 use App\Livewire\NotificationBell;
 use App\Repositories\UserRepository;
 use App\Support\NotificationCenter;
@@ -35,10 +35,10 @@ class NotificationUiTest extends TestCase
 
     public function test_admin_notification_page_and_bell_render(): void
     {
-        Filament::setCurrentPanel('admin');
+        Filament::setCurrentPanel('app');
         $this->actingAsAdmin();
 
-        $this->get('/admin/notifikasi-page')
+        $this->get('/app/notifikasi-page')
             ->assertOk()
             ->assertSee('Notifikasi')
             ->assertSee('Jadwal Hari Ini')
@@ -46,7 +46,7 @@ class NotificationUiTest extends TestCase
             ->assertSee('Proposal Penelitian Kelompok')
             ->assertSee('Studi Kasus Psikologi Sosial');
 
-        $this->get('/admin')
+        $this->get('/app')
             ->assertOk()
             ->assertSee('aria-label="Notifikasi"', false)
             ->assertSee('fi-modal-slide-over', false)
@@ -56,10 +56,10 @@ class NotificationUiTest extends TestCase
 
     public function test_student_notification_page_and_bell_render(): void
     {
-        Filament::setCurrentPanel('portal');
+        Filament::setCurrentPanel('app');
         $this->actingAsStudent();
 
-        $this->get('/portal/notifikasi-page')
+        $this->get('/app/notifikasi-page')
             ->assertOk()
             ->assertSee('Jadwal Hari Ini')
             ->assertSee('Metodologi Penelitian')
@@ -67,7 +67,7 @@ class NotificationUiTest extends TestCase
             ->assertSee('Refleksi Psikologi Umum')
             ->assertDontSee('Studi Kasus Psikologi Sosial');
 
-        $this->get('/portal')
+        $this->get('/app')
             ->assertOk()
             ->assertSee('aria-label="Notifikasi"', false)
             ->assertSee('fi-modal-slide-over', false)
@@ -77,7 +77,7 @@ class NotificationUiTest extends TestCase
 
     public function test_bell_marks_all_notifications_as_read(): void
     {
-        Filament::setCurrentPanel('portal');
+        Filament::setCurrentPanel('app');
         $student = $this->actingAsStudent();
 
         Livewire::test(NotificationBell::class)
@@ -93,7 +93,7 @@ class NotificationUiTest extends TestCase
 
     public function test_bell_marks_a_notification_as_read_before_opening_it(): void
     {
-        Filament::setCurrentPanel('portal');
+        Filament::setCurrentPanel('app');
         $student = $this->actingAsStudent();
         $notification = app(NotificationCenter::class)
             ->forUser($student)
@@ -114,7 +114,7 @@ class NotificationUiTest extends TestCase
 
     public function test_unread_filter_becomes_empty_after_marking_all_as_read(): void
     {
-        Filament::setCurrentPanel('portal');
+        Filament::setCurrentPanel('app');
         $this->actingAsStudent();
 
         Livewire::test(NotifikasiPage::class)

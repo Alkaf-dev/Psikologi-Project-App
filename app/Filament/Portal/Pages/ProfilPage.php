@@ -2,6 +2,7 @@
 
 namespace App\Filament\Portal\Pages;
 
+use App\Filament\Concerns\RequiresStudentRole;
 use App\Repositories\StudyProgramRepository;
 use App\Repositories\UserRepository;
 use Filament\Forms\Components\TextInput;
@@ -14,6 +15,10 @@ use Illuminate\Support\Facades\Hash;
 
 class ProfilPage extends Page
 {
+    use RequiresStudentRole;
+
+    protected static ?string $slug = 'profil-saya';
+
     protected static ?string $navigationLabel = 'Profil Saya';
 
     protected static ?string $title = 'Profil Saya';

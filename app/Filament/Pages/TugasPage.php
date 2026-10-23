@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Filament\Concerns\RequiresStaffRole;
 use App\Filament\Support\BaseSheetPage;
 use App\Repositories\CourseRepository;
 use App\Repositories\GroupRepository;
@@ -28,6 +29,8 @@ use Illuminate\Validation\ValidationException;
 
 class TugasPage extends BaseSheetPage
 {
+    use RequiresStaffRole;
+
     protected string $view = 'filament.pages.tugas';
 
     protected static ?string $navigationLabel = 'Materi dan Tugas';

@@ -31,7 +31,7 @@ class AnnouncementCourseFilterTest extends TestCase
 
     public function test_admin_can_filter_announcements_by_course_and_public(): void
     {
-        Filament::setCurrentPanel('admin');
+        Filament::setCurrentPanel('app');
         $this->actingAsAdmin();
 
         $course = app(CourseRepository::class)->findBy('code', 'PSI101');
@@ -87,7 +87,7 @@ class AnnouncementCourseFilterTest extends TestCase
 
     public function test_admin_can_create_announcement_with_course_id(): void
     {
-        Filament::setCurrentPanel('admin');
+        Filament::setCurrentPanel('app');
         $this->actingAsAdmin();
 
         $course = app(CourseRepository::class)->findBy('code', 'PSI101');
@@ -110,7 +110,7 @@ class AnnouncementCourseFilterTest extends TestCase
 
     public function test_student_in_portal_can_filter_announcements_by_course_and_public(): void
     {
-        Filament::setCurrentPanel('portal');
+        Filament::setCurrentPanel('app');
         $this->actingAsStudent();
 
         $course = app(CourseRepository::class)->findBy('code', 'PSI101');

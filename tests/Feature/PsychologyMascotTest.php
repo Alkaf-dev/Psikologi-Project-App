@@ -218,18 +218,18 @@ class PsychologyMascotTest extends TestCase
 
     public function test_admin_sheet_pages_render_one_expected_contextual_gif(): void
     {
-        Filament::setCurrentPanel('admin');
+        Filament::setCurrentPanel('app');
         $this->actingAsAdmin();
 
         $pages = [
-            '/admin/mata-kuliah-page' => 'memegang-buku.gif',
-            '/admin/student-page' => 'memegang-buku.gif',
-            '/admin/tugas-page' => 'membaca.gif',
-            '/admin/jadwal-page' => 'berjalan.gif',
-            '/admin/kelompok-page' => 'semangat.gif',
-            '/admin/pengumpulan-page' => 'menunjuk.gif',
-            '/admin/pengumuman-page' => 'menunjuk.gif',
-            '/admin/study-program-page' => 'berpikir.gif',
+            '/app/mata-kuliah-page' => 'memegang-buku.gif',
+            '/app/student-page' => 'memegang-buku.gif',
+            '/app/tugas-page' => 'membaca.gif',
+            '/app/jadwal-page' => 'berjalan.gif',
+            '/app/kelompok-page' => 'semangat.gif',
+            '/app/pengumpulan-page' => 'menunjuk.gif',
+            '/app/pengumuman-page' => 'menunjuk.gif',
+            '/app/study-program-page' => 'berpikir.gif',
         ];
 
         foreach ($pages as $route => $gif) {
@@ -246,14 +246,14 @@ class PsychologyMascotTest extends TestCase
 
     public function test_portal_pages_render_one_expected_contextual_gif(): void
     {
-        Filament::setCurrentPanel('portal');
+        Filament::setCurrentPanel('app');
         $this->actingAsStudent();
 
         $pages = [
-            '/portal/tugas-page' => 'membaca.gif',
-            '/portal/jadwal-page' => 'berjalan.gif',
-            '/portal/pengumuman-page' => 'menunjuk.gif',
-            '/portal/kelompok-page' => 'semangat.gif',
+            '/app/tugas-saya' => 'membaca.gif',
+            '/app/jadwal-saya' => 'berjalan.gif',
+            '/app/pengumuman-saya' => 'menunjuk.gif',
+            '/app/kelompok-saya' => 'semangat.gif',
         ];
 
         foreach ($pages as $route => $gif) {
@@ -270,12 +270,12 @@ class PsychologyMascotTest extends TestCase
 
     public function test_portal_dashboard_hides_minum_note_at_three_pending_tasks(): void
     {
-        Filament::setCurrentPanel('portal');
+        Filament::setCurrentPanel('app');
         $this->actingAsStudent();
         $this->createPendingTask('Tugas Tambahan Batas Tiga');
         $this->createPendingTask('Tugas Tambahan Batas Tiga Lainnya');
 
-        $this->get('/portal')
+        $this->get('/app')
             ->assertOk()
             ->assertDontSee('data-mascot-gif="minum"', false)
             ->assertDontSee('minum.gif', false)
@@ -284,13 +284,13 @@ class PsychologyMascotTest extends TestCase
 
     public function test_portal_dashboard_shows_minum_note_above_three_pending_tasks(): void
     {
-        Filament::setCurrentPanel('portal');
+        Filament::setCurrentPanel('app');
         $this->actingAsStudent();
         $this->createPendingTask('Tugas Tambahan Batas Empat');
         $this->createPendingTask('Tugas Tambahan Batas Empat Lainnya');
         $this->createPendingTask('Tugas Tambahan Batas Empat Ketiga');
 
-        $response = $this->get('/portal')->assertOk();
+        $response = $this->get('/app')->assertOk();
         $html = (string) $response->getContent();
 
         $this->assertSame(1, substr_count($html, 'data-mascot-gif="minum"'));
@@ -315,7 +315,7 @@ class PsychologyMascotTest extends TestCase
 
     public function test_notification_empty_state_uses_the_heart_gif(): void
     {
-        Filament::setCurrentPanel('admin');
+        Filament::setCurrentPanel('app');
         $this->actingAsAdmin();
 
         $admin = app(UserRepository::class)->findActiveByLogin('admin@psikologi.test');
@@ -324,23 +324,18 @@ class PsychologyMascotTest extends TestCase
 
         app(NotificationCenter::class)->markAllAsRead($admin);
 
-        $this->get('/admin/notifikasi-page?filter=unread')
+        $this->get('/app/notifikasi-page?filter=unread')
             ->assertOk()
             ->assertSee('images/psychology/mascot/memeluk-hati.gif', false)
             ->assertSee('psychology-mascot-gif--empty', false)
             ->assertSee('Semua notifikasi sudah dibaca', false);
     }
 
-    public function test_both_login_pages_render_the_laptop_gif(): void
+    public function test_login_page_renders_the_laptop_gif(): void
     {
-        Filament::setCurrentPanel('admin');
-        $this->get('/admin/login')
-            ->assertOk()
-            ->assertSee('data-mascot-gif="laptop"', false)
-            ->assertSee('images/psychology/mascot/laptop.gif', false);
+        Filament::setCurrentPanel('app');
 
-        Filament::setCurrentPanel('portal');
-        $this->get('/portal/login')
+        $this->get('/app/login')
             ->assertOk()
             ->assertSee('data-mascot-gif="laptop"', false)
             ->assertSee('images/psychology/mascot/laptop.gif', false);
@@ -348,10 +343,10 @@ class PsychologyMascotTest extends TestCase
 
     public function test_admin_dashboard_renders_the_greeting_with_the_waving_gif(): void
     {
-        Filament::setCurrentPanel('admin');
+        Filament::setCurrentPanel('app');
         $this->actingAsAdmin();
 
-        $this->get('/admin')
+        $this->get('/app')
             ->assertOk()
             ->assertSee('data-mascot-greeting', false)
             ->assertSee('data-mascot-greeting-key="admin-dashboard"', false)
@@ -380,10 +375,10 @@ class PsychologyMascotTest extends TestCase
 
     public function test_portal_dashboard_renders_the_greeting(): void
     {
-        Filament::setCurrentPanel('portal');
+        Filament::setCurrentPanel('app');
         $this->actingAsStudent();
 
-        $this->get('/portal')
+        $this->get('/app')
             ->assertOk()
             ->assertSee('data-mascot-greeting', false)
             ->assertSee('data-mascot-greeting-key="portal-dashboard"', false)
@@ -396,10 +391,10 @@ class PsychologyMascotTest extends TestCase
 
     public function test_admin_task_page_renders_the_launcher(): void
     {
-        Filament::setCurrentPanel('admin');
+        Filament::setCurrentPanel('app');
         $this->actingAsAdmin();
 
-        $this->get('/admin/tugas-page')
+        $this->get('/app/tugas-page')
             ->assertOk()
             ->assertSee('data-mascot-launcher', false)
             ->assertSee('data-mascot-context="admin-tasks"', false)
@@ -408,10 +403,10 @@ class PsychologyMascotTest extends TestCase
 
     public function test_portal_task_page_renders_the_launcher(): void
     {
-        Filament::setCurrentPanel('portal');
+        Filament::setCurrentPanel('app');
         $this->actingAsStudent();
 
-        $this->get('/portal/tugas-page')
+        $this->get('/app/tugas-saya')
             ->assertOk()
             ->assertSee('data-mascot-launcher', false)
             ->assertSee('data-mascot-context="portal-tasks"', false)
@@ -420,10 +415,10 @@ class PsychologyMascotTest extends TestCase
 
     public function test_launcher_defers_panel_gifs_until_interaction(): void
     {
-        Filament::setCurrentPanel('admin');
+        Filament::setCurrentPanel('app');
         $this->actingAsAdmin();
 
-        $response = $this->get('/admin/tugas-page')->assertOk();
+        $response = $this->get('/app/tugas-page')->assertOk();
         $html = (string) $response->getContent();
 
         $this->assertStringContainsString('berjalan-toggle.gif', $html);
@@ -449,10 +444,10 @@ class PsychologyMascotTest extends TestCase
 
     public function test_mascot_scripts_defer_gifs_and_respect_connection_preferences(): void
     {
-        Filament::setCurrentPanel('admin');
+        Filament::setCurrentPanel('app');
         $this->actingAsAdmin();
 
-        $this->get('/admin/tugas-page')
+        $this->get('/app/tugas-page')
             ->assertOk()
             ->assertSee('IntersectionObserver', false)
             ->assertSee('requestIdleCallback', false)
@@ -473,10 +468,10 @@ class PsychologyMascotTest extends TestCase
 
     public function test_other_sheet_pages_do_not_render_the_launcher(): void
     {
-        Filament::setCurrentPanel('admin');
+        Filament::setCurrentPanel('app');
         $this->actingAsAdmin();
 
-        $this->get('/admin/student-page')
+        $this->get('/app/student-page')
             ->assertOk()
             ->assertDontSee('class="psychology-launcher"', false);
     }

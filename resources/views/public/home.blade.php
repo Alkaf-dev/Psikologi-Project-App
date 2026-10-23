@@ -18,7 +18,7 @@
                 </p>
                 <div class="mt-8 flex flex-wrap gap-3">
                     <a href="{{ route('login') }}" class="rounded-xl bg-white px-5 py-3 text-sm font-semibold text-teal-700 shadow-sm transition hover:bg-teal-50">
-                        Masuk Portal Mahasiswa
+                        Masuk Portal
                     </a>
                     <a href="{{ route('announcements.index') }}" class="rounded-xl border border-white/40 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10">
                         Lihat Pengumuman

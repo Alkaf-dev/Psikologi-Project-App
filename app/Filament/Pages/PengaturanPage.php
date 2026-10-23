@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Filament\Concerns\RequiresStaffRole;
 use App\Repositories\SettingsRepository;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -13,6 +14,8 @@ use Filament\Support\Icons\Heroicon;
 
 class PengaturanPage extends Page
 {
+    use RequiresStaffRole;
+
     protected static ?string $navigationLabel = 'Pengaturan';
 
     protected static ?string $title = 'Pengaturan Aplikasi';

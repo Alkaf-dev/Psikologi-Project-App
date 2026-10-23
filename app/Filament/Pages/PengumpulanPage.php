@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Filament\Concerns\RequiresStaffRole;
 use App\Filament\Support\BaseSheetPage;
 use App\Repositories\GroupMemberRepository;
 use App\Repositories\GroupRepository;
@@ -24,6 +25,8 @@ use Illuminate\Validation\ValidationException;
 
 class PengumpulanPage extends BaseSheetPage
 {
+    use RequiresStaffRole;
+
     protected static ?string $navigationLabel = 'Pengumpulan';
 
     protected static ?string $title = 'Pengumpulan';

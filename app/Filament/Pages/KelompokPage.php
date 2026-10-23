@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Filament\Concerns\RequiresStaffRole;
 use App\Filament\Support\BaseKelompokPage;
 use App\Repositories\CourseRepository;
 use App\Repositories\GroupMemberRepository;
@@ -21,6 +22,8 @@ use Illuminate\Validation\ValidationException;
 
 class KelompokPage extends BaseKelompokPage
 {
+    use RequiresStaffRole;
+
     protected static ?string $navigationLabel = 'Kelompok';
 
     protected static ?string $title = 'Kelompok Mahasiswa';

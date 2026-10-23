@@ -145,7 +145,7 @@ class NotificationCenterTest extends TestCase
         $this->assertNotNull($offline);
         $this->assertFalse($offline['external']);
         $this->assertSame('Lihat jadwal', $offline['action_label']);
-        $this->assertStringContainsString('/portal/jadwal-page', $offline['url']);
+        $this->assertStringContainsString('/app/jadwal-saya', $offline['url']);
     }
 
     public function test_deadline_change_creates_a_new_notification_key(): void

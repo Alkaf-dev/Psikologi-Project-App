@@ -41,7 +41,7 @@ class PortalProdiScopeTest extends TestCase
         parent::setUp();
 
         $this->setUpSheets();
-        Filament::setCurrentPanel('portal');
+        Filament::setCurrentPanel('app');
 
         $this->psikologi = app(StudyProgramRepository::class)->findByCode('psikologi');
         $this->bimbingan = app(StudyProgramRepository::class)->create([
@@ -186,7 +186,7 @@ class PortalProdiScopeTest extends TestCase
             ->assertCanNotSeeTableRecords([(string) $psikologiAnnouncement['id']])
             ->assertSee('Info BK');
 
-        $this->get('/portal')
+        $this->get('/app')
             ->assertOk()
             ->assertSee('Bimbingan dan Konseling')
             ->assertSee('Pengantar BK')

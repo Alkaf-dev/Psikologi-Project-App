@@ -2,6 +2,7 @@
 
 namespace App\Filament\Portal\Pages;
 
+use App\Filament\Concerns\RequiresStudentRole;
 use App\Filament\Support\BaseSheetPage;
 use App\Repositories\AnnouncementRepository;
 use App\Repositories\CourseRepository;
@@ -15,6 +16,10 @@ use Illuminate\Support\Collection;
 
 class PengumumanPage extends BaseSheetPage
 {
+    use RequiresStudentRole;
+
+    protected static ?string $slug = 'pengumuman-saya';
+
     protected string $view = 'filament.portal.pages.pengumuman';
 
     protected static ?string $navigationLabel = 'Pengumuman';

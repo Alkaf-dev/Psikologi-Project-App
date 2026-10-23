@@ -22,7 +22,7 @@ class MateriTugasPageTest extends TestCase
         parent::setUp();
 
         $this->setUpSheets();
-        Filament::setCurrentPanel('portal');
+        Filament::setCurrentPanel('app');
     }
 
     protected function tearDown(): void
@@ -105,7 +105,7 @@ class MateriTugasPageTest extends TestCase
         $this->assertNull($table->getColumn('title')?->getCharacterLimit());
         $this->assertNull($table->getColumn('portal_group_name')?->getCharacterLimit());
 
-        $this->get('/portal/tugas-page')
+        $this->get('/app/tugas-saya')
             ->assertOk()
             ->assertSee('min-width: 94.5rem', false)
             ->assertSee('--sheet-action-column-width: 14.5rem', false);

@@ -32,7 +32,7 @@ class CourseOnlineLinkTest extends TestCase
 
     public function test_admin_can_create_course_with_online_meeting_link(): void
     {
-        Filament::setCurrentPanel('admin');
+        Filament::setCurrentPanel('app');
         $this->actingAsAdmin();
 
         $program = app(StudyProgramRepository::class)->findByCode('psikologi');
@@ -64,7 +64,7 @@ class CourseOnlineLinkTest extends TestCase
 
     public function test_admin_can_update_course_online_meeting_link(): void
     {
-        Filament::setCurrentPanel('admin');
+        Filament::setCurrentPanel('app');
         $this->actingAsAdmin();
 
         $course = app(CourseRepository::class)->findBy('code', 'PSI101');

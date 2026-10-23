@@ -24,7 +24,7 @@ class StudentPageTest extends TestCase
         parent::setUp();
 
         $this->setUpSheets();
-        Filament::setCurrentPanel('admin');
+        Filament::setCurrentPanel('app');
         $this->actingAsAdmin();
     }
 
@@ -81,8 +81,7 @@ class StudentPageTest extends TestCase
         $authUser = (new SheetUserProvider(app(UserRepository::class)))->retrieveById((string) $student['id']);
 
         $this->assertNotNull($authUser);
-        $this->assertTrue($authUser->canAccessPanel(Filament::getPanel('portal')));
-        $this->assertFalse($authUser->canAccessPanel(Filament::getPanel('admin')));
+        $this->assertTrue($authUser->canAccessPanel(Filament::getPanel('app')));
     }
 
     public function test_admin_can_edit_reset_password_and_delete_student(): void

@@ -33,7 +33,7 @@ class SettingsAndProfileTest extends TestCase
 
     public function test_admin_can_save_settings(): void
     {
-        Filament::setCurrentPanel('admin');
+        Filament::setCurrentPanel('app');
         $this->actingAsAdmin();
 
         Livewire::test(PengaturanPage::class)
@@ -58,7 +58,7 @@ class SettingsAndProfileTest extends TestCase
 
     public function test_student_can_update_profile_and_password(): void
     {
-        Filament::setCurrentPanel('portal');
+        Filament::setCurrentPanel('app');
         $student = $this->actingAsStudent();
 
         Livewire::test(ProfilPage::class)

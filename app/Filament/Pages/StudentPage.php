@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Enums\UserRole;
+use App\Filament\Concerns\RequiresStaffRole;
 use App\Filament\Support\BaseSheetPage;
 use App\Repositories\CourseRepository;
 use App\Repositories\GroupMemberRepository;
@@ -28,6 +29,8 @@ use Illuminate\Validation\ValidationException;
 
 class StudentPage extends BaseSheetPage
 {
+    use RequiresStaffRole;
+
     protected static ?string $navigationLabel = 'Mahasiswa';
 
     protected static ?string $title = 'Pendataan Mahasiswa';

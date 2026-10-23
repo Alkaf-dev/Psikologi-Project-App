@@ -2,6 +2,7 @@
 
 namespace App\Filament\Portal\Pages;
 
+use App\Filament\Concerns\RequiresStudentRole;
 use App\Filament\Support\BaseKelompokPage;
 use App\Repositories\CourseRepository;
 use App\Repositories\GroupMemberRepository;
@@ -13,6 +14,10 @@ use Illuminate\Support\Collection;
 
 class KelompokPage extends BaseKelompokPage
 {
+    use RequiresStudentRole;
+
+    protected static ?string $slug = 'kelompok-saya';
+
     protected static ?string $navigationLabel = 'Kelompok Saya';
 
     protected static ?string $title = 'Kelompok Saya';
@@ -26,6 +31,18 @@ class KelompokPage extends BaseKelompokPage
     protected function canManage(): bool
     {
         return false;
+    }
+
+    /**
+     * @param  array<string, mixed>  $group
+     */
+    protected function canAccessGroup(array $group): bool
+    {
+        return in_array(
+            (string) ($group['id'] ?? ''),
+            app(GroupMemberRepository::class)->groupIdsForUser((string) auth()->id()),
+            true,
+        );
     }
 
     /**

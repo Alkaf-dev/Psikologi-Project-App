@@ -6,7 +6,6 @@ use App\Filament\Pages\JadwalPage as AdminJadwalPage;
 use App\Filament\Pages\NotifikasiPage as AdminNotifikasiPage;
 use App\Filament\Pages\TugasPage as AdminTugasPage;
 use App\Filament\Portal\Pages\JadwalPage as PortalJadwalPage;
-use App\Filament\Portal\Pages\NotifikasiPage as PortalNotifikasiPage;
 use App\Filament\Portal\Pages\TugasPage as PortalTugasPage;
 use App\Repositories\GroupMemberRepository;
 use App\Repositories\NotificationReadRepository;
@@ -96,22 +95,9 @@ class NotificationCenter
         );
     }
 
-    /**
-     * @param  array<string, mixed>  $user
-     */
-    public function panelId(array $user): string
+    public function notificationPageUrl(): string
     {
-        return $this->users->isStudent($user) ? 'portal' : 'admin';
-    }
-
-    /**
-     * @param  array<string, mixed>  $user
-     */
-    public function notificationPageUrl(array $user): string
-    {
-        return $this->panelId($user) === 'portal'
-            ? PortalNotifikasiPage::getUrl(panel: 'portal')
-            : AdminNotifikasiPage::getUrl(panel: 'admin');
+        return AdminNotifikasiPage::getUrl();
     }
 
     /**
@@ -276,8 +262,8 @@ class NotificationCenter
     protected function taskPageUrl(array $user): string
     {
         return $this->users->isStudent($user)
-            ? PortalTugasPage::getUrl(panel: 'portal')
-            : AdminTugasPage::getUrl(panel: 'admin');
+            ? PortalTugasPage::getUrl()
+            : AdminTugasPage::getUrl();
     }
 
     /**
@@ -286,8 +272,8 @@ class NotificationCenter
     protected function schedulePageUrl(array $user): string
     {
         return $this->users->isStudent($user)
-            ? PortalJadwalPage::getUrl(panel: 'portal')
-            : AdminJadwalPage::getUrl(panel: 'admin');
+            ? PortalJadwalPage::getUrl()
+            : AdminJadwalPage::getUrl();
     }
 
     protected function dayName(Carbon $date): string

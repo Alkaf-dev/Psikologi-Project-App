@@ -40,7 +40,7 @@ class LoginFlowTest extends TestCase
 
     public function test_invalid_password_does_not_authenticate(): void
     {
-        Filament::setCurrentPanel('portal');
+        Filament::setCurrentPanel('app');
 
         Livewire::test(Login::class)
             ->fillForm([
@@ -56,7 +56,7 @@ class LoginFlowTest extends TestCase
 
     public function test_prodi_is_required_to_log_in(): void
     {
-        Filament::setCurrentPanel('portal');
+        Filament::setCurrentPanel('app');
 
         Livewire::test(Login::class)
             ->fillForm([
@@ -78,7 +78,7 @@ class LoginFlowTest extends TestCase
             'active' => '1',
         ]);
 
-        Filament::setCurrentPanel('portal');
+        Filament::setCurrentPanel('app');
 
         Livewire::test(Login::class)
             ->fillForm([
@@ -101,7 +101,7 @@ class LoginFlowTest extends TestCase
 
         $users->update((string) $student['id'], ['prodi_id' => '']);
 
-        Filament::setCurrentPanel('portal');
+        Filament::setCurrentPanel('app');
 
         Livewire::test(Login::class)
             ->fillForm([
@@ -115,9 +115,9 @@ class LoginFlowTest extends TestCase
         $this->assertGuest();
     }
 
-    public function test_admin_can_log_in_to_admin_panel_with_prodi(): void
+    public function test_admin_can_log_in_to_the_app_panel_with_prodi(): void
     {
-        Filament::setCurrentPanel('admin');
+        Filament::setCurrentPanel('app');
 
         Livewire::test(Login::class)
             ->fillForm([
@@ -132,9 +132,9 @@ class LoginFlowTest extends TestCase
         $this->assertTrue(auth()->user()->isAdmin());
     }
 
-    public function test_pjmk_can_log_in_to_admin_panel_with_prodi(): void
+    public function test_pjmk_can_log_in_as_an_admin_with_prodi(): void
     {
-        Filament::setCurrentPanel('admin');
+        Filament::setCurrentPanel('app');
 
         Livewire::test(Login::class)
             ->fillForm([
@@ -146,29 +146,20 @@ class LoginFlowTest extends TestCase
             ->assertHasNoFormErrors();
 
         $this->assertAuthenticated();
-        $this->assertTrue(auth()->user()->isPjmk());
+        $this->assertTrue(auth()->user()->isAdministrator());
         $this->assertTrue(auth()->user()->isAdmin());
     }
 
-    public function test_pjmk_cannot_log_in_to_portal(): void
+    public function test_unknown_role_cannot_log_in(): void
     {
-        Filament::setCurrentPanel('portal');
+        $users = app(UserRepository::class);
+        $student = $users->findActiveByLogin('ayu@psikologi.test');
 
-        Livewire::test(Login::class)
-            ->fillForm([
-                'login' => 'pjmk@psikologi.test',
-                'password' => 'password',
-                'prodi_id' => $this->prodiId(),
-            ])
-            ->call('authenticate')
-            ->assertHasFormErrors(['login']);
+        $this->assertNotNull($student);
 
-        $this->assertGuest();
-    }
+        $users->update((string) $student['id'], ['role' => 'unknown']);
 
-    public function test_student_cannot_log_in_to_admin_panel(): void
-    {
-        Filament::setCurrentPanel('admin');
+        Filament::setCurrentPanel('app');
 
         Livewire::test(Login::class)
             ->fillForm([
@@ -184,7 +175,7 @@ class LoginFlowTest extends TestCase
 
     protected function assertLoginWorks(string $login): void
     {
-        Filament::setCurrentPanel('portal');
+        Filament::setCurrentPanel('app');
 
         Livewire::test(Login::class)
             ->fillForm([

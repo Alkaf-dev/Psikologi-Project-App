@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Enums\UserRole;
+use App\Filament\Concerns\RequiresStaffRole;
 use App\Filament\Support\BaseSheetPage;
 use App\Repositories\StudyProgramRepository;
 use App\Repositories\UserRepository;
@@ -21,6 +22,8 @@ use Illuminate\Validation\ValidationException;
 
 class UserPage extends BaseSheetPage
 {
+    use RequiresStaffRole;
+
     protected static ?string $navigationLabel = 'User';
 
     protected static ?string $title = 'Manajemen User';
@@ -269,7 +272,7 @@ class UserPage extends BaseSheetPage
                 ->default(UserRole::Mahasiswa->value)
                 ->required()
                 ->live()
-                ->helperText('PJMK memiliki akses panel yang sama dengan Super Admin.'),
+                ->helperText('Admin memiliki akses penuh yang sama dengan Super Admin.'),
             Select::make('prodi_id')
                 ->label('Prodi')
                 ->options(fn (): array => app(StudyProgramRepository::class)->allOptions())
@@ -378,7 +381,7 @@ class UserPage extends BaseSheetPage
             return;
         }
 
-        $remainsAdmin = UserRole::tryFromLegacy($data['role'] ?? null)?->isAdminPanel() ?? false;
+        $remainsAdmin = UserRole::tryFromLegacy($data['role'] ?? null)?->isStaff() ?? false;
         $remainsActive = filter_var($data['active'] ?? false, FILTER_VALIDATE_BOOLEAN);
 
         if ($remainsAdmin && $remainsActive) {

@@ -54,10 +54,10 @@ class DemoData
         ]);
 
         $this->ensureUser([
-            'name' => 'PJMK Program Studi',
+            'name' => 'Admin Prodi',
             'email' => 'pjmk@psikologi.test',
             'npm' => 'PJMK001',
-            'role' => UserRole::Pjmk->value,
+            'role' => UserRole::Admin->value,
             'prodi_id' => $prodi['id'],
             'class_name' => '',
             'cohort' => '',

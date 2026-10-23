@@ -21,7 +21,7 @@ class AdminCrudActionTest extends TestCase
         parent::setUp();
 
         $this->setUpSheets();
-        Filament::setCurrentPanel('admin');
+        Filament::setCurrentPanel('app');
         $this->actingAsAdmin();
     }
 
@@ -91,7 +91,7 @@ class AdminCrudActionTest extends TestCase
         $this->assertNotNull($users->find((string) $student['id'], true));
     }
 
-    public function test_admin_can_create_super_admin_and_pjmk_accounts(): void
+    public function test_admin_can_create_super_admin_and_admin_accounts(): void
     {
         $program = app(StudyProgramRepository::class)->findByCode('psikologi');
 
@@ -102,7 +102,7 @@ class AdminCrudActionTest extends TestCase
 
         foreach ([
             ['role' => 'super_admin', 'name' => 'Super Admin Baru', 'npm' => 'ADMIN002', 'email' => 'super.admin@psikologi.test'],
-            ['role' => 'pjmk', 'name' => 'PJMK Baru', 'npm' => 'PJMK002', 'email' => 'pjmk.baru@psikologi.test'],
+            ['role' => 'pjmk', 'name' => 'Admin Baru', 'npm' => 'PJMK002', 'email' => 'pjmk.baru@psikologi.test'],
         ] as $account) {
             Livewire::test(UserPage::class)
                 ->callTableAction('create', null, [
@@ -130,11 +130,10 @@ class AdminCrudActionTest extends TestCase
 
             $this->assertNotNull($authUser);
             $this->assertTrue($authUser->isAdmin());
-            $this->assertTrue($authUser->canAccessPanel(Filament::getPanel('admin')));
-            $this->assertFalse($authUser->canAccessPanel(Filament::getPanel('portal')));
+            $this->assertTrue($authUser->canAccessPanel(Filament::getPanel('app')));
 
             if ($account['role'] === 'pjmk') {
-                $this->assertTrue($authUser->isPjmk());
+                $this->assertTrue($authUser->isAdministrator());
             } else {
                 $this->assertTrue($authUser->isSuperAdmin());
             }

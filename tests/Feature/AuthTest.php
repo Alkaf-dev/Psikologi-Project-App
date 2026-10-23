@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Auth\SheetUser;
 use App\Auth\SheetUserProvider;
+use App\Enums\UserRole;
 use App\Repositories\StudyProgramRepository;
 use App\Repositories\UserRepository;
 use Filament\Facades\Filament;
@@ -28,16 +29,11 @@ class AuthTest extends TestCase
         parent::tearDown();
     }
 
-    public function test_login_pages_render_with_login_and_prodi_fields(): void
+    public function test_login_page_renders_with_login_and_prodi_fields(): void
     {
-        $this->get('/portal/login')
+        $this->get('/app/login')
             ->assertOk()
-            ->assertSee('Email atau NIM')
-            ->assertSee('Prodi')
-            ->assertSee('S1 Psikologi');
-
-        $this->get('/admin/login')
-            ->assertOk()
+            ->assertSee('Masuk ke Psikologi Connect')
             ->assertSee('Email atau NIM')
             ->assertSee('Prodi')
             ->assertSee('S1 Psikologi');
@@ -47,15 +43,15 @@ class AuthTest extends TestCase
     {
         $this->withServerVariables(['REMOTE_ADDR' => '127.0.0.1'])
             ->withHeader('X-Forwarded-Proto', 'https')
-            ->get('/portal/login')
+            ->get('/app/login')
             ->assertOk()
             ->assertSee('https://localhost:8000/css/filament/filament/app.css', false);
     }
 
-    public function test_login_route_redirects_to_portal_login(): void
+    public function test_login_route_redirects_to_the_app_login(): void
     {
         $this->get('/login')
-            ->assertRedirect(route('filament.portal.auth.login'));
+            ->assertRedirect(route('filament.app.auth.login'));
     }
 
     public function test_user_can_be_retrieved_and_validated_by_email_or_npm(): void
@@ -113,7 +109,7 @@ class AuthTest extends TestCase
         ]));
     }
 
-    public function test_roles_are_limited_to_their_panel(): void
+    public function test_all_recognized_roles_can_access_the_app_panel(): void
     {
         $provider = new SheetUserProvider(app(UserRepository::class));
         $admin = $provider->retrieveByCredentials([
@@ -133,12 +129,20 @@ class AuthTest extends TestCase
         $this->assertNotNull($pjmk);
         $this->assertNotNull($student);
 
-        $this->assertTrue($admin->canAccessPanel(Filament::getPanel('admin')));
-        $this->assertFalse($admin->canAccessPanel(Filament::getPanel('portal')));
-        $this->assertTrue($pjmk->canAccessPanel(Filament::getPanel('admin')));
-        $this->assertFalse($pjmk->canAccessPanel(Filament::getPanel('portal')));
-        $this->assertTrue($student->canAccessPanel(Filament::getPanel('portal')));
-        $this->assertFalse($student->canAccessPanel(Filament::getPanel('admin')));
+        $this->assertTrue($admin->canAccessPanel(Filament::getPanel('app')));
+        $this->assertTrue($pjmk->canAccessPanel(Filament::getPanel('app')));
+        $this->assertTrue($student->canAccessPanel(Filament::getPanel('app')));
+        $this->assertTrue($admin->isAdmin());
+        $this->assertTrue($pjmk->isAdministrator());
+        $this->assertFalse($student->isAdmin());
+    }
+
+    public function test_pjmk_role_is_presented_as_admin(): void
+    {
+        $this->assertSame('Admin', UserRole::Admin->label());
+        $this->assertSame('pjmk', UserRole::Admin->value);
+        $this->assertSame(UserRole::SuperAdmin, UserRole::tryFromLegacy('admin'));
+        $this->assertSame(UserRole::Admin, UserRole::tryFromLegacy('pjmk'));
     }
 
     public function test_legacy_admin_role_keeps_admin_access(): void
@@ -154,7 +158,7 @@ class AuthTest extends TestCase
 
         $this->assertNotNull($user);
         $this->assertTrue($user->isAdmin());
-        $this->assertTrue($user->canAccessPanel(Filament::getPanel('admin')));
+        $this->assertTrue($user->canAccessPanel(Filament::getPanel('app')));
     }
 
     public function test_unknown_role_has_no_panel_access(): void
@@ -171,8 +175,7 @@ class AuthTest extends TestCase
         $this->assertNotNull($user);
         $this->assertFalse($user->isAdmin());
         $this->assertFalse($user->isStudent());
-        $this->assertFalse($user->canAccessPanel(Filament::getPanel('admin')));
-        $this->assertFalse($user->canAccessPanel(Filament::getPanel('portal')));
+        $this->assertFalse($user->canAccessPanel(Filament::getPanel('app')));
     }
 
     protected function prodiId(): string

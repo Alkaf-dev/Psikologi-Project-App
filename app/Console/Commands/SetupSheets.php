@@ -66,7 +66,7 @@ class SetupSheets extends Command
             $this->newLine();
             $this->components->info('Data demo siap.');
             $this->line('Super Admin: admin@psikologi.test / password');
-            $this->line('PJMK       : pjmk@psikologi.test / password');
+            $this->line('Admin      : pjmk@psikologi.test / password');
             $this->line('Mahasiswa  : ayu@psikologi.test / password');
         } elseif ($users->admins()->isEmpty()) {
             $admin = $this->createAdmin();

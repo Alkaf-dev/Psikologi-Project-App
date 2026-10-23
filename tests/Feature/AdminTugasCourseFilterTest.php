@@ -21,7 +21,7 @@ class AdminTugasCourseFilterTest extends TestCase
         parent::setUp();
 
         $this->setUpSheets();
-        Filament::setCurrentPanel('admin');
+        Filament::setCurrentPanel('app');
     }
 
     protected function tearDown(): void
@@ -63,7 +63,7 @@ class AdminTugasCourseFilterTest extends TestCase
         $this->assertStringContainsString('sheet-responsive-table', $tableClass);
         $this->assertTrue($table->getColumn('meeting_number')?->canHeaderWrap());
 
-        $this->get('/admin/tugas-page')
+        $this->get('/app/tugas-page')
             ->assertOk()
             ->assertSee('min-width: 107.5rem', false)
             ->assertSee('--sheet-action-column-width: 14rem', false)

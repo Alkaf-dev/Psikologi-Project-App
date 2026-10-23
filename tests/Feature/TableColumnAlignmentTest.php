@@ -43,7 +43,7 @@ class TableColumnAlignmentTest extends TestCase
 
     public function test_admin_tables_use_semantic_column_alignment(): void
     {
-        Filament::setCurrentPanel('admin');
+        Filament::setCurrentPanel('app');
         $this->actingAsAdmin();
 
         $this->assertColumnAlignments([
@@ -115,7 +115,7 @@ class TableColumnAlignmentTest extends TestCase
 
     public function test_portal_tables_use_semantic_column_alignment(): void
     {
-        Filament::setCurrentPanel('portal');
+        Filament::setCurrentPanel('app');
         $this->actingAsStudent();
 
         $this->assertColumnAlignments([
@@ -155,7 +155,7 @@ class TableColumnAlignmentTest extends TestCase
 
     public function test_pengumpulan_table_uses_the_compact_spreadsheet_layout(): void
     {
-        Filament::setCurrentPanel('admin');
+        Filament::setCurrentPanel('app');
         $this->actingAsAdmin();
 
         $table = Livewire::test(PengumpulanPage::class)->instance()->getTable();
@@ -209,17 +209,17 @@ class TableColumnAlignmentTest extends TestCase
 
     public function test_record_action_buttons_are_centered_and_persist_across_pages(): void
     {
-        Filament::setCurrentPanel('admin');
+        Filament::setCurrentPanel('app');
         $this->actingAsAdmin();
 
-        $this->get('/admin/pengumpulan-page')
+        $this->get('/app/pengumpulan-page')
             ->assertOk()
             ->assertSee('.fi-ta-actions', false)
             ->assertSee('justify-content: center', false)
             ->assertSee('min-width: 68rem', false)
             ->assertSee('width: var(--sheet-action-column-width)', false);
 
-        $this->get('/admin/tugas-page')
+        $this->get('/app/tugas-page')
             ->assertOk()
             ->assertSee('justify-content: center', false);
     }

@@ -4,7 +4,6 @@ namespace App\Filament\Pages\Auth;
 
 use App\Repositories\StudyProgramRepository;
 use Filament\Auth\Pages\Login as BaseLogin;
-use Filament\Facades\Filament;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Schema;
@@ -34,11 +33,7 @@ class Login extends BaseLogin
 
     public function getHeading(): string|Htmlable|null
     {
-        $panel = Filament::getCurrentOrDefaultPanel();
-
-        return $panel?->getId() === 'admin'
-            ? 'Masuk ke Panel Admin'
-            : 'Masuk ke Portal Mahasiswa';
+        return 'Masuk ke Psikologi Connect';
     }
 
     public function getSubheading(): string|Htmlable|null

@@ -30,20 +30,20 @@ class FilamentPagesTest extends TestCase
     {
         $this->actingAsAdmin();
 
-        $this->get('/admin')->assertOk()->assertSee('Dashboard Admin');
+        $this->get('/app')->assertOk()->assertSee('Dashboard Admin');
 
         foreach ([
-            '/admin/student-page' => 'Pendataan Mahasiswa',
-            '/admin/user-page' => 'Manajemen User',
-            '/admin/study-program-page' => 'Program Studi',
-            '/admin/mata-kuliah-page' => 'Mata Kuliah',
-            '/admin/jadwal-page' => 'Jadwal Mata Kuliah',
-            '/admin/kelompok-page' => 'Kelompok Mahasiswa',
-            '/admin/tugas-page' => 'Materi dan Tugas',
-            '/admin/pengumpulan-page' => 'Pengumpulan',
-            '/admin/pengumuman-page' => 'Pengumuman',
-            '/admin/notifikasi-page' => 'Notifikasi',
-            '/admin/pengaturan-page' => 'Pengaturan Aplikasi',
+            '/app/student-page' => 'Pendataan Mahasiswa',
+            '/app/user-page' => 'Manajemen User',
+            '/app/study-program-page' => 'Program Studi',
+            '/app/mata-kuliah-page' => 'Mata Kuliah',
+            '/app/jadwal-page' => 'Jadwal Mata Kuliah',
+            '/app/kelompok-page' => 'Kelompok Mahasiswa',
+            '/app/tugas-page' => 'Materi dan Tugas',
+            '/app/pengumpulan-page' => 'Pengumpulan',
+            '/app/pengumuman-page' => 'Pengumuman',
+            '/app/notifikasi-page' => 'Notifikasi',
+            '/app/pengaturan-page' => 'Pengaturan Aplikasi',
         ] as $url => $text) {
             $this->get($url)->assertOk()->assertSee($text);
         }
@@ -52,12 +52,8 @@ class FilamentPagesTest extends TestCase
     public function test_navigation_groups_are_ordered_from_most_to_least_important(): void
     {
         $this->assertSame(
-            ['Akademik', 'Administrasi', 'Konten', 'Akun', 'Sistem'],
-            $this->navigationGroupLabels('admin'),
-        );
-        $this->assertSame(
-            ['Akademik', 'Informasi', 'Akun'],
-            $this->navigationGroupLabels('portal'),
+            ['Akademik', 'Administrasi', 'Konten', 'Informasi', 'Akun', 'Sistem'],
+            $this->navigationGroupLabels('app'),
         );
     }
 
@@ -65,14 +61,14 @@ class FilamentPagesTest extends TestCase
     {
         $this->actingAsAdmin();
 
-        $this->get('/admin/student-page')
+        $this->get('/app/student-page')
             ->assertOk()
             ->assertSee('Prodi')
             ->assertSee('Nama Mahasiswa')
             ->assertSee('NIM');
     }
 
-    public function test_pjmk_can_access_user_management_page(): void
+    public function test_admin_can_access_user_management_page(): void
     {
         $pjmk = app(UserRepository::class)->findActiveByLogin('pjmk@psikologi.test');
 
@@ -84,24 +80,24 @@ class FilamentPagesTest extends TestCase
 
         $this->actingAs($user);
 
-        $this->get('/admin/user-page')
+        $this->get('/app/user-page')
             ->assertOk()
             ->assertSee('Manajemen User');
     }
 
-    public function test_portal_pages_render(): void
+    public function test_student_pages_render(): void
     {
         $this->actingAsStudent();
 
-        $this->get('/portal')->assertOk()->assertSee('Portal Mahasiswa');
+        $this->get('/app')->assertOk()->assertSee('Portal Mahasiswa');
 
         foreach ([
-            '/portal/jadwal-page' => 'Jadwal Kuliah',
-            '/portal/tugas-page' => 'Materi dan Tugas',
-            '/portal/kelompok-page' => 'Kelompok Saya',
-            '/portal/pengumuman-page' => 'Pengumuman',
-            '/portal/notifikasi-page' => 'Notifikasi',
-            '/portal/profil-page' => 'Profil Saya',
+            '/app/jadwal-saya' => 'Jadwal Kuliah',
+            '/app/tugas-saya' => 'Materi dan Tugas',
+            '/app/kelompok-saya' => 'Kelompok Saya',
+            '/app/pengumuman-saya' => 'Pengumuman',
+            '/app/notifikasi-page' => 'Notifikasi',
+            '/app/profil-saya' => 'Profil Saya',
         ] as $url => $text) {
             $this->get($url)->assertOk()->assertSee($text);
         }

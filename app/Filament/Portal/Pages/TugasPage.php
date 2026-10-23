@@ -2,6 +2,7 @@
 
 namespace App\Filament\Portal\Pages;
 
+use App\Filament\Concerns\RequiresStudentRole;
 use App\Filament\Support\BaseSheetPage;
 use App\Repositories\CourseRepository;
 use App\Repositories\GroupMemberRepository;
@@ -25,6 +26,10 @@ use Illuminate\Support\Collection;
 
 class TugasPage extends BaseSheetPage
 {
+    use RequiresStudentRole;
+
+    protected static ?string $slug = 'tugas-saya';
+
     protected string $view = 'filament.portal.pages.tugas';
 
     protected static ?string $navigationLabel = 'Materi dan Tugas';

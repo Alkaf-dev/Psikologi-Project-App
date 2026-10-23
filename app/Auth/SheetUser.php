@@ -13,11 +13,7 @@ class SheetUser extends GenericUser implements FilamentUser, HasName
 {
     public function canAccessPanel(Panel $panel): bool
     {
-        return match ($panel->getId()) {
-            'admin' => $this->isAdmin(),
-            'portal' => $this->isStudent(),
-            default => false,
-        };
+        return $panel->getId() === 'app' && $this->role() !== null;
     }
 
     public function getFilamentName(): string|Htmlable
@@ -42,7 +38,7 @@ class SheetUser extends GenericUser implements FilamentUser, HasName
 
     public function isAdmin(): bool
     {
-        return $this->role()?->isAdminPanel() ?? false;
+        return $this->role()?->isStaff() ?? false;
     }
 
     public function isSuperAdmin(): bool
@@ -50,14 +46,14 @@ class SheetUser extends GenericUser implements FilamentUser, HasName
         return $this->role() === UserRole::SuperAdmin;
     }
 
-    public function isPjmk(): bool
+    public function isAdministrator(): bool
     {
-        return $this->role() === UserRole::Pjmk;
+        return $this->role() === UserRole::Admin;
     }
 
     public function isStudent(): bool
     {
-        return $this->role()?->isStudentPortal() ?? false;
+        return $this->role()?->isStudent() ?? false;
     }
 
     public function isActive(): bool
