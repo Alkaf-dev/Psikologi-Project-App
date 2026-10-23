@@ -6,6 +6,7 @@ use App\Filament\Support\BaseSheetPage;
 use App\Repositories\CourseRepository;
 use App\Repositories\ScheduleRepository;
 use App\Repositories\UserRepository;
+use App\Support\ExternalUrl;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -85,6 +86,14 @@ class JadwalPage extends BaseSheetPage
                     ->weight('semibold')
                     ->url(fn (array $record): ?string => ($record['mode'] ?? 'offline') === 'online' && filled($record['meeting_link'] ?? null) ? (string) $record['meeting_link'] : null, true)
                     ->color(fn (array $record): ?string => ($record['mode'] ?? 'offline') === 'online' ? 'primary' : null),
+                TextColumn::make('meeting_link')
+                    ->label('Link (Online)')
+                    ->formatStateUsing(fn (?string $state): string => ExternalUrl::http($state) !== null ? 'Masuk' : '-')
+                    ->url(fn (?string $state): ?string => ExternalUrl::http($state))
+                    ->openUrlInNewTab()
+                    ->color(fn (?string $state): ?string => ExternalUrl::http($state) !== null ? 'primary' : null)
+                    ->tooltip(fn (?string $state): ?string => ExternalUrl::http($state) !== null ? 'Buka tautan perkuliahan di tab baru' : null)
+                    ->alignCenter(),
                 TextColumn::make('class_name')
                     ->label('Kelas')
                     ->sortable(),
@@ -193,12 +202,13 @@ class JadwalPage extends BaseSheetPage
                 ->visible(fn (Get $get): bool => $get('mode') === 'online')
                 ->required(fn (Get $get): bool => $get('mode') === 'online'),
             TextInput::make('meeting_link')
-                ->label('Tautan Zoom / Google Meet')
+                ->label('Link (Online)')
                 ->url()
                 ->maxLength(500)
                 ->visible(fn (Get $get): bool => $get('mode') === 'online')
                 ->required(fn (Get $get): bool => $get('mode') === 'online')
-                ->helperText('Tempel tautan rapat Zoom atau Google Meet.'),
+                ->placeholder('https://meet.google.com/... atau tautan Zoom')
+                ->helperText('Tempel tautan perkuliahan daring (Zoom, Google Meet, dll).'),
             TextInput::make('class_name')
                 ->label('Kelas')
                 ->required()

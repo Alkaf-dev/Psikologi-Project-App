@@ -71,7 +71,7 @@ return [
 
         'courses' => [
             'id', 'code', 'name', 'credits', 'lecturer', 'semester', 'class_name',
-            'description', 'created_at', 'updated_at', 'deleted_at', 'prodi_ids',
+            'description', 'created_at', 'updated_at', 'deleted_at', 'prodi_ids', 'meeting_link',
         ],
 
         'schedules' => [

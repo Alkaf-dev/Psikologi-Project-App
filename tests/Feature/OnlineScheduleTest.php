@@ -124,6 +124,15 @@ class OnlineScheduleTest extends TestCase
         Livewire::test(PortalJadwalPage::class)
             ->assertCanSeeTableRecords([(string) $schedule['id']])
             ->assertSee('Google Meet')
+            ->assertSee('Masuk')
+            ->assertSee('https://meet.google.com/portal-online-test', false);
+
+        Filament::setCurrentPanel('admin');
+        $this->actingAsAdmin();
+
+        Livewire::test(JadwalPage::class)
+            ->assertCanSeeTableRecords([(string) $schedule['id']])
+            ->assertSee('Masuk')
             ->assertSee('https://meet.google.com/portal-online-test', false);
     }
 

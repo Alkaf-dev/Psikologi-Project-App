@@ -6,6 +6,7 @@ use App\Filament\Support\BaseSheetPage;
 use App\Repositories\CourseRepository;
 use App\Repositories\StudyProgramRepository;
 use App\Repositories\UserRepository;
+use App\Support\ExternalUrl;
 use App\Support\ProdiAssignments;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Select;
@@ -83,6 +84,14 @@ class MataKuliahPage extends BaseSheetPage
                     ->badge()
                     ->searchable()
                     ->wrap()
+                    ->alignCenter(),
+                TextColumn::make('meeting_link')
+                    ->label('Link (Online)')
+                    ->formatStateUsing(fn (?string $state): string => ExternalUrl::http($state) !== null ? 'Masuk' : '-')
+                    ->url(fn (?string $state): ?string => ExternalUrl::http($state))
+                    ->openUrlInNewTab()
+                    ->color(fn (?string $state): ?string => ExternalUrl::http($state) !== null ? 'primary' : null)
+                    ->tooltip(fn (?string $state): ?string => ExternalUrl::http($state) !== null ? 'Buka tautan perkuliahan di tab baru' : null)
                     ->alignCenter(),
             ])
             ->headerActions([$this->createAction()])
@@ -197,6 +206,14 @@ class MataKuliahPage extends BaseSheetPage
                 ->preload()
                 ->helperText('Satu mata kuliah dapat dipakai beberapa Prodi. Buat data terpisah jika kelasnya berbeda.')
                 ->columnSpanFull(),
+            TextInput::make('meeting_link')
+                ->label('Link (Online)')
+                ->url()
+                ->maxLength(500)
+                ->nullable()
+                ->placeholder('https://meet.google.com/... atau tautan Zoom')
+                ->helperText('Tautan perkuliahan daring (Zoom, Google Meet, dll) jika ada.')
+                ->columnSpanFull(),
             Textarea::make('description')
                 ->label('Deskripsi')
                 ->rows(3)
@@ -211,6 +228,7 @@ class MataKuliahPage extends BaseSheetPage
     protected function normalizeCourse(array $record): array
     {
         $record['prodi_ids'] = ProdiAssignments::ids($record['prodi_ids'] ?? '');
+        $record['meeting_link'] = (string) ($record['meeting_link'] ?? '');
 
         return $record;
     }
@@ -221,6 +239,7 @@ class MataKuliahPage extends BaseSheetPage
     protected function prepareCourseData(array &$data): void
     {
         $data['prodi_ids'] = ProdiAssignments::csv($data['prodi_ids'] ?? []);
+        $data['meeting_link'] = trim((string) ($data['meeting_link'] ?? ''));
     }
 
     /**

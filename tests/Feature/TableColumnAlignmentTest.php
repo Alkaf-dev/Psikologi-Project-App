@@ -65,6 +65,7 @@ class TableColumnAlignmentTest extends TestCase
                 'start_time' => Alignment::Center,
                 'end_time' => Alignment::Center,
                 'mode_label' => Alignment::Center,
+                'meeting_link' => Alignment::Center,
             ],
             KelompokPage::class => [
                 'index' => Alignment::Center,
@@ -77,6 +78,7 @@ class TableColumnAlignmentTest extends TestCase
                 'credits' => Alignment::End,
                 'semester' => Alignment::End,
                 'prodi_names' => Alignment::Center,
+                'meeting_link' => Alignment::Center,
             ],
             PengumpulanPage::class => [
                 'task_title' => null,
@@ -135,6 +137,7 @@ class TableColumnAlignmentTest extends TestCase
                 'start_time' => Alignment::Center,
                 'end_time' => Alignment::Center,
                 'mode_label' => Alignment::Center,
+                'meeting_link' => Alignment::Center,
             ],
             PortalKelompokPage::class => [
                 'index' => Alignment::Center,
