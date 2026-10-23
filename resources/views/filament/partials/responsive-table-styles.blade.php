@@ -78,9 +78,14 @@
         padding-block: 0.625rem;
     }
 
-    .sheet-responsive-table .fi-ta-col {
+    .sheet-responsive-table .fi-ta-col,
+    .sheet-responsive-table button.fi-ta-col,
+    .sheet-responsive-table a.fi-ta-col {
+        display: block;
+        width: 100%;
         min-width: 0;
         max-width: 100%;
+        overflow: hidden;
         text-align: inherit;
     }
 
@@ -93,8 +98,11 @@
     }
 
     .sheet-responsive-table .fi-ta-text {
+        display: block;
+        width: 100%;
         min-width: 0;
         max-width: 100%;
+        overflow: hidden;
     }
 
     .sheet-responsive-table .fi-ta-text > div,
@@ -104,12 +112,83 @@
         max-width: 100%;
     }
 
+    /* Truncate text with ellipsis (...) for all non-badge text elements */
+    .sheet-responsive-table .fi-ta-text-item:not(.fi-ta-text-has-badges),
+    .sheet-responsive-table .fi-ta-text:not(.fi-ta-text-has-badges),
+    .sheet-responsive-table .fi-ta-col > .fi-ta-text-item:not(.fi-ta-text-has-badges),
+    .sheet-responsive-table .fi-ta-col > .fi-ta-text:not(.fi-ta-text-has-badges),
     .sheet-responsive-table .fi-ta-text:not(.fi-ta-text-has-badges) .fi-ta-text-item {
         display: block;
+        width: 100%;
         min-width: 0;
         max-width: 100%;
         overflow: hidden;
         text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    /* Inner spans inside text items also inherit truncation */
+    .sheet-responsive-table .fi-ta-text-item:not(.fi-ta-text-has-badges) > span:not(.fi-badge),
+    .sheet-responsive-table .fi-ta-text:not(.fi-ta-text-has-badges) > span:not(.fi-badge),
+    .sheet-responsive-table .fi-ta-col > .fi-ta-text-item:not(.fi-ta-text-has-badges) > span:not(.fi-badge),
+    .sheet-responsive-table .fi-ta-col > .fi-ta-text:not(.fi-ta-text-has-badges) > span:not(.fi-badge) {
+        display: block;
+        width: 100%;
+        min-width: 0;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    /* Targeted column truncation for long text */
+    .sheet-responsive-table .fi-ta-cell-title .fi-ta-col,
+    .sheet-responsive-table .fi-ta-cell-course-name .fi-ta-col,
+    .sheet-responsive-table .fi-ta-cell-group-name .fi-ta-col,
+    .sheet-responsive-table .fi-ta-cell-portal-group-name .fi-ta-col,
+    .sheet-responsive-table .fi-ta-cell-student-name .fi-ta-col,
+    .sheet-responsive-table .fi-ta-cell-task-title .fi-ta-col {
+        display: block;
+        width: 100%;
+        min-width: 0;
+        max-width: 100%;
+        overflow: hidden;
+    }
+
+    .sheet-responsive-table .fi-ta-cell-title .fi-ta-text-item,
+    .sheet-responsive-table .fi-ta-cell-title span:not(.fi-badge),
+    .sheet-responsive-table .fi-ta-cell-course-name .fi-ta-text-item,
+    .sheet-responsive-table .fi-ta-cell-course-name span:not(.fi-badge),
+    .sheet-responsive-table .fi-ta-cell-group-name .fi-ta-text-item,
+    .sheet-responsive-table .fi-ta-cell-group-name span:not(.fi-badge),
+    .sheet-responsive-table .fi-ta-cell-portal-group-name .fi-ta-text-item,
+    .sheet-responsive-table .fi-ta-cell-portal-group-name span:not(.fi-badge),
+    .sheet-responsive-table .fi-ta-cell-student-name .fi-ta-text-item,
+    .sheet-responsive-table .fi-ta-cell-student-name span:not(.fi-badge),
+    .sheet-responsive-table .fi-ta-cell-task-title .fi-ta-text-item,
+    .sheet-responsive-table .fi-ta-cell-task-title span:not(.fi-badge) {
+        display: block;
+        width: 100%;
+        min-width: 0;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    /* Link columns with icons: keep icon beside text cleanly */
+    .sheet-responsive-table .fi-ta-cell-material-url .fi-ta-col,
+    .sheet-responsive-table .fi-ta-cell-collection-link .fi-ta-col {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .sheet-responsive-table .fi-ta-cell-material-url .fi-ta-text span,
+    .sheet-responsive-table .fi-ta-cell-collection-link .fi-ta-text span {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
         white-space: nowrap;
     }
 
