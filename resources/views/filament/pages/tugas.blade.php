@@ -97,7 +97,7 @@
 
         .task-table-compact .fi-ta-cell:has(.fi-ta-actions) .fi-ta-actions {
             flex-wrap: nowrap;
-            justify-content: flex-end;
+            justify-content: center;
             gap: 0.75rem;
             width: 100%;
         }

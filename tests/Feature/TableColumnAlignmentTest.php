@@ -213,6 +213,22 @@ class TableColumnAlignmentTest extends TestCase
         }
     }
 
+    public function test_record_action_buttons_are_centered_and_persist_across_pages(): void
+    {
+        Filament::setCurrentPanel('admin');
+        $this->actingAsAdmin();
+
+        $this->get('/admin/pengumpulan-page')
+            ->assertOk()
+            ->assertSee('.fi-ta-actions', false)
+            ->assertSee('justify-content: center', false)
+            ->assertSee('.submission-table .fi-ta-table', false);
+
+        $this->get('/admin/tugas-page')
+            ->assertOk()
+            ->assertSee('justify-content: center', false);
+    }
+
     /**
      * @param  array<class-string, array<string, Alignment|null>>  $expectedColumns
      */

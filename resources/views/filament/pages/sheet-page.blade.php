@@ -69,7 +69,7 @@
             display: flex;
             flex-wrap: nowrap;
             align-items: center;
-            justify-content: flex-end;
+            justify-content: center;
             gap: 0.65rem;
             width: 100%;
         }
