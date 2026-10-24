@@ -45,6 +45,13 @@ Portal akademik **Prodi Psikologi STIT Muhammadiyah Kediri** berbasis **Laravel 
 - Pengaturan identitas program, kontak, dan konten halaman publik.
 - Penghapusan menggunakan soft delete; riwayat tetap ada di spreadsheet.
 
+### API v1
+- REST API `/api/v1` untuk aplikasi mobile atau klien eksternal, memakai data yang sama dengan panel.
+- Bearer token per pengguna dengan masa berlaku, daftar token, logout, dan pencabutan token.
+- Endpoint publik, mahasiswa, dan staff sesuai role.
+- Dukungan pagination, pencarian, filter, dan sorting pada endpoint daftar.
+- Spesifikasi OpenAPI lengkap di `docs/openapi.yaml`.
+
 ## Stack
 
 - PHP 8.2+
@@ -93,6 +100,127 @@ Akun demo:
 Masuk melalui `http://localhost:8000/app/login` menggunakan email atau NIM, misalnya `ayu@psikologi.test` atau `2024001`, dengan pilihan Prodi **S1 Psikologi**. Data demo selalu diarahkan ke Prodi tersebut.
 
 Gunakan `php artisan sheets:setup --demo` lagi untuk menyegarkan data demo. Data yang sudah ada tidak diduplikasi; header baru seperti `prodi_id`, `courses.prodi_ids`, dan `announcements.prodi_ids` akan ditambahkan otomatis. Mata kuliah lama tanpa `prodi_ids` diarahkan ke Prodi default **Psikologi**.
+
+## API v1
+
+API REST tersedia di `/api/v1` untuk aplikasi mobile atau klien lain. Spesifikasi lengkap beserta schema dan contoh request/response ada di [`docs/openapi.yaml`](docs/openapi.yaml). API memakai data Google Sheets yang sama dengan panel, bukan database terpisah.
+
+### Base URL
+
+```text
+http://127.0.0.1:8000/api/v1
+```
+
+Ganti host dengan domain aplikasi saat produksi. Gunakan HTTPS di produksi karena token dikirim melalui header `Authorization`.
+
+### Autentikasi
+
+Login membutuhkan Prodi aktif. ID Prodi demo adalah `01M5C0V9EWP828SVQ4W8CRKD1T` dan dapat diambil dari endpoint publik `GET /study-programs`.
+
+```bash
+curl -X POST http://127.0.0.1:8000/api/v1/auth/login \
+  -H "Accept: application/json" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "login": "ayu@psikologi.test",
+    "password": "password",
+    "prodi_id": "01M5C0V9EWP828SVQ4W8CRKD1T",
+    "device_name": "Flutter Android",
+    "expires_in_days": 30
+  }'
+```
+
+Respons berisi `access_token` plaintext yang hanya ditampilkan sekali:
+
+```json
+{
+  "token_type": "Bearer",
+  "access_token": "v1.01M5C0V9EWP828SVQ4W8CRKD1T.abcdefghijklmnopqrstuvwxyz0123456789",
+  "expires_at": "2026-11-22T10:00:00+07:00",
+  "token": { "id": "01M5C0V9EWP828SVQ4W8CRKD1T", "name": "Flutter Android" },
+  "user": { "id": "01M5BFPTQ2MKR8ASWTCW9V0AZ6", "name": "Ayu Lestari", "role": "mahasiswa" }
+}
+```
+
+Gunakan token pada request berikutnya:
+
+```bash
+curl http://127.0.0.1:8000/api/v1/auth/me \
+  -H "Accept: application/json" \
+  -H "Authorization: Bearer <access_token>"
+```
+
+Token disimpan sebagai hash di tab `api_tokens`. Logout mencabut token yang sedang dipakai. Ganti password sendiri mencabut token lain; reset password oleh staff mencabut semua token pengguna. Masa berlaku default 30 hari dan dapat diatur dengan `API_TOKEN_TTL_DAYS`.
+
+### Role dan endpoint
+
+| Grup | Prefix | Role | Keterangan |
+| --- | --- | --- | --- |
+| Publik | `/` | Tanpa token | Informasi API, Prodi aktif, pengumuman publik, pengaturan publik |
+| Auth | `/auth` | Semua pengguna | Login, logout, profil, password, daftar/cabut token |
+| Notifikasi | `/notifications` | Semua pengguna | Daftar notifikasi dan status baca |
+| Mahasiswa | `/student` | `mahasiswa` | Dashboard, mata kuliah, jadwal, tugas, pengumpulan, kelompok, pengumuman |
+| Staff | `/staff` | `pjmk`, `super_admin` | Dashboard, pengguna, Prodi, mata kuliah, jadwal, kelompok, tugas, pengumpulan/nilai, pengumuman, pengaturan |
+
+Ringkasan resource staff: `users` dan `students`, `study-programs`, `courses`, `schedules`, `groups` (termasuk anggota), `tasks`, `submissions`, `announcements`, dan `settings`. Semua CRUD staff memakai ULID pada path `{id}`.
+
+```bash
+# Contoh data mahasiswa
+curl "http://127.0.0.1:8000/api/v1/student/tasks?per_page=25&sort=deadline" \
+  -H "Accept: application/json" \
+  -H "Authorization: Bearer <access_token>"
+
+# Contoh data staff
+curl "http://127.0.0.1:8000/api/v1/staff/students?role=mahasiswa&search=ayu" \
+  -H "Accept: application/json" \
+  -H "Authorization: Bearer <staff_access_token>"
+```
+
+### Pagination, pencarian, dan filter
+
+Endpoint daftar menerima `page`, `per_page` (maksimal 100), `search`, `sort`, dan `direction=asc|desc` sesuai resource. Filter tambahan mencakup `prodi_id`, `class_name`, `semester`, `course_id`, `day`, `mode`, `type`, `status`, `task_id`, `user_id`, `group_id`, `audience`, `role`, dan `active`.
+
+Respons daftar:
+
+```json
+{
+  "data": [],
+  "meta": { "current_page": 1, "per_page": 25, "last_page": 3, "total": 61, "from": 1, "to": 25 },
+  "links": { "first": "...", "prev": null, "next": "...", "last": "..." }
+}
+```
+
+### Error dan batas request
+
+- `401` token tidak ada/tidak valid/kedaluwarsa/dicabut atau akun nonaktif.
+- `403` role tidak sesuai (misalnya mahasiswa mengakses `/staff`).
+- `404` data tidak ditemukan atau di luar akses mahasiswa.
+- `422` validasi atau aturan bisnis gagal, misalnya deadline kelompok sudah lewat.
+- `429` rate limit terlampaui.
+
+Rate limit default: 60 request/menit per pengguna untuk endpoint terautentikasi dan 10 login/menit per IP. Atur dengan `API_RATE_LIMIT_PER_MINUTE` dan `API_LOGIN_RATE_LIMIT_PER_MINUTE`. CORS diatur melalui `API_ALLOWED_ORIGINS` (default `*`).
+
+Contoh error validasi:
+
+```json
+{
+  "message": "The given data was invalid.",
+  "errors": { "prodi_id": ["Pilih program studi yang aktif."] }
+}
+```
+
+### Konfigurasi API
+
+```dotenv
+API_TOKEN_TTL_DAYS=30
+API_RATE_LIMIT_PER_MINUTE=60
+API_LOGIN_RATE_LIMIT_PER_MINUTE=10
+API_DEFAULT_PER_PAGE=25
+API_MAX_PER_PAGE=100
+API_ALLOWED_ORIGINS=*
+```
+
+Jalankan `php artisan sheets:setup` setelah menarik perubahan agar tab `api_tokens` dan header baru tersedia.
 
 ## Konfigurasi Google Sheets
 
@@ -184,6 +312,7 @@ Header setiap tab didefinisikan di `config/sheets.php`:
 | `announcements` | Pengumuman, termasuk `prodi_ids` untuk target Prodi mahasiswa |
 | `settings` | Pengaturan aplikasi |
 | `notification_reads` | Status baca notifikasi per user dan kunci notifikasi |
+| `api_tokens` | Token API tersimpan sebagai hash, masa berlaku, pemakaian terakhir, dan status pencabutan |
 
 Jangan mengubah urutan atau nama header tanpa menyesuaikan `config/sheets.php` dan data yang sudah ada. `prodi_id` pada `users` dan `prodi_ids` pada `courses`/`announcements` merujuk ke `study_programs.id`. Kolom-kolom ini ditambahkan di akhir header agar data lama tidak bergeser. `prodi_ids` berisi beberapa ULID yang dipisahkan koma; kosong pada pengumuman mahasiswa berarti semua Prodi.
 
@@ -241,6 +370,12 @@ URL lama di bawah `/admin/*` dan `/portal/*` tetap diarahkan ke halaman yang ses
 - `app/Console/Commands/AssignProdi.php`: pengisian Prodi akun lama melalui CLI.
 - `app/Filament/Portal/Pages/`: halaman personal mahasiswa di panel yang sama.
 - `app/Http/Controllers/`: controller halaman publik.
+- `routes/api.php`: seluruh route REST `/api/v1`.
+- `app/Http/Controllers/Api/V1/`: controller API publik, auth, notifikasi, mahasiswa, dan staff.
+- `app/Repositories/ApiTokenRepository.php`: penerbitan, validasi, pemakaian terakhir, dan pencabutan token.
+- `app/Support/ApiPresenter.php`: transformasi record sheet menjadi respons API tanpa field sensitif.
+- `app/Http/Middleware/ForceJsonResponse.php` dan `EnsureApiRole.php`: JSON response dan pembatasan role API.
+- `docs/openapi.yaml`: spesifikasi OpenAPI 3.0 seluruh endpoint API.
 - `app/Support/DemoData.php`: data demo.
 - `config/sheets.php`: konfigurasi driver dan seluruh header tab.
 
@@ -258,6 +393,9 @@ Setiap pembacaan sheet di-cache selama `SHEETS_CACHE_TTL` detik (default 60). Se
 - Admin dapat melihat data semua Prodi; pembatasan Prodi hanya berlaku untuk mahasiswa.
 - Satu baris mata kuliah hanya memiliki satu kelas. Mata kuliah gabungan yang dipakai beberapa kelas/Prodi perlu dibuat sebagai baris terpisah.
 - Akun lama tanpa Prodi harus diisi manual dan tidak bisa login sebelum diisi.
+- API memakai Bearer token statis tanpa refresh token; klien harus login ulang setelah token kedaluwarsa atau dicabut.
+- API tidak menyediakan unggah file; pengumpulan tugas tetap berupa tautan.
+- Rate limit API dapat menghasilkan `429` saat banyak klien berbagi IP yang sama.
 
 ## Testing
 
@@ -283,6 +421,10 @@ Test menggunakan `LocalSheetGateway` dengan file JSON sementara. Test tidak meng
 - Mount action tabel dan form pengaturan/profil.
 - CRUD admin, pengumpulan tugas, dan reset password.
 - Repository soft delete/restore serta persistensi JSON.
+- API publik, login email/NIM, validasi Prodi, token kedaluwarsa/dicabut, daftar/cabut token, profil, dan ganti password.
+- Pembatasan role API: mahasiswa tidak dapat membuka endpoint staff dan sebaliknya.
+- API mahasiswa: dashboard, mata kuliah, jadwal, tugas, pengumpulan individu, kelompok, dan notifikasi.
+- API staff: dashboard, pengaturan, pengguna, Prodi, mata kuliah, jadwal, kelompok/anggota, tugas, nilai, dan pengumuman.
 
 ## Troubleshooting
 

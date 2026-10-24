@@ -1,0 +1,3832 @@
+openapi: 3.0.3
+info:
+  title: Psikologi Connect API
+  version: 1.0.0
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  description: |
+    REST API untuk aplikasi Psikologi Connect. Semua data akademik berasal dari
+    Google Sheets. Autentikasi memakai Bearer token per pengguna yang diterbitkan
+    oleh endpoint login dan disimpan sebagai hash pada sheet `api_tokens`.
+
+    Role:
+    - `mahasiswa` hanya dapat mengakses endpoint `/student/*`.
+    - `pjmk` (label Admin) dan `super_admin` dapat mengakses `/staff/*`.
+    - Endpoint publik tidak memerlukan token.
+
+    Respons daftar memakai format `{data, meta, links}`. Respons detail memakai
+    `{data}` dan operasi tulis biasanya menyertakan `message`.
+servers:
+  - url: http://127.0.0.1:8000/api/v1
+    description: Server lokal
+  - url: https://psikologi.example.com/api/v1
+    description: Produksi (ganti dengan domain Anda)
+security: []
+tags:
+  - name: Public
+    description: Endpoint tanpa autentikasi
+  - name: Auth
+    description: Login, profil, password, dan token
+  - name: Notifications
+    description: Notifikasi tugas dan jadwal
+  - name: Student
+    description: Endpoint khusus mahasiswa
+  - name: Staff Dashboard
+    description: Ringkasan data staff
+  - name: Staff Users
+    description: Akun pengguna
+  - name: Staff Study Programs
+    description: Program studi
+  - name: Staff Courses
+    description: Mata kuliah
+  - name: Staff Schedules
+    description: Jadwal kuliah
+  - name: Staff Groups
+    description: Kelompok mahasiswa
+  - name: Staff Tasks
+    description: Tugas
+  - name: Staff Submissions
+    description: Pengumpulan dan nilai
+  - name: Staff Announcements
+    description: Pengumuman
+  - name: Staff Settings
+    description: Pengaturan aplikasi
+
+paths:
+  /:
+    get:
+      tags: [Public]
+      summary: Informasi API
+      description: Metadata versi, autentikasi, dan daftar resource utama.
+      responses:
+        '200':
+          description: Informasi API
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiInfo'
+              example:
+                name: Psikologi Connect API
+                version: v1
+                documentation: docs/openapi.yaml
+                authentication:
+                  type: Bearer
+                  login_endpoint: /api/v1/auth/login
+                resources:
+                  study_programs: /api/v1/study-programs
+                  announcements: /api/v1/announcements
+                  settings: /api/v1/settings
+                  student: /api/v1/student/*
+                  staff: /api/v1/staff/*
+
+  /study-programs:
+    get:
+      tags: [Public]
+      summary: Daftar program studi aktif
+      parameters:
+        - $ref: '#/components/parameters/Search'
+      responses:
+        '200':
+          description: Daftar program studi aktif tanpa pagination
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/StudyProgram'
+
+  /announcements:
+    get:
+      tags: [Public]
+      summary: Daftar pengumuman publik
+      description: Hanya pengumuman dengan audiens `all` yang sudah dipublikasikan.
+      parameters:
+        - $ref: '#/components/parameters/Search'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PerPage'
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [published_at, title]
+            default: published_at
+        - $ref: '#/components/parameters/Direction'
+      responses:
+        '200':
+          description: Daftar pengumuman publik
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnnouncementCollection'
+
+  /announcements/{id}:
+    get:
+      tags: [Public]
+      summary: Detail pengumuman publik
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: Detail pengumuman
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnnouncementResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /settings:
+    get:
+      tags: [Public]
+      summary: Pengaturan publik
+      responses:
+        '200':
+          description: Pengaturan yang aman ditampilkan ke publik
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/PublicSettings'
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Login dan terbitkan Bearer token
+      description: |
+        Login memakai email atau NIM, password, dan Prodi aktif. Token plaintext
+        hanya dikembalikan sekali pada respons ini. Simpan sebagai Bearer token.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            example:
+              login: ayu@psikologi.test
+              password: password
+              prodi_id: 01M5C0V9EWP828SVQ4W8CRKD1T
+              device_name: Flutter Android
+              expires_in_days: 30
+      responses:
+        '200':
+          description: Login berhasil
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+              example:
+                token_type: Bearer
+                access_token: v1.01M5C0V9EWP828SVQ4W8CRKD1T.abcdefghijklmnopqrstuvwxyz0123456789
+                expires_at: '2026-11-22T10:00:00+07:00'
+                token:
+                  id: 01M5C0V9EWP828SVQ4W8CRKD1T
+                  user_id: 01M5BFPTQ2MKR8ASWTCW9V0AZ6
+                  name: Flutter Android
+                  last_used_at: null
+                  expires_at: '2026-11-22T10:00:00+07:00'
+                  revoked_at: null
+                  created_at: '2026-10-23T10:00:00+07:00'
+                  updated_at: '2026-10-23T10:00:00+07:00'
+                user:
+                  id: 01M5BFPTQ2MKR8ASWTCW9V0AZ6
+                  name: Ayu Lestari
+                  email: ayu@psikologi.test
+                  npm: '2024001'
+                  role: mahasiswa
+                  role_label: Mahasiswa
+                  prodi_id: 01M5C0V9EWP828SVQ4W8CRKD1T
+                  prodi_name: Psikologi
+                  active: true
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: Logout dan cabut token aktif
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Token berhasil dicabut
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: Profil pengguna saat ini
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Profil pengguna
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/profile:
+    patch:
+      tags: [Auth]
+      summary: Perbarui nama dan nomor telepon
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+                  maxLength: 120
+                phone:
+                  type: string
+                  maxLength: 30
+                  nullable: true
+            example:
+              name: Ayu Lestari
+              phone: '0812-0000-0001'
+      responses:
+        '200':
+          description: Profil setelah diperbarui
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /auth/password:
+    put:
+      tags: [Auth]
+      summary: Ubah password sendiri
+      description: Password baru minimal 8 karakter dan harus dikonfirmasi. Token lain milik pengguna dicabut; token yang sedang dipakai tetap aktif.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [current_password, password, password_confirmation]
+              properties:
+                current_password:
+                  type: string
+                password:
+                  type: string
+                  minLength: 8
+                  format: password
+                password_confirmation:
+                  type: string
+                  format: password
+            example:
+              current_password: password
+              password: password-baru
+              password_confirmation: password-baru
+      responses:
+        '200':
+          description: Password berhasil diubah
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+              example:
+                message: Password berhasil diperbarui.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /auth/tokens:
+    get:
+      tags: [Auth]
+      summary: Daftar token aktif milik pengguna
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Token aktif
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Token'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/tokens/{id}:
+    delete:
+      tags: [Auth]
+      summary: Cabut token lain
+      description: Gunakan endpoint logout untuk mencabut token yang sedang dipakai.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '204':
+          description: Token dicabut
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+
+  /notifications:
+    get:
+      tags: [Notifications]
+      summary: Daftar notifikasi tugas dan jadwal
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: unread
+          in: query
+          description: Jika true, hanya notifikasi yang belum dibaca.
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Notifikasi beserta jumlah belum dibaca
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationList'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /notifications/read:
+    post:
+      tags: [Notifications]
+      summary: Tandai satu notifikasi sudah dibaca
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [key]
+              properties:
+                key:
+                  type: string
+                  maxLength: 191
+            example:
+              key: task:01M5BFPVH5Q2D9RV135KRP77N4:1792800000
+      responses:
+        '200':
+          description: Notifikasi ditandai sudah dibaca
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadReceipt'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+
+  /notifications/read-all:
+    post:
+      tags: [Notifications]
+      summary: Tandai semua notifikasi sudah dibaca
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Semua notifikasi ditandai sudah dibaca
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadReceipt'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /student/dashboard:
+    get:
+      tags: [Student]
+      summary: Ringkasan dashboard mahasiswa
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Ringkasan tugas, jadwal, kelompok, dan pengumuman
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/StudentDashboard'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /student/courses:
+    get:
+      tags: [Student]
+      summary: Mata kuliah mahasiswa
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Search'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PerPage'
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [code, name, semester, credits]
+            default: name
+        - $ref: '#/components/parameters/Direction'
+      responses:
+        '200':
+          description: Daftar mata kuliah
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseCollection'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /student/schedules:
+    get:
+      tags: [Student]
+      summary: Jadwal kuliah mahasiswa
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Search'
+        - name: day
+          in: query
+          schema:
+            $ref: '#/components/schemas/Day'
+        - name: mode
+          in: query
+          schema:
+            $ref: '#/components/schemas/ScheduleMode'
+        - $ref: '#/components/parameters/CourseIdFilter'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PerPage'
+      responses:
+        '200':
+          description: Daftar jadwal
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScheduleCollection'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /student/tasks:
+    get:
+      tags: [Student]
+      summary: Tugas yang dapat diakses mahasiswa
+      description: Tugas kelompok hanya muncul jika kelompok mahasiswa ditugaskan. Status pengumpulan dan aksi tersedia pada setiap item.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Search'
+        - $ref: '#/components/parameters/CourseIdFilter'
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [individu, kelompok]
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/TaskStatus'
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [deadline, title, created_at]
+            default: deadline
+        - $ref: '#/components/parameters/Direction'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PerPage'
+      responses:
+        '200':
+          description: Daftar tugas
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentTaskCollection'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /student/tasks/{id}:
+    get:
+      tags: [Student]
+      summary: Detail tugas mahasiswa
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: Detail tugas
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/StudentTask'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /student/tasks/{id}/submission:
+    post:
+      tags: [Student]
+      summary: Kumpulkan atau perbarui pengumpulan tugas
+      description: |
+        Link wajib berupa URL http/https. Tugas individu di-upsert per mahasiswa.
+        Tugas kelompok di-upsert per kelompok dan hanya perwakilan yang dapat
+        memperbarui. Perubahan setelah deadline untuk tugas kelompok ditolak.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [link]
+              properties:
+                link:
+                  type: string
+                  format: uri
+                  maxLength: 500
+                notes:
+                  type: string
+                  maxLength: 5000
+                  nullable: true
+            example:
+              link: https://docs.google.com/document/d/contoh-tugas
+              notes: Sudah saya kerjakan.
+      responses:
+        '201':
+          description: Pengumpulan baru berhasil dibuat
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubmissionResponse'
+        '200':
+          description: Pengumpulan yang sudah ada berhasil diperbarui
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubmissionResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+
+  /student/groups:
+    get:
+      tags: [Student]
+      summary: Kelompok mahasiswa
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Search'
+        - $ref: '#/components/parameters/CourseIdFilter'
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [name, created_at]
+            default: name
+        - $ref: '#/components/parameters/Direction'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PerPage'
+      responses:
+        '200':
+          description: Daftar kelompok beserta anggota
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GroupCollection'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /student/groups/{id}:
+    get:
+      tags: [Student]
+      summary: Detail kelompok mahasiswa
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: Detail kelompok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GroupResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /student/announcements:
+    get:
+      tags: [Student]
+      summary: Pengumuman untuk mahasiswa
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Search'
+        - $ref: '#/components/parameters/CourseIdFilter'
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [published_at, title]
+            default: published_at
+        - $ref: '#/components/parameters/Direction'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PerPage'
+      responses:
+        '200':
+          description: Daftar pengumuman
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnnouncementCollection'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /staff/dashboard:
+    get:
+      tags: [Staff Dashboard]
+      summary: Ringkasan data staff
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Statistik dan pengumuman terbaru
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/StaffDashboard'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /staff/students:
+    get:
+      tags: [Staff Users]
+      summary: Daftar mahasiswa
+      description: Sama dengan `/staff/users` dengan filter role mahasiswa.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/SearchUsers'
+        - $ref: '#/components/parameters/ProdiIdFilter'
+        - $ref: '#/components/parameters/ActiveFilter'
+        - $ref: '#/components/parameters/SortUsers'
+        - $ref: '#/components/parameters/Direction'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PerPage'
+      responses:
+        '200':
+          description: Daftar mahasiswa
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserCollection'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /staff/users:
+    get:
+      tags: [Staff Users]
+      summary: Daftar pengguna
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/SearchUsers'
+        - name: role
+          in: query
+          schema:
+            $ref: '#/components/schemas/UserRole'
+        - $ref: '#/components/parameters/ProdiIdFilter'
+        - $ref: '#/components/parameters/ActiveFilter'
+        - $ref: '#/components/parameters/SortUsers'
+        - $ref: '#/components/parameters/Direction'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PerPage'
+      responses:
+        '200':
+          description: Daftar pengguna
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserCollection'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      tags: [Staff Users]
+      summary: Tambah pengguna
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreateRequest'
+            example:
+              name: Mahasiswa Baru
+              npm: '2024999'
+              email: mahasiswa.baru@psikologi.test
+              role: mahasiswa
+              prodi_id: 01M5C0V9EWP828SVQ4W8CRKD1T
+              password: password-baru
+              class_name: Psikologi A
+              cohort: '2024'
+              phone: 0812-0000-9999
+              active: true
+              group_assignments:
+                - course_id: 01M5BFPVAP8GSEH32SD4X4TTE9
+                  group_id: null
+      responses:
+        '201':
+          description: Pengguna berhasil dibuat
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /staff/users/{id}:
+    get:
+      tags: [Staff Users]
+      summary: Detail pengguna
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: Detail pengguna
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Staff Users]
+      summary: Perbarui pengguna
+      description: Field yang tidak dikirim dipertahankan.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdateRequest'
+            example:
+              name: Nama Diperbarui
+              active: true
+      responses:
+        '200':
+          description: Pengguna setelah diperbarui
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+    patch:
+      tags: [Staff Users]
+      summary: Sebagian perbarui pengguna
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdateRequest'
+      responses:
+        '200':
+          description: Pengguna setelah diperbarui
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+    delete:
+      tags: [Staff Users]
+      summary: Hapus pengguna (soft delete)
+      description: Tidak dapat menghapus akun sendiri atau admin aktif terakhir. Token pengguna dicabut.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '204':
+          description: Pengguna dihapus
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+
+  /staff/users/{id}/reset-password:
+    post:
+      tags: [Staff Users]
+      summary: Reset password pengguna
+      description: Semua token milik pengguna dicabut.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [password]
+              properties:
+                password:
+                  type: string
+                  minLength: 8
+                  format: password
+            example:
+              password: password-baru
+      responses:
+        '200':
+          description: Password direset
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /staff/study-programs:
+    get:
+      tags: [Staff Study Programs]
+      summary: Daftar program studi
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Search'
+        - name: active
+          in: query
+          schema:
+            type: boolean
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [code, name, degree, created_at]
+            default: name
+        - $ref: '#/components/parameters/Direction'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PerPage'
+      responses:
+        '200':
+          description: Daftar program studi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudyProgramCollection'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      tags: [Staff Study Programs]
+      summary: Tambah program studi
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StudyProgramRequest'
+            example:
+              code: psikologi
+              name: Psikologi
+              degree: S1
+              active: true
+      responses:
+        '201':
+          description: Program studi dibuat
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudyProgramResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /staff/study-programs/{id}:
+    get:
+      tags: [Staff Study Programs]
+      summary: Detail program studi
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: Detail program studi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudyProgramResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Staff Study Programs]
+      summary: Perbarui program studi
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StudyProgramRequest'
+      responses:
+        '200':
+          description: Program studi setelah diperbarui
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudyProgramResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+    patch:
+      tags: [Staff Study Programs]
+      summary: Sebagian perbarui program studi
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StudyProgramRequest'
+      responses:
+        '200':
+          description: Program studi setelah diperbarui
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudyProgramResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+    delete:
+      tags: [Staff Study Programs]
+      summary: Hapus program studi
+      description: Ditolak jika masih dipakai oleh akun, mata kuliah, atau pengumuman.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '204':
+          description: Program studi dihapus
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+
+  /staff/courses:
+    get:
+      tags: [Staff Courses]
+      summary: Daftar mata kuliah
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Search'
+        - name: class_name
+          in: query
+          schema:
+            type: string
+        - name: semester
+          in: query
+          schema:
+            type: string
+        - $ref: '#/components/parameters/ProdiIdFilter'
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [code, name, credits, semester, class_name]
+            default: name
+        - $ref: '#/components/parameters/Direction'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PerPage'
+      responses:
+        '200':
+          description: Daftar mata kuliah
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseCollection'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      tags: [Staff Courses]
+      summary: Tambah mata kuliah
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourseRequest'
+            example:
+              code: PSI101
+              name: Psikologi Umum
+              credits: 3
+              lecturer: Dr. Rani Kusuma
+              semester: Ganjil
+              class_name: Psikologi A
+              prodi_ids: [01M5C0V9EWP828SVQ4W8CRKD1T]
+              meeting_link: https://meet.example.test/psi101
+              description: Pengantar konsep dasar psikologi.
+      responses:
+        '201':
+          description: Mata kuliah dibuat
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /staff/courses/{id}:
+    get:
+      tags: [Staff Courses]
+      summary: Detail mata kuliah
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: Detail mata kuliah
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Staff Courses]
+      summary: Perbarui mata kuliah
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourseRequest'
+      responses:
+        '200':
+          description: Mata kuliah setelah diperbarui
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+    patch:
+      tags: [Staff Courses]
+      summary: Sebagian perbarui mata kuliah
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourseRequest'
+      responses:
+        '200':
+          description: Mata kuliah setelah diperbarui
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+    delete:
+      tags: [Staff Courses]
+      summary: Hapus mata kuliah (soft delete)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '204':
+          description: Mata kuliah dihapus
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /staff/schedules:
+    get:
+      tags: [Staff Schedules]
+      summary: Daftar jadwal
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Search'
+        - name: course_id
+          in: query
+          schema:
+            type: string
+        - name: day
+          in: query
+          schema:
+            $ref: '#/components/schemas/Day'
+        - name: mode
+          in: query
+          schema:
+            $ref: '#/components/schemas/ScheduleMode'
+        - name: class_name
+          in: query
+          schema:
+            type: string
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [start_time, end_time, day, class_name]
+            default: start_time
+        - $ref: '#/components/parameters/Direction'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PerPage'
+      responses:
+        '200':
+          description: Daftar jadwal
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScheduleCollection'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      tags: [Staff Schedules]
+      summary: Tambah jadwal
+      description: Mode offline wajib memiliki room. Mode online wajib memiliki platform (zoom/google_meet) dan meeting_link.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScheduleRequest'
+            example:
+              course_id: 01M5BFPVAP8GSEH32SD4X4TTE9
+              day: Senin
+              start_time: '08:00'
+              end_time: '09:40'
+              mode: online
+              platform: zoom
+              meeting_link: https://zoom.example.test/psi101
+              class_name: Psikologi A
+      responses:
+        '201':
+          description: Jadwal dibuat
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScheduleResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /staff/schedules/{id}:
+    get:
+      tags: [Staff Schedules]
+      summary: Detail jadwal
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: Detail jadwal
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScheduleResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Staff Schedules]
+      summary: Perbarui jadwal
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScheduleRequest'
+      responses:
+        '200':
+          description: Jadwal setelah diperbarui
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScheduleResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+    patch:
+      tags: [Staff Schedules]
+      summary: Sebagian perbarui jadwal
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScheduleRequest'
+      responses:
+        '200':
+          description: Jadwal setelah diperbarui
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScheduleResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+    delete:
+      tags: [Staff Schedules]
+      summary: Hapus jadwal
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '204':
+          description: Jadwal dihapus
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /staff/groups:
+    get:
+      tags: [Staff Groups]
+      summary: Daftar kelompok
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Search'
+        - $ref: '#/components/parameters/CourseIdFilter'
+        - name: with_members
+          in: query
+          description: Sertakan daftar anggota pada setiap kelompok.
+          schema:
+            type: boolean
+            default: false
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [name, course_name, created_at]
+            default: name
+        - $ref: '#/components/parameters/Direction'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PerPage'
+      responses:
+        '200':
+          description: Daftar kelompok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GroupCollection'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      tags: [Staff Groups]
+      summary: Tambah kelompok
+      description: Ketua dan semua anggota harus mahasiswa aktif dengan Prodi yang sesuai mata kuliah dan belum memiliki kelompok lain pada mata kuliah tersebut.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GroupRequest'
+            example:
+              course_id: 01M5BFPVBC2FRKDQQGGAPM5SCW
+              name: Kelompok API
+              leader_id: 01M5BFPTQ2MKR8ASWTCW9V0AZ6
+              member_ids: [01M5BFPTXHZS0HZ4ZZPDZ0P1F7]
+              description: Kelompok untuk tugas observasi.
+      responses:
+        '201':
+          description: Kelompok dibuat
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GroupResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /staff/groups/{id}:
+    get:
+      tags: [Staff Groups]
+      summary: Detail kelompok
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: Detail kelompok beserta anggota
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GroupResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Staff Groups]
+      summary: Perbarui kelompok
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GroupRequest'
+      responses:
+        '200':
+          description: Kelompok setelah diperbarui
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GroupResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+    patch:
+      tags: [Staff Groups]
+      summary: Sebagian perbarui kelompok
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GroupRequest'
+      responses:
+        '200':
+          description: Kelompok setelah diperbarui
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GroupResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+    delete:
+      tags: [Staff Groups]
+      summary: Hapus kelompok beserta anggotanya
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '204':
+          description: Kelompok dihapus
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /staff/groups/{id}/members:
+    post:
+      tags: [Staff Groups]
+      summary: Tambah anggota kelompok
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [user_ids]
+              properties:
+                user_ids:
+                  type: array
+                  minItems: 1
+                  items:
+                    type: string
+            example:
+              user_ids: [01M5BFPV43N9BJEVYWYBY5FRV3]
+      responses:
+        '200':
+          description: Kelompok setelah anggota ditambahkan
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GroupResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /staff/groups/{id}/members/{userId}:
+    delete:
+      tags: [Staff Groups]
+      summary: Keluarkan anggota kelompok
+      description: Ketua kelompok tidak dapat dikeluarkan; ubah ketua terlebih dahulu.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Id'
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Anggota dikeluarkan
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+
+  /staff/tasks:
+    get:
+      tags: [Staff Tasks]
+      summary: Daftar tugas
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Search'
+        - $ref: '#/components/parameters/CourseIdFilter'
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [individu, kelompok]
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/TaskStatus'
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [deadline, title, created_at, status]
+            default: deadline
+        - $ref: '#/components/parameters/Direction'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PerPage'
+      responses:
+        '200':
+          description: Daftar tugas
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskCollection'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      tags: [Staff Tasks]
+      summary: Tambah tugas
+      description: Tugas kelompok wajib memiliki minimal satu group_ids dari mata kuliah yang dipilih.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskRequest'
+            example:
+              course_id: 01M5BFPVAP8GSEH32SD4X4TTE9
+              type: individu
+              meeting_number: 3
+              status: active
+              title: Refleksi Psikologi Umum
+              description: Tuliskan refleksi 500 kata.
+              material_url: https://example.test/materi.pdf
+              collection_link: https://example.test/kumpul
+              start_at: '2026-10-20T00:00:00+07:00'
+              deadline: '2026-10-30T23:59:00+07:00'
+              deadline_note: Kumpulkan sebelum tengah malam.
+      responses:
+        '201':
+          description: Tugas dibuat
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /staff/tasks/{id}:
+    get:
+      tags: [Staff Tasks]
+      summary: Detail tugas
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: Detail tugas
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Staff Tasks]
+      summary: Perbarui tugas
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskRequest'
+      responses:
+        '200':
+          description: Tugas setelah diperbarui
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+    patch:
+      tags: [Staff Tasks]
+      summary: Sebagian perbarui tugas
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskRequest'
+      responses:
+        '200':
+          description: Tugas setelah diperbarui
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+    delete:
+      tags: [Staff Tasks]
+      summary: Hapus tugas (soft delete)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '204':
+          description: Tugas dihapus
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /staff/submissions:
+    get:
+      tags: [Staff Submissions]
+      summary: Daftar pengumpulan
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Search'
+        - name: task_id
+          in: query
+          schema:
+            type: string
+        - name: user_id
+          in: query
+          schema:
+            type: string
+        - name: group_id
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/SubmissionStatus'
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [submitted_at, status, created_at]
+            default: submitted_at
+        - name: direction
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PerPage'
+      responses:
+        '200':
+          description: Daftar pengumpulan
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubmissionCollection'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      tags: [Staff Submissions]
+      summary: Simpan pengumpulan untuk mahasiswa
+      description: Untuk tugas kelompok, group_id wajib dan user_id harus anggota kelompok tersebut. Pengumpulan kelompok yang sudah ada akan di-upsert.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubmissionRequest'
+            example:
+              task_id: 01M5BFPVH5Q2D9RV135KRP77N4
+              user_id: 01M5BFPTQ2MKR8ASWTCW9V0AZ6
+              status: submitted
+              link: https://docs.google.com/document/d/contoh
+              notes: Dikirim melalui API.
+      responses:
+        '201':
+          description: Pengumpulan dibuat
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubmissionResponse'
+        '200':
+          description: Pengumpulan kelompok diperbarui
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubmissionResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /staff/submissions/{id}:
+    get:
+      tags: [Staff Submissions]
+      summary: Detail pengumpulan
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: Detail pengumpulan
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubmissionResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Staff Submissions]
+      summary: Perbarui pengumpulan atau nilai
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubmissionUpdateRequest'
+            example:
+              status: graded
+              grade: 90
+              feedback: Kerja bagus.
+      responses:
+        '200':
+          description: Pengumpulan setelah diperbarui
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubmissionResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+    patch:
+      tags: [Staff Submissions]
+      summary: Sebagian perbarui pengumpulan atau nilai
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubmissionUpdateRequest'
+      responses:
+        '200':
+          description: Pengumpulan setelah diperbarui
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubmissionResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+    delete:
+      tags: [Staff Submissions]
+      summary: Hapus pengumpulan (soft delete)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '204':
+          description: Pengumpulan dihapus
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /staff/announcements:
+    get:
+      tags: [Staff Announcements]
+      summary: Daftar pengumuman
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Search'
+        - name: audience
+          in: query
+          schema:
+            $ref: '#/components/schemas/Audience'
+        - $ref: '#/components/parameters/CourseIdFilter'
+        - $ref: '#/components/parameters/ProdiIdFilter'
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [published_at, title, created_at]
+            default: published_at
+        - name: direction
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PerPage'
+      responses:
+        '200':
+          description: Daftar pengumuman
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnnouncementCollection'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      tags: [Staff Announcements]
+      summary: Tambah pengumuman
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnnouncementRequest'
+            example:
+              title: Pengumuman Akademik
+              audience: mahasiswa
+              prodi_ids: [01M5C0V9EWP828SVQ4W8CRKD1T]
+              published_at: '2026-10-23T08:00:00+07:00'
+              body: Perkuliahan dimulai pukul 08.00.
+      responses:
+        '201':
+          description: Pengumuman dibuat
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnnouncementResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /staff/announcements/{id}:
+    get:
+      tags: [Staff Announcements]
+      summary: Detail pengumuman
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: Detail pengumuman
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnnouncementResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Staff Announcements]
+      summary: Perbarui pengumuman
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnnouncementRequest'
+      responses:
+        '200':
+          description: Pengumuman setelah diperbarui
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnnouncementResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+    patch:
+      tags: [Staff Announcements]
+      summary: Sebagian perbarui pengumuman
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnnouncementRequest'
+      responses:
+        '200':
+          description: Pengumuman setelah diperbarui
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnnouncementResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+    delete:
+      tags: [Staff Announcements]
+      summary: Hapus pengumuman (soft delete)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '204':
+          description: Pengumuman dihapus
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /staff/settings:
+    get:
+      tags: [Staff Settings]
+      summary: Semua pengaturan aplikasi
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Pengaturan aplikasi
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Settings'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    put:
+      tags: [Staff Settings]
+      summary: Perbarui pengaturan aplikasi
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SettingsRequest'
+            example:
+              program_name: Psikologi Connect
+              academic_year: 2026/2027
+              semester: Ganjil
+              contact_email: psikologi@example.ac.id
+              contact_phone: '0812-0000-0000'
+              public_tagline: Tumbuh bersama psikologi.
+              public_about: Portal akademik Program Studi Psikologi.
+              portal_note: Periksa tugas dan jadwal secara berkala.
+      responses:
+        '200':
+          description: Pengaturan setelah diperbarui
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Settings'
+                  message:
+                    type: string
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+    patch:
+      tags: [Staff Settings]
+      summary: Sebagian perbarui pengaturan aplikasi
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SettingsRequest'
+      responses:
+        '200':
+          description: Pengaturan setelah diperbarui
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Settings'
+                  message:
+                    type: string
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: 'Token dari `/auth/login`, dikirim sebagai `Authorization: Bearer <access_token>`.'
+
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      description: ULID record
+      schema:
+        type: string
+    Search:
+      name: search
+      in: query
+      description: Pencarian case-insensitive pada field teks resource.
+      schema:
+        type: string
+    Page:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    PerPage:
+      name: per_page
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 25
+    Direction:
+      name: direction
+      in: query
+      schema:
+        type: string
+        enum: [asc, desc]
+        default: asc
+    CourseIdFilter:
+      name: course_id
+      in: query
+      schema:
+        type: string
+    ProdiIdFilter:
+      name: prodi_id
+      in: query
+      schema:
+        type: string
+    ActiveFilter:
+      name: active
+      in: query
+      schema:
+        type: boolean
+    SearchUsers:
+      name: search
+      in: query
+      description: Cari pada name, npm, email, class_name, cohort, dan phone.
+      schema:
+        type: string
+    SortUsers:
+      name: sort
+      in: query
+      schema:
+        type: string
+        enum: [name, npm, email, class_name, cohort, created_at]
+        default: name
+
+  responses:
+    Unauthorized:
+      description: Token tidak ada, tidak valid, kedaluwarsa, dicabut, atau akun nonaktif
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            message: Unauthenticated.
+    Forbidden:
+      description: Role tidak memiliki akses ke endpoint ini
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            message: Forbidden.
+    NotFound:
+      description: Data tidak ditemukan
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            message: Data tidak ditemukan.
+    Unprocessable:
+      description: Permintaan tidak dapat diproses karena aturan bisnis
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            message: Tugas ini sudah selesai atau belum dipublikasikan.
+    ValidationError:
+      description: Validasi request gagal
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ValidationError'
+          example:
+            message: The given data was invalid.
+            errors:
+              email:
+                - Email sudah digunakan oleh user lain.
+    TooManyRequests:
+      description: Rate limit terlampaui
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            message: Too Many Attempts.
+
+  schemas:
+    ApiInfo:
+      type: object
+      properties:
+        name:
+          type: string
+        version:
+          type: string
+        documentation:
+          type: string
+        authentication:
+          type: object
+          properties:
+            type:
+              type: string
+            login_endpoint:
+              type: string
+        resources:
+          type: object
+          additionalProperties:
+            type: string
+
+    Error:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+      example:
+        message: Data tidak ditemukan.
+
+    ValidationError:
+      type: object
+      required: [message, errors]
+      properties:
+        message:
+          type: string
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+
+    Message:
+      type: object
+      properties:
+        message:
+          type: string
+
+    ReadReceipt:
+      type: object
+      required: [message, unread_count]
+      properties:
+        message:
+          type: string
+        unread_count:
+          type: integer
+
+    PaginationMeta:
+      type: object
+      properties:
+        current_page:
+          type: integer
+        per_page:
+          type: integer
+        last_page:
+          type: integer
+        total:
+          type: integer
+        from:
+          type: integer
+          nullable: true
+        to:
+          type: integer
+          nullable: true
+
+    PaginationLinks:
+      type: object
+      properties:
+        first:
+          type: string
+          format: uri
+        prev:
+          type: string
+          format: uri
+          nullable: true
+        next:
+          type: string
+          format: uri
+          nullable: true
+        last:
+          type: string
+          format: uri
+          nullable: true
+
+    UserRole:
+      type: string
+      enum: [mahasiswa, super_admin, pjmk]
+      description: Gunakan pjmk untuk Admin. Nilai lama admin tetap dibaca sebagai super_admin jika ada di sheet.
+
+    Day:
+      type: string
+      enum: [Senin, Selasa, Rabu, Kamis, Jumat, Sabtu, Minggu]
+
+    ScheduleMode:
+      type: string
+      enum: [offline, online]
+
+    TaskType:
+      type: string
+      enum: [individu, kelompok]
+
+    TaskStatus:
+      type: string
+      enum: [draft, active, completed]
+
+    SubmissionStatus:
+      type: string
+      enum: [submitted, late, graded]
+
+    Audience:
+      type: string
+      enum: [all, mahasiswa, admin]
+
+    LoginRequest:
+      type: object
+      required: [login, password, prodi_id]
+      properties:
+        login:
+          type: string
+          description: Email atau NIM
+          maxLength: 150
+        password:
+          type: string
+          format: password
+        prodi_id:
+          type: string
+        device_name:
+          type: string
+          maxLength: 100
+          default: API Client
+        expires_in_days:
+          type: integer
+          minimum: 1
+          maximum: 365
+          description: Default dari API_TOKEN_TTL_DAYS (30 hari).
+
+    LoginResponse:
+      type: object
+      required: [token_type, access_token, expires_at, token, user]
+      properties:
+        token_type:
+          type: string
+          example: Bearer
+        access_token:
+          type: string
+          description: Token plaintext. Hanya ditampilkan sekali.
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+        token:
+          $ref: '#/components/schemas/Token'
+        user:
+          $ref: '#/components/schemas/User'
+
+    Token:
+      type: object
+      properties:
+        id:
+          type: string
+        user_id:
+          type: string
+        name:
+          type: string
+        last_used_at:
+          type: string
+          format: date-time
+          nullable: true
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+        revoked_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        current:
+          type: boolean
+          description: Hanya ada pada daftar token.
+
+    User:
+      type: object
+      required: [id, name, email, npm, role, active]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        npm:
+          type: string
+        role:
+          $ref: '#/components/schemas/UserRole'
+        role_label:
+          type: string
+        class_name:
+          type: string
+        cohort:
+          type: string
+        phone:
+          type: string
+        active:
+          type: boolean
+        prodi_id:
+          type: string
+        prodi_name:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      example:
+        id: 01M5BFPTQ2MKR8ASWTCW9V0AZ6
+        name: Ayu Lestari
+        email: ayu@psikologi.test
+        npm: '2024001'
+        role: mahasiswa
+        role_label: Mahasiswa
+        class_name: Psikologi A
+        cohort: '2024'
+        phone: 0812-0000-0001
+        active: true
+        prodi_id: 01M5C0V9EWP828SVQ4W8CRKD1T
+        prodi_name: Psikologi
+        created_at: '2026-10-20T01:44:39+00:00'
+        updated_at: '2026-10-20T13:44:12+07:00'
+
+    UserCreateRequest:
+      type: object
+      required: [name, npm, email, role, prodi_id, password]
+      properties:
+        name:
+          type: string
+          maxLength: 120
+        npm:
+          type: string
+          maxLength: 30
+        email:
+          type: string
+          format: email
+          maxLength: 150
+        role:
+          $ref: '#/components/schemas/UserRole'
+        prodi_id:
+          type: string
+        password:
+          type: string
+          minLength: 8
+          format: password
+        class_name:
+          type: string
+          maxLength: 50
+          description: Wajib untuk role mahasiswa.
+        cohort:
+          type: string
+          maxLength: 10
+        phone:
+          type: string
+          maxLength: 30
+        active:
+          type: boolean
+          default: true
+        group_assignments:
+          type: array
+          items:
+            type: object
+            required: [course_id]
+            properties:
+              course_id:
+                type: string
+              group_id:
+                type: string
+                nullable: true
+
+    UserUpdateRequest:
+      type: object
+      description: Semua field opsional. Jika password diisi, token pengguna dicabut.
+      properties:
+        name:
+          type: string
+          maxLength: 120
+        npm:
+          type: string
+          maxLength: 30
+        email:
+          type: string
+          format: email
+          maxLength: 150
+        role:
+          $ref: '#/components/schemas/UserRole'
+        prodi_id:
+          type: string
+        password:
+          type: string
+          minLength: 8
+          format: password
+          nullable: true
+        class_name:
+          type: string
+          maxLength: 50
+          nullable: true
+        cohort:
+          type: string
+          maxLength: 10
+          nullable: true
+        phone:
+          type: string
+          maxLength: 30
+          nullable: true
+        active:
+          type: boolean
+        group_assignments:
+          type: array
+          items:
+            type: object
+            required: [course_id]
+            properties:
+              course_id:
+                type: string
+              group_id:
+                type: string
+                nullable: true
+
+    UserResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/User'
+        message:
+          type: string
+
+    UserCollection:
+      type: object
+      required: [data, meta, links]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+        links:
+          $ref: '#/components/schemas/PaginationLinks'
+
+    StudyProgram:
+      type: object
+      properties:
+        id:
+          type: string
+        code:
+          type: string
+        name:
+          type: string
+        degree:
+          type: string
+        active:
+          type: boolean
+        label:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      example:
+        id: 01M5C0V9EWP828SVQ4W8CRKD1T
+        code: psikologi
+        name: Psikologi
+        degree: S1
+        active: true
+        label: S1 Psikologi
+
+    StudyProgramRequest:
+      type: object
+      required: [code, name, degree]
+      properties:
+        code:
+          type: string
+          maxLength: 30
+        name:
+          type: string
+          maxLength: 150
+        degree:
+          type: string
+          maxLength: 20
+        active:
+          type: boolean
+          default: true
+
+    StudyProgramResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/StudyProgram'
+        message:
+          type: string
+
+    StudyProgramCollection:
+      type: object
+      required: [data, meta, links]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/StudyProgram'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+        links:
+          $ref: '#/components/schemas/PaginationLinks'
+
+    Course:
+      type: object
+      properties:
+        id:
+          type: string
+        code:
+          type: string
+        name:
+          type: string
+        credits:
+          type: integer
+        lecturer:
+          type: string
+        semester:
+          type: string
+        class_name:
+          type: string
+        description:
+          type: string
+        prodi_ids:
+          type: array
+          items:
+            type: string
+        prodi_names:
+          type: array
+          items:
+            type: string
+        meeting_link:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      example:
+        id: 01M5BFPVAP8GSEH32SD4X4TTE9
+        code: PSI101
+        name: Psikologi Umum
+        credits: 3
+        lecturer: Dr. Rani Kusuma
+        semester: Ganjil
+        class_name: Psikologi A
+        description: Pengantar konsep dasar psikologi.
+        prodi_ids: [01M5C0V9EWP828SVQ4W8CRKD1T]
+        prodi_names: [Psikologi]
+        meeting_link: https://meet.example.test/psi101
+
+    CourseRequest:
+      type: object
+      required: [code, name, credits, lecturer, semester, class_name, prodi_ids]
+      properties:
+        code:
+          type: string
+          maxLength: 30
+        name:
+          type: string
+          maxLength: 150
+        credits:
+          type: integer
+          minimum: 1
+          maximum: 8
+        lecturer:
+          type: string
+          maxLength: 150
+        semester:
+          type: string
+          maxLength: 20
+        class_name:
+          type: string
+          maxLength: 50
+        prodi_ids:
+          type: array
+          minItems: 1
+          items:
+            type: string
+        meeting_link:
+          type: string
+          format: uri
+          maxLength: 500
+          nullable: true
+        description:
+          type: string
+          nullable: true
+
+    CourseResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/Course'
+        message:
+          type: string
+
+    CourseCollection:
+      type: object
+      required: [data, meta, links]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Course'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+        links:
+          $ref: '#/components/schemas/PaginationLinks'
+
+    Schedule:
+      type: object
+      properties:
+        id:
+          type: string
+        course_id:
+          type: string
+        course_name:
+          type: string
+        course_code:
+          type: string
+        course_lecturer:
+          type: string
+        day:
+          $ref: '#/components/schemas/Day'
+        start_time:
+          type: string
+          example: '08:00'
+        end_time:
+          type: string
+          example: '09:40'
+        mode:
+          $ref: '#/components/schemas/ScheduleMode'
+        mode_label:
+          type: string
+        room:
+          type: string
+          nullable: true
+        platform:
+          type: string
+          nullable: true
+          enum: [zoom, google_meet]
+        platform_label:
+          type: string
+          nullable: true
+        meeting_link:
+          type: string
+          nullable: true
+        class_name:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ScheduleRequest:
+      type: object
+      required: [course_id, day, start_time, end_time, mode, class_name]
+      properties:
+        course_id:
+          type: string
+        day:
+          $ref: '#/components/schemas/Day'
+        start_time:
+          type: string
+          pattern: '^([01][0-9]|2[0-3]):[0-5][0-9]$'
+          example: '08:00'
+        end_time:
+          type: string
+          pattern: '^([01][0-9]|2[0-3]):[0-5][0-9]$'
+          example: '09:40'
+        mode:
+          $ref: '#/components/schemas/ScheduleMode'
+        room:
+          type: string
+          maxLength: 60
+          description: Wajib untuk mode offline.
+        platform:
+          type: string
+          enum: [zoom, google_meet]
+          description: Wajib untuk mode online.
+        meeting_link:
+          type: string
+          format: uri
+          maxLength: 500
+          description: Wajib untuk mode online.
+        class_name:
+          type: string
+          maxLength: 50
+
+    ScheduleResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/Schedule'
+        message:
+          type: string
+
+    ScheduleCollection:
+      type: object
+      required: [data, meta, links]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Schedule'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+        links:
+          $ref: '#/components/schemas/PaginationLinks'
+
+    GroupMember:
+      type: object
+      properties:
+        id:
+          type: string
+        user_id:
+          type: string
+        name:
+          type: string
+        npm:
+          type: string
+        role:
+          type: string
+          enum: [ketua, anggota]
+
+    Group:
+      type: object
+      properties:
+        id:
+          type: string
+        course_id:
+          type: string
+        course_name:
+          type: string
+        course_code:
+          type: string
+        name:
+          type: string
+        leader_id:
+          type: string
+        leader_name:
+          type: string
+        description:
+          type: string
+        members_count:
+          type: integer
+        member_names:
+          type: string
+        member_ids:
+          type: array
+          items:
+            type: string
+        members:
+          type: array
+          items:
+            $ref: '#/components/schemas/GroupMember'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      example:
+        id: 01M5BFPVDT9ECQDX8W28DW8Z2B
+        course_id: 01M5BFPVBC2FRKDQQGGAPM5SCW
+        course_name: Psikologi Perkembangan
+        course_code: PSI201
+        name: Kelompok 1 - Observasi
+        leader_id: 01M5BFPTQ2MKR8ASWTCW9V0AZ6
+        leader_name: Ayu Lestari
+        description: Observasi perkembangan anak usia sekolah.
+        members_count: 3
+        member_names: Ayu Lestari, Bima Pratama, Citra Dewi
+
+    GroupRequest:
+      type: object
+      required: [course_id, name, leader_id]
+      properties:
+        course_id:
+          type: string
+        name:
+          type: string
+          maxLength: 80
+        leader_id:
+          type: string
+        member_ids:
+          type: array
+          items:
+            type: string
+          nullable: true
+        description:
+          type: string
+          nullable: true
+
+    GroupResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/Group'
+        message:
+          type: string
+
+    GroupCollection:
+      type: object
+      required: [data, meta, links]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Group'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+        links:
+          $ref: '#/components/schemas/PaginationLinks'
+
+    Submission:
+      type: object
+      properties:
+        id:
+          type: string
+        task_id:
+          type: string
+        user_id:
+          type: string
+        group_id:
+          type: string
+        status:
+          $ref: '#/components/schemas/SubmissionStatus'
+        link:
+          type: string
+          format: uri
+        notes:
+          type: string
+          nullable: true
+        grade:
+          type: number
+          nullable: true
+        feedback:
+          type: string
+        submitted_at:
+          type: string
+          format: date-time
+        task_title:
+          type: string
+        task_type:
+          $ref: '#/components/schemas/TaskType'
+        student_name:
+          type: string
+        student_npm:
+          type: string
+        representative_name:
+          type: string
+        group_name:
+          type: string
+        is_late:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      example:
+        id: 01M5BFPVKQV7J9TFA0WC5G7KY2
+        task_id: 01M5BFPVHT15EC334MS2QWSV42
+        user_id: 01M5BFPV43N9BJEVYWYBY5FRV3
+        group_id: ''
+        status: graded
+        link: https://docs.google.com/document/d/contoh
+        notes: null
+        grade: 88
+        feedback: Analisis sudah baik.
+        submitted_at: '2026-10-18T01:44:40+00:00'
+        task_title: Laporan Observasi Perkembangan Anak
+        task_type: individu
+        student_name: Citra Dewi
+        student_npm: '2024003'
+        representative_name: Citra Dewi
+        group_name: '-'
+        is_late: false
+
+    SubmissionRequest:
+      type: object
+      required: [task_id, user_id, status, link]
+      properties:
+        task_id:
+          type: string
+        user_id:
+          type: string
+        group_id:
+          type: string
+          nullable: true
+        status:
+          $ref: '#/components/schemas/SubmissionStatus'
+        link:
+          type: string
+          format: uri
+          maxLength: 500
+        submitted_at:
+          type: string
+          format: date-time
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        feedback:
+          type: string
+          nullable: true
+        grade:
+          type: number
+          minimum: 0
+          maximum: 100
+          nullable: true
+
+    SubmissionUpdateRequest:
+      type: object
+      description: Semua field opsional. Jika status graded, grade wajib numerik.
+      properties:
+        task_id:
+          type: string
+        user_id:
+          type: string
+        group_id:
+          type: string
+          nullable: true
+        status:
+          $ref: '#/components/schemas/SubmissionStatus'
+        link:
+          type: string
+          format: uri
+        submitted_at:
+          type: string
+          format: date-time
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        feedback:
+          type: string
+          nullable: true
+        grade:
+          type: number
+          minimum: 0
+          maximum: 100
+          nullable: true
+
+    SubmissionResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/Submission'
+        message:
+          type: string
+
+    SubmissionCollection:
+      type: object
+      required: [data, meta, links]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Submission'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+        links:
+          $ref: '#/components/schemas/PaginationLinks'
+
+    Task:
+      type: object
+      properties:
+        id:
+          type: string
+        course_id:
+          type: string
+        course_name:
+          type: string
+        course_code:
+          type: string
+        group_id:
+          type: string
+          description: Kolom lama; gunakan group_ids.
+        group_ids:
+          type: array
+          items:
+            type: string
+        group_name:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        type:
+          $ref: '#/components/schemas/TaskType'
+        type_label:
+          type: string
+        status:
+          $ref: '#/components/schemas/TaskStatus'
+        status_label:
+          type: string
+        meeting_number:
+          type: integer
+          nullable: true
+        material_url:
+          type: string
+          nullable: true
+        start_at:
+          type: string
+          nullable: true
+        deadline:
+          type: string
+          format: date-time
+        deadline_label:
+          type: string
+        deadline_note:
+          type: string
+          nullable: true
+        collection_link:
+          type: string
+          nullable: true
+        is_overdue:
+          type: boolean
+        submission_count:
+          type: integer
+          description: Hanya pada endpoint staff.
+        created_by:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      example:
+        id: 01M5BFPVH5Q2D9RV135KRP77N4
+        course_id: 01M5BFPVAP8GSEH32SD4X4TTE9
+        course_name: Psikologi Umum
+        course_code: PSI101
+        group_ids: []
+        group_name: Semua mahasiswa
+        title: Refleksi Psikologi Umum
+        description: Tuliskan refleksi 500 kata.
+        type: individu
+        type_label: Individu
+        status: active
+        status_label: Aktif
+        meeting_number: 3
+        material_url: https://example.test/materi.pdf
+        start_at: null
+        deadline: '2026-10-30T23:59:00+07:00'
+        deadline_label: 30 Okt 2026 23:59
+        deadline_note: Kumpulkan sebelum tengah malam.
+        collection_link: https://example.test/kumpul
+        is_overdue: false
+        submission_count: 1
+
+    StudentTask:
+      allOf:
+        - $ref: '#/components/schemas/Task'
+        - type: object
+          properties:
+            matched_group_id:
+              type: string
+              nullable: true
+            portal_group_name:
+              type: string
+              nullable: true
+            submission:
+              type: object
+              nullable: true
+              allOf:
+                - $ref: '#/components/schemas/Submission'
+            submission_status:
+              type: string
+              nullable: true
+            submission_label:
+              type: string
+            is_representative:
+              type: boolean
+            can_submit:
+              type: boolean
+            can_update:
+              type: boolean
+
+    TaskRequest:
+      type: object
+      required: [course_id, type, status, title, deadline]
+      properties:
+        course_id:
+          type: string
+        type:
+          $ref: '#/components/schemas/TaskType'
+        meeting_number:
+          type: integer
+          minimum: 1
+          maximum: 99
+          nullable: true
+        status:
+          $ref: '#/components/schemas/TaskStatus'
+        title:
+          type: string
+          maxLength: 180
+        description:
+          type: string
+          nullable: true
+        material_url:
+          type: string
+          format: uri
+          maxLength: 500
+          nullable: true
+        collection_link:
+          type: string
+          format: uri
+          maxLength: 500
+          nullable: true
+        group_ids:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Wajib minimal satu untuk tugas kelompok.
+        start_at:
+          type: string
+          format: date-time
+          nullable: true
+        deadline:
+          type: string
+          format: date-time
+        deadline_note:
+          type: string
+          maxLength: 150
+          nullable: true
+
+    TaskResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/Task'
+        message:
+          type: string
+
+    TaskCollection:
+      type: object
+      required: [data, meta, links]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Task'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+        links:
+          $ref: '#/components/schemas/PaginationLinks'
+
+    StudentTaskCollection:
+      type: object
+      required: [data, meta, links]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/StudentTask'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+        links:
+          $ref: '#/components/schemas/PaginationLinks'
+
+    Announcement:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        body:
+          type: string
+        audience:
+          $ref: '#/components/schemas/Audience'
+        audience_label:
+          type: string
+        course_id:
+          type: string
+        course_name:
+          type: string
+          nullable: true
+        course_code:
+          type: string
+          nullable: true
+        prodi_ids:
+          type: array
+          items:
+            type: string
+        prodi_names:
+          type: array
+          items:
+            type: string
+        created_by:
+          type: string
+        author_name:
+          type: string
+        published:
+          type: boolean
+        published_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      example:
+        id: 01M5C0V9NY1ZKM0118PPSS5WE6
+        title: Pengumuman Akademik
+        body: Perkuliahan dimulai pukul 08.00.
+        audience: mahasiswa
+        audience_label: Mahasiswa
+        course_id: ''
+        course_name: null
+        course_code: null
+        prodi_ids: [01M5C0V9EWP828SVQ4W8CRKD1T]
+        prodi_names: [Psikologi]
+        created_by: 01M5BFPTEJRXSS6W5B3ANENFR6
+        author_name: Admin Program Studi
+        published: true
+        published_at: '2026-10-23T08:00:00+07:00'
+
+    AnnouncementRequest:
+      type: object
+      required: [title, audience, published_at, body]
+      properties:
+        title:
+          type: string
+          maxLength: 180
+        audience:
+          $ref: '#/components/schemas/Audience'
+        course_id:
+          type: string
+          nullable: true
+        prodi_ids:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Dipakai untuk audiens mahasiswa. Kosong berarti semua Prodi.
+        published_at:
+          type: string
+          format: date-time
+        body:
+          type: string
+
+    AnnouncementResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/Announcement'
+        message:
+          type: string
+
+    AnnouncementCollection:
+      type: object
+      required: [data, meta, links]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Announcement'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+        links:
+          $ref: '#/components/schemas/PaginationLinks'
+
+    Notification:
+      type: object
+      properties:
+        key:
+          type: string
+        type:
+          type: string
+          enum: [task, schedule]
+        type_label:
+          type: string
+        group:
+          type: string
+          enum: [tasks, today, tomorrow]
+        title:
+          type: string
+        description:
+          type: string
+        meta:
+          type: string
+        badge:
+          type: string
+        time_label:
+          type: string
+        color:
+          type: string
+        icon:
+          type: string
+        url:
+          type: string
+        action_label:
+          type: string
+        external:
+          type: boolean
+        sort_at:
+          type: integer
+        read:
+          type: boolean
+        read_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    NotificationList:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Notification'
+        meta:
+          type: object
+          properties:
+            total:
+              type: integer
+            unread:
+              type: integer
+
+    StudentDashboard:
+      type: object
+      properties:
+        student:
+          $ref: '#/components/schemas/User'
+        counts:
+          type: object
+          properties:
+            tasks:
+              type: integer
+            active_tasks:
+              type: integer
+            pending_tasks:
+              type: integer
+            overdue_tasks:
+              type: integer
+            submitted_tasks:
+              type: integer
+            courses:
+              type: integer
+            groups:
+              type: integer
+            today_schedules:
+              type: integer
+            unread_notifications:
+              type: integer
+        upcoming_tasks:
+          type: array
+          items:
+            $ref: '#/components/schemas/StudentTask'
+        today_schedules:
+          type: array
+          items:
+            $ref: '#/components/schemas/Schedule'
+        groups:
+          type: array
+          items:
+            $ref: '#/components/schemas/Group'
+        latest_announcements:
+          type: array
+          items:
+            $ref: '#/components/schemas/Announcement'
+
+    StaffDashboard:
+      type: object
+      properties:
+        counts:
+          type: object
+          properties:
+            students:
+              type: integer
+            staff:
+              type: integer
+            courses:
+              type: integer
+            schedules:
+              type: integer
+            groups:
+              type: integer
+            tasks:
+              type: integer
+            active_tasks:
+              type: integer
+            submissions:
+              type: integer
+            announcements:
+              type: integer
+        latest_announcements:
+          type: array
+          items:
+            $ref: '#/components/schemas/Announcement'
+
+    PublicSettings:
+      type: object
+      properties:
+        program_name:
+          type: string
+        academic_year:
+          type: string
+        semester:
+          type: string
+        contact_email:
+          type: string
+        contact_phone:
+          type: string
+        public_tagline:
+          type: string
+        public_about:
+          type: string
+        portal_note:
+          type: string
+
+    Settings:
+      allOf:
+        - $ref: '#/components/schemas/PublicSettings'
+        - type: object
+          additionalProperties:
+            type: string
+
+    SettingsRequest:
+      type: object
+      properties:
+        program_name:
+          type: string
+          maxLength: 120
+        academic_year:
+          type: string
+          maxLength: 20
+          nullable: true
+        semester:
+          type: string
+          maxLength: 20
+          nullable: true
+        contact_email:
+          type: string
+          format: email
+          maxLength: 150
+          nullable: true
+        contact_phone:
+          type: string
+          maxLength: 30
+          nullable: true
+        public_tagline:
+          type: string
+          maxLength: 180
+          nullable: true
+        public_about:
+          type: string
+          nullable: true
+        portal_note:
+          type: string
+          maxLength: 180
+          nullable: true

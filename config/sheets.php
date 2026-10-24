@@ -114,6 +114,11 @@ return [
             'created_at', 'updated_at', 'deleted_at',
         ],
 
+        'api_tokens' => [
+            'id', 'user_id', 'name', 'token_hash', 'last_used_at', 'expires_at',
+            'revoked_at', 'created_at', 'updated_at', 'deleted_at',
+        ],
+
     ],
 
 ];
