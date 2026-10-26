@@ -61,12 +61,13 @@ Portal akademik **Prodi Psikologi STIT Muhammadiyah Kediri** berbasis **Laravel 
 - Tailwind CSS 4 + Vite 7
 - PHPUnit 11
 
-Database aplikasi tidak menyimpan data akademik. Konfigurasi default memakai SQLite in-memory; data utama berada di Google Sheets atau file JSON lokal saat mode demo.
+Database aplikasi memakai MySQL dengan nama database `psikologiproject-app` dan tidak menyimpan data akademik. Data utama berada di Google Sheets atau file JSON lokal saat mode demo.
 
 ## Kebutuhan Sistem
 
-- PHP 8.2 dengan ekstensi `openssl`, `pdo`, `mbstring`, `tokenizer`, `xml`, `ctype`, `json`, `bcmath`, `fileinfo`, `gd`, `intl`, dan `zip`.
+- PHP 8.2 dengan ekstensi `openssl`, `pdo`, `pdo_mysql`, `mbstring`, `tokenizer`, `xml`, `ctype`, `json`, `bcmath`, `fileinfo`, `gd`, `intl`, dan `zip`.
 - Composer 2.
+- MySQL atau MariaDB.
 - Node.js 20+ dan npm.
 - Akun Google Cloud jika ingin memakai Google Sheets.
 
@@ -74,10 +75,19 @@ Database aplikasi tidak menyimpan data akademik. Konfigurasi default memakai SQL
 
 Mode demo memakai `LocalSheetGateway` dan file `storage/app/private/demo-sheets.json`, sehingga tidak memerlukan kredensial Google.
 
+Buat database MySQL terlebih dahulu:
+
+```sql
+CREATE DATABASE `psikologiproject-app` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
+
+Sesuaikan `DB_USERNAME` dan `DB_PASSWORD` pada `.env` bila perlu, lalu jalankan:
+
 ```bash
 composer install
 copy .env.example .env
 php artisan key:generate
+php artisan migrate
 npm install
 npm run build
 php artisan sheets:setup --demo
