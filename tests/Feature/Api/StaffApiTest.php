@@ -3,7 +3,10 @@
 namespace Tests\Feature\Api;
 
 use App\Repositories\CourseRepository;
+use App\Repositories\SubmissionRepository;
+use App\Repositories\TaskRepository;
 use App\Repositories\UserRepository;
+use App\Support\TaskGroups;
 use Tests\Concerns\InteractsWithApi;
 use Tests\Concerns\InteractsWithSheets;
 use Tests\TestCase;
@@ -39,6 +42,8 @@ class StaffApiTest extends TestCase
                         'groups', 'tasks', 'active_tasks', 'submissions', 'announcements',
                     ],
                     'latest_announcements',
+                    'active_tasks',
+                    'latest_submissions',
                 ],
             ]);
 
@@ -299,7 +304,8 @@ class StaffApiTest extends TestCase
         $this->withApiToken($token)
             ->getJson('/api/v1/staff/groups/'.$groupId.'?with_members=1')
             ->assertOk()
-            ->assertJsonCount(3, 'data.members');
+            ->assertJsonCount(3, 'data.members')
+            ->assertJsonStructure(['data' => ['members' => [['email', 'phone']]]]);
 
         $this->withApiToken($token)
             ->deleteJson('/api/v1/staff/groups/'.$groupId.'/members/'.$ayu['id'])
@@ -312,6 +318,52 @@ class StaffApiTest extends TestCase
         $this->withApiToken($token)
             ->deleteJson('/api/v1/staff/groups/'.$groupId)
             ->assertNoContent();
+    }
+
+    public function test_staff_task_list_can_be_filtered_by_group(): void
+    {
+        $token = $this->apiLogin('pjmk@psikologi.test');
+        $task = app(TaskRepository::class)->all()
+            ->first(fn (array $candidate): bool => TaskGroups::assignedIds($candidate) !== []);
+
+        $this->assertNotNull($task);
+        $groupId = TaskGroups::assignedIds($task)[0];
+
+        $response = $this->withApiToken($token)
+            ->getJson('/api/v1/staff/tasks?per_page=100&group_id='.$groupId)
+            ->assertOk();
+
+        $tasks = collect($response->json('data'));
+        $this->assertNotEmpty($tasks);
+        $this->assertTrue($tasks->every(
+            fn (array $candidate): bool => in_array($groupId, TaskGroups::assignedIds($candidate), true),
+        ));
+
+        $this->withApiToken($token)
+            ->getJson('/api/v1/staff/tasks?group_id=missing-group')
+            ->assertOk()
+            ->assertJsonPath('meta.total', 0);
+    }
+
+    public function test_staff_submission_list_can_be_filtered_by_course(): void
+    {
+        $token = $this->apiLogin('pjmk@psikologi.test');
+        $submission = app(SubmissionRepository::class)->all()->first();
+        $this->assertNotNull($submission);
+
+        $task = app(TaskRepository::class)->find((string) $submission['task_id']);
+        $this->assertNotNull($task);
+
+        $courseId = (string) $task['course_id'];
+        $response = $this->withApiToken($token)
+            ->getJson('/api/v1/staff/submissions?per_page=100&course_id='.$courseId)
+            ->assertOk();
+
+        $submissions = collect($response->json('data'));
+        $this->assertNotEmpty($submissions);
+        $this->assertTrue($submissions->every(
+            fn (array $candidate): bool => (string) ($candidate['task_course_id'] ?? '') === $courseId,
+        ));
     }
 
     public function test_staff_can_manage_tasks_and_grade_submissions(): void
@@ -410,7 +462,8 @@ class StaffApiTest extends TestCase
             ])
             ->assertCreated()
             ->assertJsonPath('data.title', 'Pengumuman API')
-            ->assertJsonPath('data.prodi_ids', []);
+            ->assertJsonPath('data.prodi_ids', [])
+            ->assertJsonPath('data.prodi_names', ['Publik']);
 
         $id = $created->json('data.id');
         $this->assertIsString($id);
@@ -422,7 +475,8 @@ class StaffApiTest extends TestCase
             ])
             ->assertOk()
             ->assertJsonPath('data.audience', 'mahasiswa')
-            ->assertJsonPath('data.prodi_ids', [$prodiId]);
+            ->assertJsonPath('data.prodi_ids', [$prodiId])
+            ->assertJsonPath('data.prodi_names', ['Psikologi']);
 
         $this->withApiToken($token)
             ->getJson('/api/v1/staff/announcements?search=Pengumuman API')

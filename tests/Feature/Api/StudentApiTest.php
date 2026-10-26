@@ -57,10 +57,12 @@ class StudentApiTest extends TestCase
             ->assertOk()
             ->assertJsonStructure(['data', 'meta']);
 
-        $this->withApiToken($token)
+        $announcements = $this->withApiToken($token)
             ->getJson('/api/v1/student/announcements?per_page=100')
             ->assertOk()
             ->assertJsonStructure(['data', 'meta']);
+
+        $this->assertIsArray($announcements->json('data.0.prodi_names'));
 
         $this->withApiToken($token)
             ->getJson('/api/v1/student/groups?per_page=100')
@@ -109,6 +111,33 @@ class StudentApiTest extends TestCase
                     ->assertNotFound();
             }
         }
+    }
+
+    public function test_student_task_list_can_be_filtered_by_group(): void
+    {
+        $token = $this->apiLogin('citra@psikologi.test');
+        $student = app(UserRepository::class)->findActiveByLogin('citra@psikologi.test');
+        $this->assertNotNull($student);
+
+        $task = app(TaskRepository::class)->forStudent($student)
+            ->first(fn (array $candidate): bool => TaskGroups::assignedIds($candidate) !== []);
+        $this->assertNotNull($task);
+        $groupId = TaskGroups::assignedIds($task)[0];
+
+        $response = $this->withApiToken($token)
+            ->getJson('/api/v1/student/tasks?per_page=100&group_id='.$groupId)
+            ->assertOk();
+
+        $tasks = collect($response->json('data'));
+        $this->assertNotEmpty($tasks);
+        $this->assertTrue($tasks->every(
+            fn (array $candidate): bool => in_array($groupId, TaskGroups::assignedIds($candidate), true),
+        ));
+
+        $this->withApiToken($token)
+            ->getJson('/api/v1/student/tasks?per_page=100&group_id=tidak-ada')
+            ->assertOk()
+            ->assertJsonPath('meta.total', 0);
     }
 
     public function test_student_can_submit_and_update_an_individual_task(): void

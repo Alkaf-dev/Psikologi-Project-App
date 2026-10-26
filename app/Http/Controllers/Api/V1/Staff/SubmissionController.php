@@ -22,6 +22,7 @@ class SubmissionController extends ApiController
         $items = $submissions->withDetails();
         $items = $this->search($items, $request, ['task_title', 'student_name', 'student_npm', 'group_name']);
         $items = $this->filter($items, $request, 'task_id', 'task_id');
+        $items = $this->filter($items, $request, 'course_id', 'task_course_id');
         $items = $this->filter($items, $request, 'user_id', 'user_id');
         $items = $this->filter($items, $request, 'group_id', 'group_id');
         $items = $this->filter($items, $request, 'status', 'status');

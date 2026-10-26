@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Sheets\SpreadsheetGateway;
+use App\Support\SheetRowCache;
 use DateTimeInterface;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
@@ -30,6 +31,8 @@ abstract class BaseSheetRepository
 
     public function flushCache(): void
     {
+        app(SheetRowCache::class)->flush($this->table);
+
         Cache::forget($this->cacheKey());
     }
 
@@ -38,45 +41,51 @@ abstract class BaseSheetRepository
      */
     public function all(bool $withTrashed = false): Collection
     {
-        $rows = $this->rawRows();
+        return app(SheetRowCache::class)->remember(
+            $this->table,
+            $withTrashed,
+            function () use ($withTrashed): Collection {
+                $rows = $this->rawRows();
 
-        if (empty($rows)) {
-            return collect();
-        }
+                if (empty($rows)) {
+                    return collect();
+                }
 
-        $headers = array_values(array_filter(array_map(
-            fn (mixed $header): string => trim((string) $header),
-            $rows[0],
-        )));
+                $headers = array_values(array_filter(array_map(
+                    fn (mixed $header): string => trim((string) $header),
+                    $rows[0],
+                )));
 
-        if (empty($headers)) {
-            $headers = $this->headers();
-        }
+                if (empty($headers)) {
+                    $headers = $this->headers();
+                }
 
-        $records = collect();
+                $records = collect();
 
-        foreach (array_slice($rows, 1) as $index => $row) {
-            if ($this->isEmptyRow($row)) {
-                continue;
-            }
+                foreach (array_slice($rows, 1) as $index => $row) {
+                    if ($this->isEmptyRow($row)) {
+                        continue;
+                    }
 
-            $values = array_pad(
-                array_slice(array_values($row), 0, count($headers)),
-                count($headers),
-                '',
-            );
+                    $values = array_pad(
+                        array_slice(array_values($row), 0, count($headers)),
+                        count($headers),
+                        '',
+                    );
 
-            $record = array_combine($headers, $values) ?: [];
-            $record['_row'] = $index + 2;
+                    $record = array_combine($headers, $values) ?: [];
+                    $record['_row'] = $index + 2;
 
-            if (! $withTrashed && trim((string) ($record['deleted_at'] ?? '')) !== '') {
-                continue;
-            }
+                    if (! $withTrashed && trim((string) ($record['deleted_at'] ?? '')) !== '') {
+                        continue;
+                    }
 
-            $records->push($record);
-        }
+                    $records->push($record);
+                }
 
-        return $records->values();
+                return $records->values();
+            },
+        );
     }
 
     /**

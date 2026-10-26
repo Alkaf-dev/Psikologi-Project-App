@@ -82,6 +82,8 @@ class GroupRepository extends BaseSheetRepository
 
                 $member['user_name'] = $user['name'] ?? 'Tanpa nama';
                 $member['user_npm'] = $user['npm'] ?? '';
+                $member['user_email'] = $user['email'] ?? '';
+                $member['user_phone'] = $user['phone'] ?? '';
 
                 return $member;
             })

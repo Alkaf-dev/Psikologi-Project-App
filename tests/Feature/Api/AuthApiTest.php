@@ -85,8 +85,14 @@ class AuthApiTest extends TestCase
             ->assertJsonPath('data.email', 'ayu@psikologi.test');
     }
 
-    public function test_login_accepts_npm_and_rejects_invalid_credentials_or_prodi(): void
+    public function test_login_accepts_username_npm_and_rejects_invalid_credentials_or_prodi(): void
     {
+        $this->postJson('/api/v1/auth/login', [
+            'login' => 'ayu',
+            'password' => 'password',
+            'prodi_id' => $this->apiProdiId(),
+        ])->assertOk()->assertJsonPath('user.email', 'ayu@psikologi.test');
+
         $this->postJson('/api/v1/auth/login', [
             'login' => '2024001',
             'password' => 'password',

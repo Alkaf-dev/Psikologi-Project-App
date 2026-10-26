@@ -30,6 +30,7 @@ class GroupController extends ApiController
             fn (array $group): array => ApiPresenter::group(
                 $group,
                 $includeMembers ? $groups->membersWithUser((string) $group['id']) : null,
+                $includeMembers,
             ),
         );
     }
@@ -42,6 +43,7 @@ class GroupController extends ApiController
         return $this->data(ApiPresenter::group(
             $group,
             $groups->membersWithUser($id),
+            true,
         ));
     }
 
@@ -88,7 +90,7 @@ class GroupController extends ApiController
         $group = $groups->withDetails(collect([$group]))->first();
 
         return response()->json([
-            'data' => ApiPresenter::group($group, $groups->membersWithUser((string) $group['id'])),
+            'data' => ApiPresenter::group($group, $groups->membersWithUser((string) $group['id']), true),
             'message' => 'Kelompok berhasil ditambahkan.',
         ], 201);
     }
@@ -146,6 +148,7 @@ class GroupController extends ApiController
         return $this->data(ApiPresenter::group(
             $updated,
             $groups->membersWithUser($id),
+            true,
         ));
     }
 
@@ -211,6 +214,7 @@ class GroupController extends ApiController
             'data' => ApiPresenter::group(
                 $groups->withDetails(collect([$group]))->first(),
                 $groups->membersWithUser($id),
+                true,
             ),
             'message' => count($newIds).' anggota ditambahkan.',
         ]);

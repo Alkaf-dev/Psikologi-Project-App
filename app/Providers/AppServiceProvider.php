@@ -10,6 +10,7 @@ use App\Sheets\GoogleSheetsGateway;
 use App\Sheets\LocalSheetGateway;
 use App\Sheets\MysqlSheetGateway;
 use App\Sheets\SpreadsheetGateway;
+use App\Support\SheetRowCache;
 use Filament\Support\ArrayRecord;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -22,6 +23,8 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
+        $this->app->scoped(SheetRowCache::class, fn (): SheetRowCache => new SheetRowCache);
+
         $this->app->singleton(SpreadsheetGateway::class, function (): SpreadsheetGateway {
             return match ((string) config('sheets.driver', 'local')) {
                 'google' => new GoogleSheetsGateway(

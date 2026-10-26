@@ -12,6 +12,7 @@ class NotificationController extends ApiController
     {
         $user = $this->currentUser();
         $items = $notifications->forUser($user);
+        $unread = $items->where('read', false)->count();
 
         if ($request->boolean('unread')) {
             $items = $items->where('read', false)->values();
@@ -23,7 +24,7 @@ class NotificationController extends ApiController
             'data' => $items,
             'meta' => [
                 'total' => $items->count(),
-                'unread' => $notifications->unreadCount($user),
+                'unread' => $unread,
             ],
         ]);
     }
@@ -36,30 +37,31 @@ class NotificationController extends ApiController
 
         $user = $this->currentUser();
         $key = trim((string) $data['key']);
-        $available = $notifications->forUser($user)->contains(
-            fn (array $notification): bool => (string) ($notification['key'] ?? '') === $key,
-        );
+        $items = $notifications->forUser($user);
+        $notification = $items->firstWhere('key', $key);
 
-        if (! $available) {
+        if ($notification === null) {
             abort(422, 'Notifikasi tidak ditemukan untuk akun ini.');
         }
 
+        $wasUnread = ! ($notification['read'] ?? false);
         $notifications->markAsRead($user, $key);
 
         return response()->json([
             'message' => 'Notifikasi ditandai sudah dibaca.',
-            'unread_count' => $notifications->unreadCount($user),
+            'unread_count' => $items->where('read', false)->count() - ($wasUnread ? 1 : 0),
         ]);
     }
 
     public function readAll(NotificationCenter $notifications): JsonResponse
     {
         $user = $this->currentUser();
-        $notifications->markAllAsRead($user);
+        $items = $notifications->forUser($user);
+        $notifications->markManyAsRead($user, $items->pluck('key')->all());
 
         return response()->json([
             'message' => 'Semua notifikasi ditandai sudah dibaca.',
-            'unread_count' => $notifications->unreadCount($user),
+            'unread_count' => 0,
         ]);
     }
 }

@@ -25,13 +25,35 @@ class DashboardController extends ApiController
         SubmissionRepository $submissions,
         AnnouncementRepository $announcements,
     ): JsonResponse {
+        $allUsers = $users->all();
         $allTasks = $tasks->all();
+        $allSubmissions = $submissions->all();
+        $allAnnouncements = $announcements->all();
+        $submissionCounts = $allSubmissions->groupBy('task_id')->map->count();
+
+        $activeTasks = $allTasks
+            ->filter(fn (array $task): bool => TaskStatus::normalize($task['status'] ?? '') === TaskStatus::ACTIVE)
+            ->sortBy('deadline')
+            ->take(5)
+            ->values();
+
+        $activeTasks = $tasks->withDetails($activeTasks)
+            ->map(function (array $task) use ($submissionCounts): array {
+                $task['submission_count'] = $submissionCounts[(string) ($task['id'] ?? '')] ?? 0;
+
+                return ApiPresenter::task($task);
+            })
+            ->values();
+
+        $latestSubmissions = $submissions->withDetails(
+            $allSubmissions->sortByDesc('submitted_at')->take(5)->values(),
+        )->map(fn (array $submission): array => ApiPresenter::submission($submission))->values();
 
         return response()->json([
             'data' => [
                 'counts' => [
-                    'students' => $users->students()->count(),
-                    'staff' => $users->admins()->count(),
+                    'students' => $allUsers->filter(fn (array $user): bool => $users->isStudent($user))->count(),
+                    'staff' => $allUsers->filter(fn (array $user): bool => $users->isAdmin($user))->count(),
                     'courses' => $courses->count(),
                     'schedules' => $schedules->count(),
                     'groups' => $groups->count(),
@@ -39,12 +61,14 @@ class DashboardController extends ApiController
                     'active_tasks' => $allTasks->filter(
                         fn (array $task): bool => TaskStatus::normalize($task['status'] ?? '') === TaskStatus::ACTIVE,
                     )->count(),
-                    'submissions' => $submissions->count(),
-                    'announcements' => $announcements->count(),
+                    'submissions' => $allSubmissions->count(),
+                    'announcements' => $allAnnouncements->count(),
                 ],
                 'latest_announcements' => $announcements->withAuthor(
-                    $announcements->all()->sortByDesc('published_at')->take(3),
+                    $allAnnouncements->sortByDesc('published_at')->take(3),
                 )->map(fn (array $announcement): array => ApiPresenter::announcement($announcement))->values(),
+                'active_tasks' => $activeTasks,
+                'latest_submissions' => $latestSubmissions,
             ],
         ]);
     }

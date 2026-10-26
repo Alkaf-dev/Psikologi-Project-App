@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Repositories\UserRepository;
+use App\Support\TaskGroups;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -154,6 +155,23 @@ abstract class ApiController extends Controller
 
         return $items
             ->filter(fn (array $item): bool => (string) ($item[$field] ?? '') === $value)
+            ->values();
+    }
+
+    /**
+     * @param  Collection<int, array<string, mixed>>  $items
+     * @return Collection<int, array<string, mixed>>
+     */
+    protected function filterByTaskGroup(Collection $items, Request $request): Collection
+    {
+        $groupId = trim((string) $request->query('group_id', ''));
+
+        if ($groupId === '') {
+            return $items;
+        }
+
+        return $items
+            ->filter(fn (array $task): bool => in_array($groupId, TaskGroups::assignedIds($task), true))
             ->values();
     }
 

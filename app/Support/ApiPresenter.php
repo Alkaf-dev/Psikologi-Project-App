@@ -98,8 +98,11 @@ final class ApiPresenter
      * @param  Collection<int, array<string, mixed>>|null  $members
      * @return array<string, mixed>
      */
-    public static function group(array $group, ?Collection $members = null): array
-    {
+    public static function group(
+        array $group,
+        ?Collection $members = null,
+        bool $includeContacts = false,
+    ): array {
         $data = self::base($group);
         $data['members_count'] = $members !== null
             ? $members->count()
@@ -107,13 +110,22 @@ final class ApiPresenter
 
         if ($members !== null) {
             $data['member_ids'] = $members->pluck('user_id')->filter()->values()->all();
-            $data['members'] = $members->map(fn (array $member): array => [
-                'id' => (string) ($member['id'] ?? ''),
-                'user_id' => (string) ($member['user_id'] ?? ''),
-                'name' => (string) ($member['user_name'] ?? ''),
-                'npm' => (string) ($member['user_npm'] ?? ''),
-                'role' => (string) ($member['role'] ?? 'anggota'),
-            ])->values()->all();
+            $data['members'] = $members->map(function (array $member) use ($includeContacts): array {
+                $presented = [
+                    'id' => (string) ($member['id'] ?? ''),
+                    'user_id' => (string) ($member['user_id'] ?? ''),
+                    'name' => (string) ($member['user_name'] ?? ''),
+                    'npm' => (string) ($member['user_npm'] ?? ''),
+                    'role' => (string) ($member['role'] ?? 'anggota'),
+                ];
+
+                if ($includeContacts) {
+                    $presented['email'] = (string) ($member['user_email'] ?? '');
+                    $presented['phone'] = (string) ($member['user_phone'] ?? '');
+                }
+
+                return $presented;
+            })->values()->all();
         }
 
         return $data;
@@ -161,6 +173,9 @@ final class ApiPresenter
         $data['prodi_ids'] = ProdiAssignments::ids($data['prodi_ids'] ?? '');
         $data['audience'] = (string) ($data['audience'] ?? 'all');
         $data['published'] = trim((string) ($data['published_at'] ?? '')) !== '';
+        $data['prodi_names'] = $data['audience'] === 'mahasiswa'
+            ? ProdiAssignments::names($data['prodi_ids'], 'Semua Prodi')
+            : ['Publik'];
 
         return $data;
     }

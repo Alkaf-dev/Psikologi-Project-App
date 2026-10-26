@@ -34,6 +34,7 @@ class TaskController extends ApiController
         $items = $this->filter($items, $request, 'course_id', 'course_id');
         $items = $this->filter($items, $request, 'type', 'type');
         $items = $this->filter($items, $request, 'status', 'status');
+        $items = $this->filterByTaskGroup($items, $request);
         $items = $this->sort($items, $request, ['deadline', 'title', 'created_at', 'status'], 'deadline');
 
         return $this->paginated(

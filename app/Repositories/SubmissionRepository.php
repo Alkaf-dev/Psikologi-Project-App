@@ -114,6 +114,8 @@ class SubmissionRepository extends BaseSheetRepository
                 $task = $tasks->find((string) ($submission['task_id'] ?? ''));
                 $submission['task_title'] = $task['title'] ?? '-';
                 $submission['task_type'] = $task['type'] ?? 'individu';
+                $submission['task_course_id'] = (string) ($task['course_id'] ?? '');
+                $submission['task_meeting_number'] = $task['meeting_number'] ?? null;
                 $submission['student_name'] = $users->nameById((string) ($submission['user_id'] ?? ''));
                 $submission['student_npm'] = (string) ($users->find((string) ($submission['user_id'] ?? ''))['npm'] ?? '');
                 $submission['representative_name'] = $submission['student_name'];

@@ -33,6 +33,6 @@ return [
 
     'default_per_page' => (int) env('API_DEFAULT_PER_PAGE', 25),
 
-    'max_per_page' => (int) env('API_MAX_PER_PAGE', 100),
+    'max_per_page' => (int) env('API_MAX_PER_PAGE', 500),
 
 ];

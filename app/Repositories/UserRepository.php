@@ -62,7 +62,11 @@ class UserRepository extends BaseSheetRepository
                 return false;
             }
 
-            return mb_strtolower(trim((string) ($user['email'] ?? ''))) === $login
+            $email = mb_strtolower(trim((string) ($user['email'] ?? '')));
+            $username = $email !== '' ? explode('@', $email, 2)[0] : '';
+
+            return $email === $login
+                || $username === $login
                 || mb_strtolower(trim((string) ($user['npm'] ?? ''))) === $login;
         });
     }
