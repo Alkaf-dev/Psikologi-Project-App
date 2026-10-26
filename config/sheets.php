@@ -7,13 +7,13 @@ return [
     | Spreadsheet Driver
     |--------------------------------------------------------------------------
     |
+    | "mysql" menyimpan data ke tabel MySQL (tujuan utama aplikasi).
     | "google" menyimpan data ke Google Sheets melalui service account.
-    | "local" menyimpan data ke file JSON lokal (cocok untuk demo dan test
-    | tanpa kredensial Google Cloud).
+    | "local" menyimpan data ke file JSON lokal (sumber migrasi dan test).
     |
     */
 
-    'driver' => env('SHEETS_DRIVER', 'local'),
+    'driver' => env('SHEETS_DRIVER', 'mysql'),
 
     /*
     |--------------------------------------------------------------------------
@@ -35,6 +35,21 @@ return [
     */
 
     'local_path' => env('SHEETS_LOCAL_PATH', storage_path('app/private/demo-sheets.json')),
+
+    /*
+    |--------------------------------------------------------------------------
+    | MySQL Driver
+    |--------------------------------------------------------------------------
+    |
+    | Data spreadsheet disimpan sebagai tabel MySQL dengan prefix tertentu.
+    | Prefix menjaga tabel aplikasi tetap terpisah dari tabel framework.
+    |
+    */
+
+    'mysql' => [
+        'connection' => env('SHEETS_MYSQL_CONNECTION'),
+        'table_prefix' => env('SHEETS_MYSQL_PREFIX', 'sheet_'),
+    ],
 
     /*
     |--------------------------------------------------------------------------

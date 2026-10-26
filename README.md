@@ -1,6 +1,6 @@
 # Psikologi Connect
 
-Portal akademik **Prodi Psikologi STIT Muhammadiyah Kediri** berbasis **Laravel 12 + Filament 5**. Data utama disimpan di **Google Sheets**, dengan situs publik dan satu panel terpadu `/app` untuk admin serta mahasiswa. Login mendukung beberapa Prodi melalui pilihan dropdown yang wajib diisi.
+Portal akademik **Prodi Psikologi STIT Muhammadiyah Kediri** berbasis **Laravel 12 + Filament 5**. Data utama disimpan di **MySQL**, dengan situs publik dan satu panel terpadu `/app` untuk admin serta mahasiswa. Login mendukung beberapa Prodi melalui pilihan dropdown yang wajib diisi.
 
 ## Fitur
 
@@ -23,7 +23,7 @@ Portal akademik **Prodi Psikologi STIT Muhammadiyah Kediri** berbasis **Laravel 
 - Daftar kelompok beserta peran, ketua, dan anggota, hanya dari mata kuliah Prodi mahasiswa.
 - Pengumuman untuk mahasiswa, termasuk target Prodi tertentu atau semua Prodi.
 - Lonceng notifikasi dengan panel geser dari kanan dan halaman Notifikasi untuk tugas aktif serta jadwal hari ini dan besok.
-- Status baca notifikasi tersimpan per akun di tab `notification_reads`.
+- Status baca notifikasi tersimpan per akun di tabel `sheet_notification_reads`.
 - Profil dan perubahan password.
 
 ### Panel staff
@@ -43,7 +43,7 @@ Portal akademik **Prodi Psikologi STIT Muhammadiyah Kediri** berbasis **Laravel 
 - Reset password user.
 - Lonceng dengan panel notifikasi geser dari kanan dan halaman Notifikasi global untuk tugas aktif serta jadwal hari ini dan besok.
 - Pengaturan identitas program, kontak, dan konten halaman publik.
-- Penghapusan menggunakan soft delete; riwayat tetap ada di spreadsheet.
+- Penghapusan menggunakan soft delete; riwayat tetap ada di database.
 
 ### API v1
 - REST API `/api/v1` untuk aplikasi mobile atau klien eksternal, memakai data yang sama dengan panel.
@@ -61,7 +61,7 @@ Portal akademik **Prodi Psikologi STIT Muhammadiyah Kediri** berbasis **Laravel 
 - Tailwind CSS 4 + Vite 7
 - PHPUnit 11
 
-Database aplikasi memakai MySQL dengan nama database `psikologiproject-app` dan tidak menyimpan data akademik. Data utama berada di Google Sheets atau file JSON lokal saat mode demo.
+Database aplikasi memakai MySQL dengan nama database `psikologiproject-app`. Seluruh data akademik disimpan di tabel `sheet_*` yang dapat diisi dari migrasi Google Sheets, file JSON demo, atau input langsung melalui aplikasi.
 
 ## Kebutuhan Sistem
 
@@ -69,11 +69,11 @@ Database aplikasi memakai MySQL dengan nama database `psikologiproject-app` dan 
 - Composer 2.
 - MySQL atau MariaDB.
 - Node.js 20+ dan npm.
-- Akun Google Cloud jika ingin memakai Google Sheets.
+- Akun Google Cloud hanya jika ingin mengimpor data dari Google Sheets.
 
 ## Menjalankan Mode Demo
 
-Mode demo memakai `LocalSheetGateway` dan file `storage/app/private/demo-sheets.json`, sehingga tidak memerlukan kredensial Google.
+Mode demo menulis data contoh ke MySQL, sehingga tidak memerlukan kredensial Google. Data contoh juga tersedia di `storage/app/private/demo-sheets.json` untuk diimpor dengan `php artisan sheets:migrate-to-mysql --source=local --fresh`.
 
 Buat database MySQL terlebih dahulu:
 
@@ -113,7 +113,7 @@ Gunakan `php artisan sheets:setup --demo` lagi untuk menyegarkan data demo. Data
 
 ## API v1
 
-API REST tersedia di `/api/v1` untuk aplikasi mobile atau klien lain. Spesifikasi lengkap beserta schema dan contoh request/response ada di [`docs/openapi.yaml`](docs/openapi.yaml). API memakai data Google Sheets yang sama dengan panel, bukan database terpisah.
+API REST tersedia di `/api/v1` untuk aplikasi mobile atau klien lain. Spesifikasi lengkap beserta schema dan contoh request/response ada di [`docs/openapi.yaml`](docs/openapi.yaml). API memakai data MySQL yang sama dengan panel, bukan database terpisah.
 
 ### Base URL
 
@@ -160,7 +160,7 @@ curl http://127.0.0.1:8000/api/v1/auth/me \
   -H "Authorization: Bearer <access_token>"
 ```
 
-Token disimpan sebagai hash di tab `api_tokens`. Logout mencabut token yang sedang dipakai. Ganti password sendiri mencabut token lain; reset password oleh staff mencabut semua token pengguna. Masa berlaku default 30 hari dan dapat diatur dengan `API_TOKEN_TTL_DAYS`.
+Token disimpan sebagai hash di tabel `sheet_api_tokens`. Logout mencabut token yang sedang dipakai. Ganti password sendiri mencabut token lain; reset password oleh staff mencabut semua token pengguna. Masa berlaku default 30 hari dan dapat diatur dengan `API_TOKEN_TTL_DAYS`.
 
 ### Role dan endpoint
 
@@ -230,9 +230,11 @@ API_MAX_PER_PAGE=100
 API_ALLOWED_ORIGINS=*
 ```
 
-Jalankan `php artisan sheets:setup` setelah menarik perubahan agar tab `api_tokens` dan header baru tersedia.
+Jalankan `php artisan migrate` setelah menarik perubahan agar tabel `sheet_api_tokens` dan kolom baru tersedia.
 
-## Konfigurasi Google Sheets
+## Migrasi dari Google Sheets (Opsional)
+
+Penyimpanan utama aplikasi adalah MySQL. Bagian ini hanya diperlukan jika ingin mengimpor data yang sudah ada di Google Sheets. Setelah impor selesai, kembalikan `SHEETS_DRIVER=mysql`.
 
 ### 1. Buat project Google Cloud
 1. Buka [Google Cloud Console](https://console.cloud.google.com/).
@@ -270,7 +272,9 @@ https://docs.google.com/spreadsheets/d/SPREADSHEET_ID/edit
 php artisan sheets:check
 ```
 
-### 4. Atur `.env`
+### 4. Atur `.env` dan impor
+
+Gunakan Google Sheets hanya sebagai sumber data selama migrasi:
 
 ```dotenv
 SHEETS_DRIVER=google
@@ -285,9 +289,20 @@ Jalankan:
 php artisan optimize:clear
 php artisan sheets:check
 php artisan sheets:setup
+php artisan migrate
+php artisan sheets:migrate-to-mysql --source=google --fresh
 ```
 
 `sheets:setup` akan membuat tab yang belum ada, menambahkan header baru yang belum tersedia tanpa mengubah data lama, memigrasikan role lama `admin` menjadi `super_admin`, dan mengisi `prodi_ids` mata kuliah lama dengan Prodi default. Tanpa opsi `--demo`, command akan meminta data Super Admin awal beserta Prodinya.
+
+Setelah impor berhasil, ubah `.env` menjadi:
+
+```dotenv
+SHEETS_DRIVER=mysql
+SHEETS_MYSQL_PREFIX=sheet_
+```
+
+Lalu jalankan `php artisan optimize:clear`. Mulai saat itu aplikasi tidak lagi membaca atau menulis ke Google Sheets.
 
 Untuk spreadsheet lama, akun yang sudah ada tidak diisi Prodinya secara otomatis. Setelah setup, isi Prodi admin pertama melalui CLI agar bisa login:
 
@@ -303,39 +318,41 @@ Setelah admin bisa masuk, lengkapi Prodi dan role akun lain melalui menu **User*
 php artisan sheets:check
 ```
 
-Perintah ini menampilkan driver, judul spreadsheet, URL, email service account, daftar tab, jumlah header, dan jumlah baris.
+Perintah ini menampilkan driver, koneksi/database (atau detail spreadsheet saat memakai driver Google), daftar tabel/tab, jumlah header, dan jumlah baris.
 
-## Struktur Tab Spreadsheet
+## Struktur Tabel MySQL
 
-Header setiap tab didefinisikan di `config/sheets.php`:
+Kolom setiap tabel didefinisikan di `config/sheets.php`:
 
-| Tab | Isi |
+| Tabel | Isi |
 | --- | --- |
-| `study_programs` | Daftar Prodi, kode, jenjang, dan status aktif |
-| `users` | Akun Mahasiswa, Super Admin, dan Admin, termasuk `prodi_id` dan `role` |
-| `courses` | Mata kuliah, termasuk `prodi_ids` berisi daftar ID Prodi |
-| `schedules` | Jadwal kuliah, mode offline/online, platform, dan tautan rapat |
-| `groups` | Kelompok mahasiswa |
-| `group_members` | Anggota dan ketua kelompok |
-| `tasks` | Tugas individu/kelompok, termasuk `group_ids`, pertemuan, materi, status, dan link pengumpulan |
-| `submissions` | Pengumpulan, nilai, dan feedback; tugas kelompok memakai satu baris per `task_id` + `group_id` |
-| `announcements` | Pengumuman, termasuk `prodi_ids` untuk target Prodi mahasiswa |
-| `settings` | Pengaturan aplikasi |
-| `notification_reads` | Status baca notifikasi per user dan kunci notifikasi |
-| `api_tokens` | Token API tersimpan sebagai hash, masa berlaku, pemakaian terakhir, dan status pencabutan |
+| `sheet_study_programs` | Daftar Prodi, kode, jenjang, dan status aktif |
+| `sheet_users` | Akun Mahasiswa, Super Admin, dan Admin, termasuk `prodi_id` dan `role` |
+| `sheet_courses` | Mata kuliah, termasuk `prodi_ids` berisi daftar ID Prodi |
+| `sheet_schedules` | Jadwal kuliah, mode offline/online, platform, dan tautan rapat |
+| `sheet_groups` | Kelompok mahasiswa |
+| `sheet_group_members` | Anggota dan ketua kelompok |
+| `sheet_tasks` | Tugas individu/kelompok, termasuk `group_ids`, pertemuan, materi, status, dan link pengumpulan |
+| `sheet_submissions` | Pengumpulan, nilai, dan feedback; tugas kelompok memakai satu baris per `task_id` + `group_id` |
+| `sheet_announcements` | Pengumuman, termasuk `prodi_ids` untuk target Prodi mahasiswa |
+| `sheet_settings` | Pengaturan aplikasi |
+| `sheet_notification_reads` | Status baca notifikasi per user dan kunci notifikasi |
+| `sheet_api_tokens` | Token API tersimpan sebagai hash, masa berlaku, pemakaian terakhir, dan status pencabutan |
 
-Jangan mengubah urutan atau nama header tanpa menyesuaikan `config/sheets.php` dan data yang sudah ada. `prodi_id` pada `users` dan `prodi_ids` pada `courses`/`announcements` merujuk ke `study_programs.id`. Kolom-kolom ini ditambahkan di akhir header agar data lama tidak bergeser. `prodi_ids` berisi beberapa ULID yang dipisahkan koma; kosong pada pengumuman mahasiswa berarti semua Prodi.
+Jangan mengubah urutan atau nama kolom tanpa menyesuaikan `config/sheets.php` dan data yang sudah ada. `prodi_id` pada `sheet_users` dan `prodi_ids` pada `sheet_courses`/`sheet_announcements` merujuk ke `sheet_study_programs.id`. Kolom-kolom ini ditambahkan di akhir agar data lama tidak bergeser. `prodi_ids` berisi beberapa ULID yang dipisahkan koma; kosong pada pengumuman mahasiswa berarti semua Prodi.
 
-`tasks.group_ids` berisi beberapa ID kelompok yang dipisahkan koma. Kolom `tasks.group_id` lama tetap dipertahankan untuk kompatibilitas. Status tugas: `draft` (tidak tampil di portal), `active` (tampil dan dapat dikumpulkan), serta `completed` (tampil tetapi read-only). Pengumpulan kelompok disimpan sekali per kombinasi `task_id` dan `group_id`; `user_id` pada baris tersebut adalah anggota yang menjadi perwakilan.
+`sheet_tasks.group_ids` berisi beberapa ID kelompok yang dipisahkan koma. Kolom `sheet_tasks.group_id` lama tetap dipertahankan untuk kompatibilitas. Status tugas: `draft` (tidak tampil di portal), `active` (tampil dan dapat dikumpulkan), serta `completed` (tampil tetapi read-only). Pengumpulan kelompok disimpan sekali per kombinasi `task_id` dan `group_id`; `user_id` pada baris tersebut adalah anggota yang menjadi perwakilan.
 
-Notifikasi tidak disimpan sebagai daftar event. Aplikasi menghitung notifikasi langsung dari tugas aktif dan jadwal, lalu menyimpan hanya status baca per akun di `notification_reads`. Kunci tugas memakai `task:{id}:{timestamp deadline}`, sedangkan jadwal memakai `schedule:{id}:{tanggal}`; perubahan deadline atau pergantian hari dapat menghasilkan notifikasi baru. Tugas yang ditampilkan adalah tugas `active` dengan deadline pada pekan berjalan atau setelahnya, tanpa deadline tidak ditampilkan. Jadwal yang ditampilkan hanya jadwal hari ini dan besok.
+Notifikasi tidak disimpan sebagai daftar event. Aplikasi menghitung notifikasi langsung dari tugas aktif dan jadwal, lalu menyimpan hanya status baca per akun di `sheet_notification_reads`. Kunci tugas memakai `task:{id}:{timestamp deadline}`, sedangkan jadwal memakai `schedule:{id}:{tanggal}`; perubahan deadline atau pergantian hari dapat menghasilkan notifikasi baru. Tugas yang ditampilkan adalah tugas `active` dengan deadline pada pekan berjalan atau setelahnya, tanpa deadline tidak ditampilkan. Jadwal yang ditampilkan hanya jadwal hari ini dan besok.
 
 ## Perintah Penting
 
 ```bash
-php artisan sheets:check          # cek koneksi, tab, header, dan jumlah baris
-php artisan sheets:setup          # buat tab/header, Prodi awal, migrasi role, dan Prodi matkul lama
-php artisan sheets:setup --demo   # buat tab/header, migrasi role/matkul, dan isi data demo
+php artisan migrate               # buat tabel framework dan tabel sheet_*
+php artisan sheets:migrate-to-mysql --source=local|google --fresh  # impor data ke MySQL
+php artisan sheets:check          # cek driver, tabel, header, dan jumlah baris
+php artisan sheets:setup          # buat tabel/kolom, Prodi awal, migrasi role, dan Prodi matkul lama
+php artisan sheets:setup --demo   # buat tabel/kolom, migrasi role/matkul, dan isi data demo
 php artisan sheets:assign-prodi {email} --prodi=psikologi  # isi Prodi akun lama
 php artisan test                  # jalankan seluruh test
 php artisan optimize:clear        # bersihkan cache config/route/view
@@ -361,16 +378,18 @@ URL lama di bawah `/admin/*` dan `/portal/*` tetap diarahkan ke halaman yang ses
 
 ## Arsitektur Singkat
 
-- `app/Sheets/SpreadsheetGateway.php`: kontrak akses spreadsheet.
-- `app/Sheets/GoogleSheetsGateway.php`: implementasi Google Sheets API.
-- `app/Sheets/LocalSheetGateway.php`: implementasi JSON lokal untuk demo/test.
+- `app/Sheets/SpreadsheetGateway.php`: kontrak akses data spreadsheet.
+- `app/Sheets/MysqlSheetGateway.php`: implementasi utama berbasis tabel MySQL `sheet_*`.
+- `app/Sheets/GoogleSheetsGateway.php`: implementasi Google Sheets API untuk sumber migrasi.
+- `app/Sheets/LocalSheetGateway.php`: implementasi JSON lokal untuk demo, impor, dan test.
+- `app/Console/Commands/MigrateSheetsToMysql.php`: impor data Google Sheets/JSON ke MySQL.
 - `app/Repositories/`: repository per domain dengan cache, ULID, dan soft delete.
 - `app/Repositories/StudyProgramRepository.php`: daftar Prodi dan opsi login.
 - `app/Support/ProdiAssignments.php`: parsing, validasi, dan label daftar Prodi pada kolom `prodi_ids`.
 - `app/Support/TaskGroups.php`: parsing, validasi, dan label kelompok pada kolom `group_ids`.
 - `app/Support/TaskStatus.php`: normalisasi dan label status tugas `Draf`/`Aktif`/`Selesai`.
 - `app/Support/NotificationCenter.php`: perhitungan notifikasi tugas dan jadwal per user.
-- `app/Repositories/NotificationReadRepository.php`: status baca notifikasi di sheet.
+- `app/Repositories/NotificationReadRepository.php`: status baca notifikasi di database.
 - `app/Livewire/NotificationBell.php`: lonceng dan panel notifikasi geser kanan pada topbar panel.
 - `app/Auth/SheetUser.php` dan `SheetUserProvider.php`: autentikasi tanpa Eloquent, termasuk validasi Prodi dan role.
 - `app/Enums/UserRole.php`: definisi role Mahasiswa, Super Admin, dan Admin.
@@ -383,21 +402,22 @@ URL lama di bawah `/admin/*` dan `/portal/*` tetap diarahkan ke halaman yang ses
 - `routes/api.php`: seluruh route REST `/api/v1`.
 - `app/Http/Controllers/Api/V1/`: controller API publik, auth, notifikasi, mahasiswa, dan staff.
 - `app/Repositories/ApiTokenRepository.php`: penerbitan, validasi, pemakaian terakhir, dan pencabutan token.
-- `app/Support/ApiPresenter.php`: transformasi record sheet menjadi respons API tanpa field sensitif.
+- `app/Support/ApiPresenter.php`: transformasi record database menjadi respons API tanpa field sensitif.
 - `app/Http/Middleware/ForceJsonResponse.php` dan `EnsureApiRole.php`: JSON response dan pembatasan role API.
 - `docs/openapi.yaml`: spesifikasi OpenAPI 3.0 seluruh endpoint API.
 - `app/Support/DemoData.php`: data demo.
 - `config/sheets.php`: konfigurasi driver dan seluruh header tab.
 
-Setiap pembacaan sheet di-cache selama `SHEETS_CACHE_TTL` detik (default 60). Setelah operasi tulis melalui aplikasi, cache tab terkait dibersihkan. Perubahan langsung di Google Sheets dapat terlihat terlambat sampai cache kedaluwarsa.
+Setiap pembacaan tabel di-cache selama `SHEETS_CACHE_TTL` detik (default 60). Setelah operasi tulis melalui aplikasi, cache tabel terkait dibersihkan. Perubahan langsung di database dapat terlihat terlambat sampai cache kedaluwarsa atau cache dibersihkan.
 
 ## Batasan yang Diketahui
 
-- Google Sheets bukan database transaksional. Tidak ada row locking; penulisan bersamaan dapat saling menimpa.
+- Tabel `sheet_*` adalah mirror data spreadsheet: kolom bertipe `longtext` dan belum memakai foreign key atau constraint relasional.
+- Gateway MySQL belum memakai row locking; penulisan bersamaan pada baris yang sama dapat saling menimpa.
 - Pengumpulan tugas berupa tautan; aplikasi tidak mengunggah atau menyimpan file.
 - Pengumpulan kelompok memakai satu perwakilan per kelompok. Perwakilan adalah anggota pertama yang mengumpulkan dan hanya dia yang dapat memperbarui sampai deadline.
 - Tidak ada registrasi publik, OAuth, atau remember-me. Notifikasi hanya tersedia di dalam aplikasi; tidak ada email, WhatsApp, atau browser push.
-- Kuota Google Sheets API berlaku; cache membantu mengurangi pembacaan. Notifikasi dihitung ulang setiap kali halaman dimuat.
+- Kuota Google Sheets API hanya berlaku saat memakai Google Sheets sebagai sumber migrasi; aplikasi utama membaca MySQL. Notifikasi dihitung ulang setiap kali halaman dimuat.
 - Pengumuman publik hanya menampilkan audiens `all`.
 - Panel memakai halaman custom, bukan Filament Resource Eloquent.
 - Admin dapat melihat data semua Prodi; pembatasan Prodi hanya berlaku untuk mahasiswa.
@@ -413,7 +433,7 @@ Setiap pembacaan sheet di-cache selama `SHEETS_CACHE_TTL` detik (default 60). Se
 php artisan test
 ```
 
-Test menggunakan `LocalSheetGateway` dengan file JSON sementara. Test tidak menghubungi Google Sheets. Cakupan saat ini meliputi:
+Test menggunakan `LocalSheetGateway` dengan file JSON sementara dan SQLite in-memory. Test tidak menghubungi Google Sheets atau MySQL produksi. Cakupan saat ini meliputi:
 
 - Render halaman publik.
 - Visibilitas pengumuman publik.
@@ -431,6 +451,8 @@ Test menggunakan `LocalSheetGateway` dengan file JSON sementara. Test tidak meng
 - Mount action tabel dan form pengaturan/profil.
 - CRUD admin, pengumpulan tugas, dan reset password.
 - Repository soft delete/restore serta persistensi JSON.
+- Gateway MySQL: pembuatan tabel, baca/tulis/update baris, batch read, dan health check.
+- Perintah impor spreadsheet ke MySQL beserta pemetaan kolom lama.
 - API publik, login email/NIM, validasi Prodi, token kedaluwarsa/dicabut, daftar/cabut token, profil, dan ganti password.
 - Pembatasan role API: mahasiswa tidak dapat membuka endpoint staff dan sebaliknya.
 - API mahasiswa: dashboard, mata kuliah, jadwal, tugas, pengumpulan individu, kelompok, dan notifikasi.
@@ -446,14 +468,25 @@ npm install
 npm run build
 ```
 
-### `Sheet [users] belum dibuat` atau header kurang
+### `Sheet [users] belum dibuat` atau kolom kurang
 Jalankan:
 
 ```bash
+php artisan migrate
 php artisan sheets:setup
 ```
 
-Perintah ini membuat tab yang belum ada dan menambahkan header baru seperti `prodi_id` atau `prodi_ids` tanpa mengubah data lama. Cek hasilnya dengan `php artisan sheets:check`.
+`php artisan migrate` membuat tabel `sheet_*`, sedangkan `sheets:setup` melengkapi kolom baru seperti `prodi_id` atau `prodi_ids` tanpa mengubah data lama. Cek hasilnya dengan `php artisan sheets:check`.
+
+### Data lama masih berasal dari Google Sheets
+Pastikan `.env` memakai `SHEETS_DRIVER=mysql`, lalu jalankan:
+
+```bash
+php artisan optimize:clear
+php artisan sheets:migrate-to-mysql --source=google --fresh
+```
+
+Perintah impor hanya menyalin data; aktifkan driver MySQL setelah impor selesai.
 
 ### Login gagal karena Prodi
 - Pastikan Prodi yang dipilih aktif.

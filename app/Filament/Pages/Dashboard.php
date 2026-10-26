@@ -87,7 +87,11 @@ class Dashboard extends BaseDashboard
             'announcementCount' => $announcements->count(),
             'latestTasks' => $tasks->withDetails()->sortByDesc('created_at')->take(5)->values(),
             'latestSubmissions' => $submissions->withDetails()->sortByDesc('submitted_at')->take(5)->values(),
-            'dataDriver' => config('sheets.driver') === 'google' ? 'Google Sheets' : 'Demo lokal',
+            'dataDriver' => match ((string) config('sheets.driver')) {
+                'google' => 'Google Sheets',
+                'mysql' => 'MySQL',
+                default => 'Demo lokal',
+            },
         ];
     }
 

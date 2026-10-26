@@ -30,6 +30,9 @@ class CheckSheets extends Command
 
         if (($health['driver'] ?? null) === 'local') {
             $this->line('File data: '.($health['path'] ?? '-'));
+        } elseif (($health['driver'] ?? null) === 'mysql') {
+            $this->line('Koneksi: '.($health['connection'] ?? '-'));
+            $this->line('Database: '.($health['database'] ?? '-'));
         } else {
             $this->line('Spreadsheet: '.($health['title'] ?? '-'));
             $this->line('URL: '.($health['spreadsheet_url'] ?? '-'));

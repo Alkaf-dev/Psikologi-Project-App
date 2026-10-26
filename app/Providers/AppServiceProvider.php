@@ -8,6 +8,7 @@ use App\Repositories\ApiTokenRepository;
 use App\Repositories\UserRepository;
 use App\Sheets\GoogleSheetsGateway;
 use App\Sheets\LocalSheetGateway;
+use App\Sheets\MysqlSheetGateway;
 use App\Sheets\SpreadsheetGateway;
 use Filament\Support\ArrayRecord;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -28,8 +29,12 @@ class AppServiceProvider extends ServiceProvider
                     config('sheets.credentials_path'),
                 ),
                 'local' => new LocalSheetGateway(config('sheets.local_path')),
+                'mysql' => new MysqlSheetGateway(
+                    config('sheets.mysql.connection'),
+                    (string) config('sheets.mysql.table_prefix', 'sheet_'),
+                ),
                 default => throw new InvalidArgumentException(
-                    'SHEETS_DRIVER harus bernilai "google" atau "local".',
+                    'SHEETS_DRIVER harus bernilai "mysql", "google", atau "local".',
                 ),
             };
         });
