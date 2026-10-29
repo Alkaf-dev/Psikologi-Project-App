@@ -84,6 +84,26 @@ return [
             ]) : [],
         ],
 
+        'public' => [
+            'driver' => 'mysql',
+            'url' => env('PUBLIC_DB_URL'),
+            'host' => env('PUBLIC_DB_HOST'),
+            'port' => env('PUBLIC_DB_PORT', '3306'),
+            'database' => env('PUBLIC_DB_DATABASE'),
+            'username' => env('PUBLIC_DB_USERNAME'),
+            'password' => env('PUBLIC_DB_PASSWORD'),
+            'unix_socket' => env('PUBLIC_DB_SOCKET', ''),
+            'charset' => env('PUBLIC_DB_CHARSET', 'utf8mb4'),
+            'collation' => env('PUBLIC_DB_COLLATION', 'utf8mb4_unicode_ci'),
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'strict' => true,
+            'engine' => null,
+            'options' => extension_loaded('pdo_mysql') ? array_filter([
+                (PHP_VERSION_ID >= 80500 ? Mysql::ATTR_SSL_CA : PDO::MYSQL_ATTR_SSL_CA) => env('PUBLIC_MYSQL_ATTR_SSL_CA'),
+            ]) : [],
+        ],
+
         'pgsql' => [
             'driver' => 'pgsql',
             'url' => env('DB_URL'),
