@@ -81,8 +81,33 @@ class CourseRepository extends BaseSheetRepository
      */
     public function isAvailableForStudent(array $course, array $student): bool
     {
-        return trim((string) ($course['class_name'] ?? '')) === trim((string) ($student['class_name'] ?? ''))
-            && $this->isAvailableForProdi($course, (string) ($student['prodi_id'] ?? ''));
+        $studentProdiId = (string) ($student['prodi_id'] ?? '');
+        $prodi = app(StudyProgramRepository::class)->find($studentProdiId);
+        $prodiCode = strtolower(trim((string) ($prodi['code'] ?? '')));
+        $prodiName = strtolower(trim((string) ($prodi['name'] ?? '')));
+
+        $isPsi = $prodiCode === 'psi'
+            || str_contains($prodiName, 'psikologi')
+            || $studentProdiId === '01M60CY00TAFA0HV21NX7JFNDF';
+
+        // Untuk mahasiswa PSI, seluruh mata kuliah dapat diakses
+        if ($isPsi) {
+            return true;
+        }
+
+        // Untuk HKI, ES, dan PGMI, pilihan matkul dibatasi sesuai prodi
+        if ($this->isAvailableForProdi($course, $studentProdiId)) {
+            return true;
+        }
+
+        if ($prodiCode !== '') {
+            $courseClass = strtolower(trim((string) ($course['class_name'] ?? '')));
+            if (str_contains($courseClass, $prodiCode)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

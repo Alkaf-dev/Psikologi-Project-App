@@ -24,6 +24,13 @@ class ScheduleController extends ApiController
         $items = $this->filter($items, $request, 'day', 'day');
         $items = $this->filter($items, $request, 'mode', 'mode');
         $items = $this->filter($items, $request, 'class_name', 'class_name');
+        if ($prodiId = (string) $request->input('prodi_id', '')) {
+            $items = $items->filter(function (array $schedule) use ($prodiId): bool {
+                $prodiIds = $schedule['prodi_ids'] ?? [];
+
+                return is_array($prodiIds) && in_array($prodiId, $prodiIds, true);
+            })->values();
+        }
         $items = $this->sort($items, $request, ['start_time', 'end_time', 'day', 'class_name'], 'start_time');
 
         return $this->paginated(
@@ -99,6 +106,7 @@ class ScheduleController extends ApiController
             'room' => ['nullable', 'string', 'max:60'],
             'platform' => ['nullable', 'string', 'max:30'],
             'meeting_link' => ['nullable', 'url:http,https', 'max:500'],
+            'attendance_link' => ['nullable', 'url:http,https', 'max:500'],
             'class_name' => [$required, 'string', 'max:50'],
         ];
     }
@@ -155,6 +163,7 @@ class ScheduleController extends ApiController
                 ? ScheduleRepository::normalizePlatform($data['platform'] ?? null)
                 : '',
             'meeting_link' => $mode === 'online' ? trim((string) ($data['meeting_link'] ?? '')) : '',
+            'attendance_link' => trim((string) ($data['attendance_link'] ?? '')),
             'class_name' => trim((string) ($data['class_name'] ?? '')),
         ];
     }

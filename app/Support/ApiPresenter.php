@@ -69,6 +69,7 @@ final class ApiPresenter
         $data['prodi_names'] = ProdiAssignments::names($programIds);
         $data['credits'] = (int) ($data['credits'] ?? 0);
         $data['meeting_link'] = self::nullableString($data['meeting_link'] ?? null);
+        $data['attendance_link'] = self::nullableString($data['attendance_link'] ?? null);
 
         return $data;
     }
@@ -88,6 +89,7 @@ final class ApiPresenter
         $data['platform'] = $platform !== '' ? $platform : null;
         $data['platform_label'] = $platform !== '' ? ScheduleRepository::PLATFORMS[$platform] : null;
         $data['meeting_link'] = $mode === 'online' ? self::nullableString($data['meeting_link'] ?? null) : null;
+        $data['attendance_link'] = self::nullableString($data['attendance_link'] ?? null);
         $data['room'] = $mode === 'offline' ? self::nullableString($data['room'] ?? null) : null;
 
         return $data;

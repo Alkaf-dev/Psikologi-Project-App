@@ -53,6 +53,7 @@ class CourseController extends ApiController
             'prodi_ids' => ['required', 'array', 'min:1'],
             'prodi_ids.*' => ['required', 'string'],
             'meeting_link' => ['nullable', 'url:http,https', 'max:500'],
+            'attendance_link' => ['nullable', 'url:http,https', 'max:500'],
             'description' => ['nullable', 'string'],
         ]);
 
@@ -80,6 +81,7 @@ class CourseController extends ApiController
             'prodi_ids' => ['sometimes', 'required', 'array', 'min:1'],
             'prodi_ids.*' => ['required', 'string'],
             'meeting_link' => ['sometimes', 'nullable', 'url:http,https', 'max:500'],
+            'attendance_link' => ['sometimes', 'nullable', 'url:http,https', 'max:500'],
             'description' => ['sometimes', 'nullable', 'string'],
         ]);
 
@@ -120,6 +122,7 @@ class CourseController extends ApiController
             'class_name' => trim((string) ($data['class_name'] ?? '')),
             'prodi_ids' => ProdiAssignments::csv($data['prodi_ids'] ?? []),
             'meeting_link' => trim((string) ($data['meeting_link'] ?? '')),
+            'attendance_link' => trim((string) ($data['attendance_link'] ?? '')),
             'description' => trim((string) ($data['description'] ?? '')),
         ];
     }

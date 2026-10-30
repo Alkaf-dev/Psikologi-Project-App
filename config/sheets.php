@@ -86,12 +86,12 @@ return [
 
         'courses' => [
             'id', 'code', 'name', 'credits', 'lecturer', 'semester', 'class_name',
-            'description', 'created_at', 'updated_at', 'deleted_at', 'prodi_ids', 'meeting_link',
+            'description', 'created_at', 'updated_at', 'deleted_at', 'prodi_ids', 'meeting_link', 'attendance_link',
         ],
 
         'schedules' => [
             'id', 'course_id', 'day', 'start_time', 'end_time', 'room', 'class_name',
-            'created_at', 'updated_at', 'deleted_at', 'mode', 'platform', 'meeting_link',
+            'created_at', 'updated_at', 'deleted_at', 'mode', 'platform', 'meeting_link', 'attendance_link',
         ],
 
         'groups' => [

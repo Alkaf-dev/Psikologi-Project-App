@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Support\ProdiAssignments;
 use Illuminate\Support\Collection;
 
 class ScheduleRepository extends BaseSheetRepository
@@ -54,16 +55,83 @@ class ScheduleRepository extends BaseSheetRepository
             ->map(fn (mixed $id): string => (string) $id)
             ->all();
 
-        $className = trim((string) ($student['class_name'] ?? ''));
+        $studentProdiId = (string) ($student['prodi_id'] ?? '');
+        $prodi = app(StudyProgramRepository::class)->find($studentProdiId);
+        $prodiCode = strtolower(trim((string) ($prodi['code'] ?? '')));
+        $prodiName = strtolower(trim((string) ($prodi['name'] ?? '')));
+
+        $isPsi = $prodiCode === 'psi'
+            || str_contains($prodiName, 'psikologi')
+            || $studentProdiId === '01M60CY00TAFA0HV21NX7JFNDF';
+
+        $studentClass = trim((string) ($student['class_name'] ?? ''));
 
         return $this->all()
-            ->filter(fn (array $schedule): bool => in_array((string) ($schedule['course_id'] ?? ''), $courseIds, true)
-                && trim((string) ($schedule['class_name'] ?? '')) === $className)
+            ->filter(function (array $schedule) use ($courseIds, $isPsi, $studentClass, $prodiCode): bool {
+                $scheduleCourseId = (string) ($schedule['course_id'] ?? '');
+                if (! in_array($scheduleCourseId, $courseIds, true)) {
+                    return false;
+                }
+
+                // Untuk mahasiswa PSI, semua jadwal dari mata kuliah yang tersedia dapat dilihat
+                if ($isPsi) {
+                    return true;
+                }
+
+                $scheduleClass = trim((string) ($schedule['class_name'] ?? ''));
+                if ($scheduleClass === '') {
+                    return true;
+                }
+
+                return $this->matchesStudentClass($scheduleClass, $studentClass, $prodiCode);
+            })
             ->sortBy(fn (array $schedule): array => [
                 self::DAYS[(string) ($schedule['day'] ?? '')] ?? 99,
                 (string) ($schedule['start_time'] ?? ''),
             ])
             ->values();
+    }
+
+    protected function matchesStudentClass(string $scheduleClass, string $studentClass, string $prodiCode): bool
+    {
+        $scheduleLower = strtolower($scheduleClass);
+        $studentLower = strtolower($studentClass);
+
+        // Check if student specifies rombel (1a, 1b, 1c)
+        $studentRombel = null;
+        foreach (['1a', '1b', '1c'] as $r) {
+            if (preg_match('/\b'.$r.'\b/i', $studentLower)) {
+                $studentRombel = $r;
+                break;
+            }
+        }
+
+        // Check if schedule specifies rombels
+        $scheduleRombels = [];
+        foreach (['1a', '1b', '1c'] as $r) {
+            if (preg_match('/\b'.$r.'\b/i', $scheduleLower)) {
+                $scheduleRombels[] = $r;
+            }
+        }
+
+        // If both student and schedule have rombels, they must match
+        if ($studentRombel !== null && ! empty($scheduleRombels)) {
+            if (! in_array($studentRombel, $scheduleRombels, true)) {
+                return false;
+            }
+        }
+
+        // Check prodi code in schedule class
+        if ($prodiCode !== '' && str_contains($scheduleLower, $prodiCode)) {
+            return true;
+        }
+
+        // Direct containment
+        if ($studentClass !== '' && (str_contains($scheduleLower, $studentLower) || str_contains($studentLower, $scheduleLower))) {
+            return true;
+        }
+
+        return true;
     }
 
     /**
@@ -80,6 +148,8 @@ class ScheduleRepository extends BaseSheetRepository
                 $schedule['course_name'] = $course['name'] ?? '-';
                 $schedule['course_code'] = $course['code'] ?? '';
                 $schedule['course_lecturer'] = $course['lecturer'] ?? '';
+                $schedule['prodi_names'] = ProdiAssignments::label($course['prodi_ids'] ?? '', 'Belum diatur');
+                $schedule['prodi_ids'] = ProdiAssignments::ids($course['prodi_ids'] ?? '');
 
                 $mode = self::normalizeMode($schedule['mode'] ?? null);
                 $platform = $mode === 'online'
