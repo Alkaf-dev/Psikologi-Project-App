@@ -66,7 +66,8 @@ Route::prefix('v1')->group(function (): void {
         Route::apiResource('tasks', StaffTaskController::class)->parameters(['tasks' => 'id']);
         Route::apiResource('submissions', StaffSubmissionController::class)->parameters(['submissions' => 'id']);
         Route::apiResource('announcements', StaffAnnouncementController::class)
-            ->parameters(['announcements' => 'id']);
+            ->parameters(['announcements' => 'id'])
+            ->names('api.staff.announcements');
 
         Route::get('settings', [StaffSettingsController::class, 'show']);
         Route::match(['put', 'patch'], 'settings', [StaffSettingsController::class, 'update']);

@@ -64,6 +64,14 @@ class PublicPagesTest extends TestCase
         $this->get('/pengumuman/'.$announcement['id'])->assertNotFound();
     }
 
+    public function test_public_announcement_route_names_are_not_shadowed_by_api_routes(): void
+    {
+        $this->assertSame('/pengumuman', route('announcements.index', [], false));
+        $this->assertSame('/pengumuman/contoh', route('announcements.show', ['id' => 'contoh'], false));
+        $this->assertSame('/api/v1/staff/announcements', route('api.staff.announcements.index', [], false));
+        $this->assertSame('/api/v1/staff/announcements/contoh', route('api.staff.announcements.show', ['id' => 'contoh'], false));
+    }
+
     public function test_unknown_announcement_returns_404(): void
     {
         $this->get('/pengumuman/tidak-ada')->assertNotFound();
