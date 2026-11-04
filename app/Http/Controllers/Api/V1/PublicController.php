@@ -85,6 +85,7 @@ class PublicController extends ApiController
         $publicFields = [
             'id', 'name', 'email', 'npm', 'role', 'role_label', 'class_name',
             'cohort', 'phone', 'prodi_id', 'prodi_name', 'active', 'created_at',
+            'avatar_url', 'cover_url',
         ];
 
         return $this->data(collect($presented)->only($publicFields)->all());

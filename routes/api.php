@@ -30,6 +30,11 @@ Route::prefix('v1')->group(function (): void {
         Route::post('auth/logout', [AuthController::class, 'logout']);
         Route::get('auth/me', [AuthController::class, 'me']);
         Route::patch('auth/profile', [AuthController::class, 'updateProfile']);
+        Route::post('auth/avatar', [AuthController::class, 'uploadAvatar']);
+        Route::delete('auth/avatar', [AuthController::class, 'deleteAvatar']);
+        Route::post('auth/cover', [AuthController::class, 'uploadCover']);
+        Route::post('auth/cover/preset', [AuthController::class, 'setCoverPreset']);
+        Route::delete('auth/cover', [AuthController::class, 'deleteCover']);
         Route::put('auth/password', [AuthController::class, 'updatePassword']);
         Route::get('auth/tokens', [AuthController::class, 'tokens']);
         Route::delete('auth/tokens/{id}', [AuthController::class, 'revokeToken']);

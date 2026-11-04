@@ -6,11 +6,14 @@ use App\Enums\UserRole;
 use App\Repositories\ApiTokenRepository;
 use App\Repositories\StudyProgramRepository;
 use App\Repositories\UserRepository;
+use App\Sheets\SpreadsheetGateway;
 use App\Support\ApiPresenter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends ApiController
@@ -104,6 +107,116 @@ class AuthController extends ApiController
         return $this->data(ApiPresenter::user($updated));
     }
 
+    public function uploadAvatar(Request $request, UserRepository $users, SpreadsheetGateway $gateway): JsonResponse
+    {
+        $data = $request->validate([
+            'avatar' => ['required', 'file', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
+        ]);
+
+        $this->ensureUserMediaColumns($gateway);
+
+        $user = $this->currentUser();
+        $file = $data['avatar'];
+        $path = $file->storeAs(
+            'avatars',
+            Str::ulid().'.'.mb_strtolower($file->extension() ?: 'jpg'),
+            'uploads',
+        );
+
+        if ($path === false) {
+            abort(500, 'Gagal menyimpan foto profil.');
+        }
+
+        $this->deleteUploadedMedia($user['avatar_url'] ?? null);
+
+        $updated = $users->update((string) $user['id'], [
+            'avatar_url' => $this->uploadedMediaUrl($request, $path),
+        ]);
+
+        return $this->data(ApiPresenter::user($updated));
+    }
+
+    public function deleteAvatar(UserRepository $users, SpreadsheetGateway $gateway): JsonResponse
+    {
+        $this->ensureUserMediaColumns($gateway);
+
+        $user = $this->currentUser();
+
+        $this->deleteUploadedMedia($user['avatar_url'] ?? null);
+
+        $updated = $users->update((string) $user['id'], ['avatar_url' => '']);
+
+        return $this->data(ApiPresenter::user($updated));
+    }
+
+    public function uploadCover(Request $request, UserRepository $users, SpreadsheetGateway $gateway): JsonResponse
+    {
+        $data = $request->validate([
+            'cover' => ['required', 'file', 'mimes:jpg,jpeg,png,webp', 'max:8192'],
+        ]);
+
+        $this->ensureUserMediaColumns($gateway);
+
+        $user = $this->currentUser();
+        $file = $data['cover'];
+        $path = $file->storeAs(
+            'covers',
+            Str::ulid().'.'.mb_strtolower($file->extension() ?: 'jpg'),
+            'uploads',
+        );
+
+        if ($path === false) {
+            abort(500, 'Gagal menyimpan foto sampul.');
+        }
+
+        $this->deleteUploadedMedia($user['cover_url'] ?? null);
+
+        $updated = $users->update((string) $user['id'], [
+            'cover_url' => $this->uploadedMediaUrl($request, $path),
+        ]);
+
+        return $this->data(ApiPresenter::user($updated));
+    }
+
+    public function setCoverPreset(Request $request, UserRepository $users, SpreadsheetGateway $gateway): JsonResponse
+    {
+        $data = $request->validate([
+            'cover_url' => ['required', 'string', 'max:2048', 'url'],
+        ]);
+
+        $url = trim((string) $data['cover_url']);
+        $scheme = mb_strtolower((string) parse_url($url, PHP_URL_SCHEME));
+
+        if (! in_array($scheme, ['http', 'https'], true)) {
+            throw ValidationException::withMessages([
+                'cover_url' => 'URL sampul tidak valid.',
+            ]);
+        }
+
+        $this->ensureUserMediaColumns($gateway);
+
+        $user = $this->currentUser();
+
+        $this->deleteUploadedMedia($user['cover_url'] ?? null);
+
+        $updated = $users->update((string) $user['id'], ['cover_url' => $url]);
+
+        return $this->data(ApiPresenter::user($updated));
+    }
+
+    public function deleteCover(UserRepository $users, SpreadsheetGateway $gateway): JsonResponse
+    {
+        $this->ensureUserMediaColumns($gateway);
+
+        $user = $this->currentUser();
+
+        $this->deleteUploadedMedia($user['cover_url'] ?? null);
+
+        $updated = $users->update((string) $user['id'], ['cover_url' => '']);
+
+        return $this->data(ApiPresenter::user($updated));
+    }
+
     public function updatePassword(Request $request, UserRepository $users, ApiTokenRepository $tokens): JsonResponse
     {
         $data = $request->validate([
@@ -166,5 +279,32 @@ class AuthController extends ApiController
         }
 
         return response()->noContent();
+    }
+
+    private function ensureUserMediaColumns(SpreadsheetGateway $gateway): void
+    {
+        $gateway->ensureSheet('users', (array) config('sheets.tabs.users', []));
+    }
+
+    private function uploadedMediaUrl(Request $request, string $path): string
+    {
+        return rtrim($request->getSchemeAndHttpHost(), '/').'/uploads/'.ltrim($path, '/');
+    }
+
+    private function deleteUploadedMedia(?string $url): void
+    {
+        $path = (string) parse_url((string) $url, PHP_URL_PATH);
+        $marker = '/uploads/';
+        $position = strpos($path, $marker);
+
+        if ($position === false) {
+            return;
+        }
+
+        $relative = ltrim(substr($path, $position + strlen($marker)), '/');
+
+        if ($relative !== '' && Storage::disk('uploads')->exists($relative)) {
+            Storage::disk('uploads')->delete($relative);
+        }
     }
 }

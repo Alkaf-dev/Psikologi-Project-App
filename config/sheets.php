@@ -81,7 +81,7 @@ return [
         'users' => [
             'id', 'name', 'email', 'npm', 'password_hash', 'role', 'class_name',
             'cohort', 'phone', 'active', 'created_at', 'updated_at', 'deleted_at',
-            'prodi_id',
+            'prodi_id', 'avatar_url', 'cover_url',
         ],
 
         'courses' => [
