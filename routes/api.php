@@ -21,6 +21,7 @@ Route::prefix('v1')->group(function (): void {
     Route::get('study-programs', [PublicController::class, 'programs']);
     Route::get('announcements', [PublicController::class, 'announcements']);
     Route::get('announcements/{id}', [PublicController::class, 'announcement']);
+    Route::get('auth/profile/{id}', [PublicController::class, 'profile']);
     Route::get('settings', [PublicController::class, 'settings']);
 
     Route::post('auth/login', [AuthController::class, 'login'])->middleware('throttle:api-login');

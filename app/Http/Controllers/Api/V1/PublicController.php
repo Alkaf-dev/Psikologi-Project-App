@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Repositories\AnnouncementRepository;
 use App\Repositories\SettingsRepository;
 use App\Repositories\StudyProgramRepository;
+use App\Repositories\UserRepository;
 use App\Support\ApiPresenter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -71,9 +72,28 @@ class PublicController extends ApiController
         ));
     }
 
+    public function profile(string $id, UserRepository $users): JsonResponse
+    {
+        $user = $users->find($id);
+
+        if ($user === null || ! $users->isActive($user)) {
+            return response()->json(['message' => 'Profil tidak ditemukan.'], 404);
+        }
+
+        $presented = ApiPresenter::user($user);
+
+        $publicFields = [
+            'id', 'name', 'email', 'npm', 'role', 'role_label', 'class_name',
+            'cohort', 'phone', 'prodi_id', 'prodi_name', 'active', 'created_at',
+        ];
+
+        return $this->data(collect($presented)->only($publicFields)->all());
+    }
+
     public function settings(SettingsRepository $settings): JsonResponse
     {
         $all = $settings->allKeyed();
+
         $publicKeys = [
             'program_name',
             'academic_year',
