@@ -183,8 +183,8 @@ class SubmissionController extends ApiController
             $errors['task_id'] = 'Pilih tugas yang valid.';
         }
 
-        if ($user === null || ! $users->isStudent($user)) {
-            $errors['user_id'] = 'Pilih mahasiswa yang valid.';
+        if ($user === null || ! $users->isActive($user)) {
+            $errors['user_id'] = 'Pilih mahasiswa atau pengguna aktif yang valid.';
         }
 
         if ($task !== null && ($task['type'] ?? 'individu') === 'kelompok') {

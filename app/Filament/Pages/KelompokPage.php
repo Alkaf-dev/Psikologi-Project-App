@@ -262,7 +262,7 @@ class KelompokPage extends BaseKelompokPage
                 foreach ($userIds as $userId) {
                     $user = $users->find($userId);
 
-                    if (! $user || ! $users->isStudent($user) || ! $users->isActive($user)) {
+                    if (! $user || ! $users->isActive($user)) {
                         $invalid[] = $user['name'] ?? $userId;
 
                         continue;

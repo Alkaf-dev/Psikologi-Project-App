@@ -272,8 +272,8 @@ class GroupController extends ApiController
         $errors = [];
         $leader = $users->find($leaderId);
 
-        if ($leader === null || ! $users->isStudent($leader) || ! $users->isActive($leader)) {
-            $errors['leader_id'] = 'Ketua harus mahasiswa aktif yang valid.';
+        if ($leader === null || ! $users->isActive($leader)) {
+            $errors['leader_id'] = 'Ketua harus pengguna aktif yang valid.';
         } elseif (! $courses->isAvailableForProdi($course, (string) ($leader['prodi_id'] ?? ''))) {
             $errors['leader_id'] = 'Prodi ketua tidak sesuai dengan mata kuliah.';
         }
@@ -283,14 +283,14 @@ class GroupController extends ApiController
         foreach ($memberIds as $userId) {
             $user = $users->find($userId);
 
-            if ($user === null || ! $users->isStudent($user) || ! $users->isActive($user)) {
-                $errors['member_ids'] = 'Semua anggota harus mahasiswa aktif yang valid.';
+            if ($user === null || ! $users->isActive($user)) {
+                $errors['member_ids'] = 'Semua anggota harus pengguna aktif yang valid.';
 
                 continue;
             }
 
             if (! $courses->isAvailableForProdi($course, (string) ($user['prodi_id'] ?? ''))) {
-                $errors['member_ids'] = 'Terdapat anggota yang Produnya tidak sesuai dengan mata kuliah.';
+                $errors['member_ids'] = 'Terdapat anggota yang Prodinya tidak sesuai dengan mata kuliah.';
 
                 continue;
             }
@@ -298,7 +298,7 @@ class GroupController extends ApiController
             $membership = $members->membershipForCourse($userId, (string) $course['id']);
 
             if ($membership !== null && (string) ($membership['group_id'] ?? '') !== (string) $exceptGroupId) {
-                $errors['member_ids'] = 'Terdapat mahasiswa yang sudah memiliki kelompok pada mata kuliah ini.';
+                $errors['member_ids'] = 'Terdapat anggota yang sudah memiliki kelompok pada mata kuliah ini.';
             }
         }
 
