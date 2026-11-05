@@ -92,17 +92,81 @@ class AuthController extends ApiController
 
     public function updateProfile(Request $request, UserRepository $users): JsonResponse
     {
+        $user = $this->currentUser();
+        $userId = (string) $user['id'];
+
         $data = $request->validate([
             'name' => ['required', 'string', 'max:120'],
-            'phone' => ['nullable', 'string', 'max:30'],
+            'email' => ['sometimes', 'nullable', 'string', 'max:150'],
+            'username' => ['sometimes', 'nullable', 'string', 'max:100'],
+            'npm' => ['sometimes', 'nullable', 'string', 'max:30'],
+            'phone' => ['sometimes', 'nullable', 'string', 'max:30'],
+            'class_name' => ['sometimes', 'nullable', 'string', 'max:50'],
+            'cohort' => ['sometimes', 'nullable', 'string', 'max:10'],
+            'prodi_id' => ['sometimes', 'nullable', 'string', 'max:50'],
+            'password' => ['sometimes', 'nullable', 'string', 'min:6'],
         ]);
 
-        $user = $this->currentUser();
-
-        $updated = $users->update((string) $user['id'], [
+        $payload = [
             'name' => trim((string) $data['name']),
             'phone' => trim((string) ($data['phone'] ?? '')),
-        ]);
+        ];
+
+        // Email / Username update
+        $targetEmail = $data['email'] ?? $data['username'] ?? null;
+        if ($targetEmail !== null && trim((string) $targetEmail) !== '') {
+            $inputEmail = trim((string) $targetEmail);
+            if (! str_contains($inputEmail, '@')) {
+                $existingDomain = 'psi.id';
+                if (! empty($user['email']) && str_contains($user['email'], '@')) {
+                    $parts = explode('@', $user['email'], 2);
+                    if (! empty($parts[1])) {
+                        $existingDomain = $parts[1];
+                    }
+                }
+                $inputEmail = $inputEmail.'@'.$existingDomain;
+            }
+
+            if ($users->emailExists($inputEmail, $userId)) {
+                throw ValidationException::withMessages([
+                    'email' => 'Username atau email ini sudah digunakan oleh akun lain.',
+                ]);
+            }
+            $payload['email'] = $inputEmail;
+        }
+
+        // NIM / NPM update
+        if (array_key_exists('npm', $data) && trim((string) $data['npm']) !== '') {
+            $inputNpm = trim((string) $data['npm']);
+            if ($users->npmExists($inputNpm, $userId)) {
+                throw ValidationException::withMessages([
+                    'npm' => 'NIM sudah digunakan oleh akun lain.',
+                ]);
+            }
+            $payload['npm'] = $inputNpm;
+        }
+
+        // Kelas
+        if (array_key_exists('class_name', $data)) {
+            $payload['class_name'] = trim((string) ($data['class_name'] ?? ''));
+        }
+
+        // Angkatan
+        if (array_key_exists('cohort', $data)) {
+            $payload['cohort'] = trim((string) ($data['cohort'] ?? ''));
+        }
+
+        // Program Studi
+        if (array_key_exists('prodi_id', $data) && trim((string) $data['prodi_id']) !== '') {
+            $payload['prodi_id'] = trim((string) $data['prodi_id']);
+        }
+
+        // Password langsung
+        if (! empty($data['password'])) {
+            $payload['password_hash'] = Hash::make((string) $data['password']);
+        }
+
+        $updated = $users->update($userId, $payload);
 
         return $this->data(ApiPresenter::user($updated));
     }
