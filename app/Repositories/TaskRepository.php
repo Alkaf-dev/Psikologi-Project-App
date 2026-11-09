@@ -32,8 +32,9 @@ class TaskRepository extends BaseSheetRepository
                 )));
 
                 $task['group_name'] = $isGroupTask
-                    ? ($groupNames !== [] ? implode(', ', $groupNames) : 'Semua mahasiswa')
+                    ? ($groupNames !== [] ? implode(', ', $groupNames) : 'Semua kelompok')
                     : 'Semua mahasiswa';
+                $task['group_names'] = $groupNames;
                 $task['group_ids'] = TaskGroups::csv($assignedGroupIds);
                 $task['type_label'] = $isGroupTask ? 'Kelompok' : 'Individu';
                 $task['status'] = TaskStatus::normalize($task['status'] ?? '');

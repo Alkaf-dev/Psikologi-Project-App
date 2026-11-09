@@ -141,6 +141,8 @@ final class ApiPresenter
     {
         $data = self::base($task);
         $data['group_ids'] = TaskGroups::ids($data['group_ids'] ?? '');
+        $data['group_name'] = (string) ($data['group_name'] ?? '');
+        $data['group_names'] = (array) ($data['group_names'] ?? []);
         $data['status'] = TaskStatus::normalize($data['status'] ?? '');
         $data['status_label'] = TaskStatus::label($data['status']);
         $data['type'] = (string) ($data['type'] ?? 'individu');

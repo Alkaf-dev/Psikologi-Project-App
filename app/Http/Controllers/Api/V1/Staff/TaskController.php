@@ -29,7 +29,7 @@ class TaskController extends ApiController
             });
 
         $items = $this->search($items, $request, [
-            'title', 'description', 'course_name', 'course_code', 'type_label', 'status_label',
+            'title', 'description', 'course_name', 'course_code', 'type_label', 'status_label', 'group_name',
         ]);
         $items = $this->filter($items, $request, 'course_id', 'course_id');
         $items = $this->filter($items, $request, 'type', 'type');
