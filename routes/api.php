@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\V1\Staff\AnnouncementController as StaffAnnouncemen
 use App\Http\Controllers\Api\V1\Staff\CourseController as StaffCourseController;
 use App\Http\Controllers\Api\V1\Staff\DashboardController as StaffDashboardController;
 use App\Http\Controllers\Api\V1\Staff\GroupController as StaffGroupController;
+use App\Http\Controllers\Api\V1\Staff\MaterialController as StaffMaterialController;
 use App\Http\Controllers\Api\V1\Staff\ScheduleController as StaffScheduleController;
 use App\Http\Controllers\Api\V1\Staff\SettingsController as StaffSettingsController;
 use App\Http\Controllers\Api\V1\Staff\StudyProgramController as StaffStudyProgramController;
@@ -50,6 +51,7 @@ Route::prefix('v1')->group(function (): void {
         Route::get('schedules', [StudentController::class, 'schedules']);
         Route::get('tasks', [StudentController::class, 'tasks']);
         Route::get('tasks/{id}', [StudentController::class, 'task']);
+        Route::get('materials', [StudentController::class, 'materials']);
         Route::post('tasks/{id}/submission', [StudentController::class, 'submitTask']);
         Route::get('groups', [StudentController::class, 'groups']);
         Route::get('groups/{id}', [StudentController::class, 'group']);
@@ -70,6 +72,7 @@ Route::prefix('v1')->group(function (): void {
         Route::post('groups/{id}/members', [StaffGroupController::class, 'addMembers']);
         Route::delete('groups/{id}/members/{userId}', [StaffGroupController::class, 'removeMember']);
         Route::apiResource('tasks', StaffTaskController::class)->parameters(['tasks' => 'id']);
+        Route::apiResource('materials', StaffMaterialController::class)->parameters(['materials' => 'id']);
         Route::apiResource('submissions', StaffSubmissionController::class)->parameters(['submissions' => 'id']);
         Route::apiResource('announcements', StaffAnnouncementController::class)
             ->parameters(['announcements' => 'id'])

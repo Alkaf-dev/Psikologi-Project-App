@@ -110,6 +110,11 @@ return [
             'collection_link', 'status',
         ],
 
+        'materials' => [
+            'id', 'course_id', 'title', 'description', 'url', 'meeting_number',
+            'created_by', 'created_at', 'updated_at', 'deleted_at',
+        ],
+
         'submissions' => [
             'id', 'task_id', 'user_id', 'group_id', 'status', 'link', 'notes', 'grade',
             'feedback', 'submitted_at', 'created_at', 'updated_at', 'deleted_at',

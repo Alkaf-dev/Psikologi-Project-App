@@ -6,6 +6,7 @@ use App\Repositories\AnnouncementRepository;
 use App\Repositories\CourseRepository;
 use App\Repositories\GroupMemberRepository;
 use App\Repositories\GroupRepository;
+use App\Repositories\MaterialRepository;
 use App\Repositories\ScheduleRepository;
 use App\Repositories\SubmissionRepository;
 use App\Repositories\TaskRepository;
@@ -138,6 +139,23 @@ class StudentController extends ApiController
         return $this->paginated(
             $this->decorateTasks($items, $userId, $studentGroupIds, $submissions, $groups),
             $request,
+        );
+    }
+
+    public function materials(Request $request, MaterialRepository $materials): JsonResponse
+    {
+        $student = $this->currentUser();
+        $items = $materials->withCourse($materials->forStudent($student));
+        $items = $this->search($items, $request, [
+            'title', 'description', 'course_name', 'course_code',
+        ]);
+        $items = $this->filter($items, $request, 'course_id', 'course_id');
+        $items = $this->sort($items, $request, ['title', 'meeting_number', 'created_at'], 'title');
+
+        return $this->paginated(
+            $items,
+            $request,
+            fn (array $material): array => ApiPresenter::material($material),
         );
     }
 

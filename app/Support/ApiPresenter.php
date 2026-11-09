@@ -154,6 +154,22 @@ final class ApiPresenter
     }
 
     /**
+     * @param  array<string, mixed>  $material
+     * @return array<string, mixed>
+     */
+    public static function material(array $material): array
+    {
+        $data = self::base($material);
+        $meetingNumber = trim((string) ($data['meeting_number'] ?? ''));
+
+        $data['meeting_number'] = $meetingNumber !== '' ? (int) $meetingNumber : null;
+        $data['url'] = trim((string) ($data['url'] ?? ''));
+        $data['description'] = self::nullableString($data['description'] ?? null);
+
+        return $data;
+    }
+
+    /**
      * @param  array<string, mixed>  $submission
      * @return array<string, mixed>
      */
