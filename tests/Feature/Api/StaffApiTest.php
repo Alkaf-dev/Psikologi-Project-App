@@ -498,4 +498,63 @@ class StaffApiTest extends TestCase
             ->deleteJson('/api/v1/staff/announcements/'.$id)
             ->assertNoContent();
     }
+
+    public function test_staff_can_manage_materials_and_students_can_read_them(): void
+    {
+        $token = $this->apiLogin('pjmk@psikologi.test');
+        $course = $this->withApiToken($token)
+            ->getJson('/api/v1/staff/courses?per_page=100')
+            ->assertOk()
+            ->json('data.0');
+
+        $this->assertIsArray($course);
+
+        $courseId = $course['id'];
+        $this->assertIsString($courseId);
+
+        $created = $this->withApiToken($token)
+            ->postJson('/api/v1/staff/materials', [
+                'course_id' => $courseId,
+                'title' => 'Slide Pertemuan API',
+                'description' => 'Bahan ajar untuk pengujian API.',
+                'url' => 'https://drive.google.com/file/d/api-material',
+                'meeting_number' => 3,
+            ])
+            ->assertCreated()
+            ->assertJsonPath('data.title', 'Slide Pertemuan API')
+            ->assertJsonPath('data.meeting_number', 3)
+            ->assertJsonPath('data.course_id', $courseId)
+            ->assertJsonPath('data.course_name', $course['name']);
+
+        $materialId = $created->json('data.id');
+        $this->assertIsString($materialId);
+
+        $this->withApiToken($token)
+            ->getJson('/api/v1/staff/materials?search=Slide Pertemuan API')
+            ->assertOk()
+            ->assertJsonPath('data.0.id', $materialId);
+
+        $this->withApiToken($token)
+            ->patchJson('/api/v1/staff/materials/'.$materialId, [
+                'title' => 'Slide Pertemuan API Revisi',
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.title', 'Slide Pertemuan API Revisi');
+
+        $studentToken = $this->apiLogin('ayu@psikologi.test');
+
+        $this->withApiToken($studentToken)
+            ->getJson('/api/v1/student/materials?per_page=100')
+            ->assertOk()
+            ->assertJsonFragment(['id' => $materialId]);
+
+        $this->withApiToken($token)
+            ->deleteJson('/api/v1/staff/materials/'.$materialId)
+            ->assertNoContent();
+
+        $this->withApiToken($studentToken)
+            ->getJson('/api/v1/student/materials?per_page=100')
+            ->assertOk()
+            ->assertJsonMissing(['id' => $materialId]);
+    }
 }

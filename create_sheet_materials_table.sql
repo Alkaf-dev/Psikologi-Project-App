@@ -15,3 +15,4 @@ CREATE TABLE IF NOT EXISTS `sheet_materials` (
   `deleted_at` longtext DEFAULT NULL,
   PRIMARY KEY (`_row_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
