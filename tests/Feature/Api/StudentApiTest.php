@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Api;
 
+use App\Repositories\GroupMemberRepository;
 use App\Repositories\GroupRepository;
 use App\Repositories\SubmissionRepository;
 use App\Repositories\TaskRepository;
@@ -196,6 +197,39 @@ class StudentApiTest extends TestCase
         $this->withApiToken($token)
             ->getJson('/api/v1/student/groups/'.$other['id'])
             ->assertNotFound();
+    }
+
+    public function test_student_group_list_includes_a_group_led_without_a_membership_row(): void
+    {
+        $student = app(UserRepository::class)->findActiveByLogin('ayu@psikologi.test');
+        $group = app(GroupRepository::class)->findBy('name', 'Kelompok 1 - Observasi');
+
+        $this->assertNotNull($student);
+        $this->assertNotNull($group);
+
+        $member = app(GroupMemberRepository::class)
+            ->forUser((string) $student['id'])
+            ->first(fn (array $candidate): bool => (string) ($candidate['group_id'] ?? '') === (string) $group['id']);
+
+        $this->assertNotNull($member);
+        app(GroupMemberRepository::class)->delete((string) $member['id']);
+
+        $response = $this->withApiToken($this->apiLogin('ayu@psikologi.test'))
+            ->getJson('/api/v1/student/groups?per_page=100')
+            ->assertOk();
+
+        $this->assertTrue(
+            collect($response->json('data'))->contains(fn (array $candidate): bool => (string) $candidate['id'] === (string) $group['id']),
+        );
+    }
+
+    public function test_student_cannot_open_the_staff_group_directory(): void
+    {
+        $token = $this->apiLogin('ayu@psikologi.test');
+
+        $this->withApiToken($token)
+            ->getJson('/api/v1/staff/groups')
+            ->assertForbidden();
     }
 
     public function test_student_can_read_and_mark_notifications(): void

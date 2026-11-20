@@ -3,6 +3,8 @@
 namespace Tests\Feature\Api;
 
 use App\Repositories\CourseRepository;
+use App\Repositories\GroupMemberRepository;
+use App\Repositories\GroupRepository;
 use App\Repositories\SubmissionRepository;
 use App\Repositories\TaskRepository;
 use App\Repositories\UserRepository;
@@ -263,6 +265,28 @@ class StaffApiTest extends TestCase
         $this->withApiToken($token)
             ->deleteJson('/api/v1/staff/courses/'.$courseId)
             ->assertNoContent();
+    }
+
+    public function test_staff_can_open_the_student_group_directory_scoped_to_their_memberships(): void
+    {
+        $staff = app(UserRepository::class)->findActiveByLogin('pjmk@psikologi.test');
+        $group = app(GroupRepository::class)->findBy('name', 'Kelompok 1 - Observasi');
+
+        $this->assertNotNull($staff);
+        $this->assertNotNull($group);
+
+        app(GroupMemberRepository::class)->addMember((string) $group['id'], (string) $staff['id']);
+
+        $response = $this->withApiToken($this->apiLogin('pjmk@psikologi.test'))
+            ->getJson('/api/v1/student/groups?per_page=100')
+            ->assertOk()
+            ->assertJsonStructure(['data' => [['id', 'name', 'members', 'member_ids']]]);
+
+        $groupIds = collect($response->json('data'))->pluck('id')->map(fn (mixed $id): string => (string) $id)->all();
+        $expected = app(GroupRepository::class)->forStudent($staff)->pluck('id')->map(fn (mixed $id): string => (string) $id)->all();
+
+        $this->assertEqualsCanonicalizing($expected, $groupIds);
+        $this->assertContains((string) $group['id'], $groupIds);
     }
 
     public function test_staff_can_manage_groups_and_members(): void

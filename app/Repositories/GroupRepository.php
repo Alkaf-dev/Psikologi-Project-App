@@ -14,18 +14,25 @@ class GroupRepository extends BaseSheetRepository
      */
     public function forStudent(array $student): Collection
     {
+        $userId = (string) ($student['id'] ?? '');
+
         $groupIds = app(GroupMemberRepository::class)
-            ->groupIdsForUser((string) ($student['id'] ?? ''));
+            ->groupIdsForUser($userId);
 
         $courseIds = app(CourseRepository::class)
-            ->forProdi((string) ($student['prodi_id'] ?? ''))
+            ->forStudent($student)
             ->pluck('id')
             ->map(fn (mixed $id): string => (string) $id)
             ->all();
 
         return $this->all()
-            ->filter(fn (array $group): bool => in_array((string) ($group['id'] ?? ''), $groupIds, true)
-                && in_array((string) ($group['course_id'] ?? ''), $courseIds, true))
+            ->filter(function (array $group) use ($userId, $groupIds, $courseIds): bool {
+                $isMember = in_array((string) ($group['id'] ?? ''), $groupIds, true);
+                $isLeader = $userId !== '' && (string) ($group['leader_id'] ?? '') === $userId;
+
+                return ($isMember || $isLeader)
+                    && in_array((string) ($group['course_id'] ?? ''), $courseIds, true);
+            })
             ->values();
     }
 

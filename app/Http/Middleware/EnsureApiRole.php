@@ -27,7 +27,8 @@ class EnsureApiRole
             ->filter()
             ->contains(fn (string $role): bool => match ($role) {
                 'staff' => $user->isAdmin(),
-                'student' => $user->isStudent(),
+                'student' => $user->isStudent()
+                    || ($user->isAdmin() && ($request->isMethod('GET') || $request->isMethod('HEAD'))),
                 default => false,
             });
 

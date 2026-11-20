@@ -216,7 +216,7 @@ class AuthApiTest extends TestCase
             ->assertUnauthorized();
     }
 
-    public function test_role_middleware_prevents_cross_role_access(): void
+    public function test_role_middleware_limits_staff_to_read_only_student_routes(): void
     {
         $student = $this->apiLogin('ayu@psikologi.test');
         $admin = $this->apiLogin('admin@psikologi.test');
@@ -227,6 +227,12 @@ class AuthApiTest extends TestCase
 
         $this->withApiToken($admin)
             ->getJson('/api/v1/student/dashboard')
+            ->assertOk();
+
+        $this->withApiToken($admin)
+            ->postJson('/api/v1/student/tasks/tidak-ada/submission', [
+                'link' => 'https://example.com/tugas',
+            ])
             ->assertForbidden();
     }
 
