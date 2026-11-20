@@ -38,11 +38,17 @@ class KelompokPage extends BaseKelompokPage
      */
     protected function canAccessGroup(array $group): bool
     {
-        return in_array(
+        $userId = (string) auth()->id();
+
+        if (in_array(
             (string) ($group['id'] ?? ''),
-            app(GroupMemberRepository::class)->groupIdsForUser((string) auth()->id()),
+            app(GroupMemberRepository::class)->groupIdsForUser($userId),
             true,
-        );
+        )) {
+            return true;
+        }
+
+        return $userId !== '' && (string) ($group['leader_id'] ?? '') === $userId;
     }
 
     /**

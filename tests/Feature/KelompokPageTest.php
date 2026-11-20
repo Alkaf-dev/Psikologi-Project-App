@@ -215,6 +215,35 @@ class KelompokPageTest extends TestCase
             );
     }
 
+    public function test_portal_group_page_includes_a_group_led_without_a_membership_row(): void
+    {
+        Filament::setCurrentPanel('app');
+        $this->actingAsStudent();
+
+        $student = app(UserRepository::class)->findActiveByLogin('ayu@psikologi.test');
+        $course = app(CourseRepository::class)->findBy('code', 'PSI201');
+        $group = app(GroupRepository::class)->findBy('name', 'Kelompok 1 - Observasi');
+
+        $this->assertNotNull($student);
+        $this->assertNotNull($course);
+        $this->assertNotNull($group);
+
+        $members = app(GroupMemberRepository::class);
+        $member = $members->forUser((string) $student['id'])
+            ->first(fn (array $candidate): bool => (string) ($candidate['group_id'] ?? '') === (string) $group['id']);
+
+        $this->assertNotNull($member);
+        $members->delete((string) $member['id']);
+
+        Livewire::test(PortalKelompokPage::class)
+            ->assertSee('Psikologi Perkembangan')
+            ->call('selectCourse', (string) $course['id'])
+            ->assertSee('Kelompok 1 - Observasi')
+            ->call('selectGroup', (string) $group['id'])
+            ->assertSet('selectedGroupId', (string) $group['id'])
+            ->assertCanSeeTableRecords($members->forGroup((string) $group['id'])->pluck('id')->all());
+    }
+
     public function test_portal_group_page_cannot_open_a_group_the_student_does_not_belong_to(): void
     {
         Filament::setCurrentPanel('app');
