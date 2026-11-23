@@ -26,6 +26,7 @@ class PublicController extends ApiController
                 'study_programs' => '/api/v1/study-programs',
                 'announcements' => '/api/v1/announcements',
                 'settings' => '/api/v1/settings',
+                'display' => '/api/v1/display/*',
                 'student' => '/api/v1/student/*',
                 'staff' => '/api/v1/staff/*',
             ],

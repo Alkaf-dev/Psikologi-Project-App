@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\PublicController;
+use App\Http\Controllers\Api\V1\PublicDisplayController;
 use App\Http\Controllers\Api\V1\Staff\AnnouncementController as StaffAnnouncementController;
 use App\Http\Controllers\Api\V1\Staff\CourseController as StaffCourseController;
 use App\Http\Controllers\Api\V1\Staff\DashboardController as StaffDashboardController;
@@ -24,6 +25,14 @@ Route::prefix('v1')->group(function (): void {
     Route::get('announcements/{id}', [PublicController::class, 'announcement']);
     Route::get('auth/profile/{id}', [PublicController::class, 'profile']);
     Route::get('settings', [PublicController::class, 'settings']);
+
+    Route::prefix('display')->group(function (): void {
+        Route::get('courses', [PublicDisplayController::class, 'courses']);
+        Route::get('schedules', [PublicDisplayController::class, 'schedules']);
+        Route::get('groups', [PublicDisplayController::class, 'groups']);
+        Route::get('tasks', [PublicDisplayController::class, 'tasks']);
+        Route::get('materials', [PublicDisplayController::class, 'materials']);
+    });
 
     Route::post('auth/login', [AuthController::class, 'login'])->middleware('throttle:api-login');
 
